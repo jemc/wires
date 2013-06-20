@@ -1,34 +1,28 @@
 require_relative 'tubes'
 
-def on_keypress(codeblock)
-    event = 5
-    codeblock.call($data = event)
-end
-def on(event, channel='*', &codeblock)
-    # on_keypress(codeblock)
-    Channel(channel).register(event, codeblock)
-end
+# TODO: fire function should block until event is actually fired
+# TODO: handle exceptions in task threads
+# TODO: pass events around as objects (optionally?)
 
-
-cow = 4
-
-on :keyup do
-    puts cow
-    puts $data
-end
+global_thing = 0
 
 on :keydown do
-    puts cow
-    puts $data
+    puts 'something was pressed while global_thing is #{global_thing}'
 end
 
-cow = 5
-Channel('*').fire(:keyup)
-cow = 6
-
-
-Thread.new do
-    Hub.new.run
+on :keydown, 'keypad1' do
+    puts 'keypad1 was pressed while global_thing is #{global_thing}'
 end
 
-sleep 2
+
+global_thing = 4
+
+fire :keydown
+
+sleep 0.5
+
+global_thing = 5
+
+fire :keydown, 'keypad1'
+
+sleep 0.5

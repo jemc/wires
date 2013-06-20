@@ -1,3 +1,12 @@
+
+def on(event, channel='*', &codeblock)
+    Channel(channel).register(event, codeblock)
+end
+
+def fire(event, channel='*') 
+    Channel(channel).fire(event)
+end
+
 def Channel(*args) Channel.new(*args) end
 
 class Channel
