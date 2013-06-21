@@ -18,12 +18,23 @@ class Hub
     end
     
     def _process_item(x)
+        x, state = x
         event, proc = x
-        Thread.new { proc.call($data = 55) }
+        Thread.new do
+            state[:lock] = false
+            proc.call($event = event)
+        end
+    end
+    
+    def fire(x)
+        state = {lock: true}
+        @queue << [x, state]
+        
+        sleep(0) while state[:lock]
     end
     
     def enqueue(x)
-        @queue << x
+        fire x
     end
 end
 
