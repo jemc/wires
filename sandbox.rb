@@ -9,7 +9,7 @@ require_relative 'tubes'
 
 on :keydown do
     sleep 1
-    raise Interrupt
+    # raise NotImplementedError
     puts "event: #{$event}"
 end
 
@@ -17,11 +17,6 @@ end
 # raise NotImplementedError
 
 fire :keydown
-
-# sleep 2.0
-
-puts Hub.new.inspect
-puts Hub.new.inspect
 
 # puts Thread.list.inspect
 Thread.list.each{|t| t.join if t != Thread.current}

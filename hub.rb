@@ -25,14 +25,21 @@ class Hub
     end
     
     def _process_item(x)
-        x, state = x
+        x, waiting_thread = x
         event, proc = x
         Thread.new do
-            state[:lock] = false
             
-            begin proc.call($event = event)
+            begin
+                waiting_thread.wakeup
+                proc.call($event = event)
                 
             rescue Interrupt, SystemExit => e
+                # TODO: This doesn't catch interrupts
+                # outside the task threads, which means
+                # that most of the time the interrupts will
+                # not actually get caught, because the 
+                # majority of time is spent idling in the
+                # Hub's sleep loop.
                 @keepgoing = false
                 _unhandled_exception(e)
                 
@@ -47,10 +54,8 @@ class Hub
     end
     
     def fire(x)
-        state = {lock: true}
-        @queue << [x, state]
-        
-        sleep(0) while state[:lock]
+        @queue << [x, Thread.current]
+        sleep
     end
     
     def enqueue(x)
