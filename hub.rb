@@ -1,5 +1,3 @@
-require 'coderay'
-# Wirb.start
 
 # Make sure puts goes to $stdout for all threads!
 def puts(x) $stdout.puts(x) end

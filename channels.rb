@@ -10,7 +10,6 @@ def fire(event, channel='*')
     Channel(channel).fire(event)
 end
 
-
 def Channel(*args) Channel.new(*args) end
 
 class Channel

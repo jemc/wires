@@ -6,13 +6,11 @@ require_relative 'tubes'
 # TODO: possibly allow event handler filtering with regexp?
 # TODO: pass events around as objects (optionally?)
 
-on :keydown do
-    raise NotImplementedError
-    sleep 1
-    puts "event: #{$event}"
+class SomethingDoneEvent < Event
+end
+class SomethingElseDoneEvent < SomethingDoneEvent
 end
 
-on 'keydown' # do nothing
-
-# fire :keydown
-# fire 'keydown'
+p SomethingElseDoneEvent.ancestry
+p SomethingElseDoneEvent.codestrings
+p SomethingElseDoneEvent.codestring
