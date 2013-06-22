@@ -34,12 +34,6 @@ class Hub
                 proc.call($event = event)
                 
             rescue Interrupt, SystemExit => e
-                # TODO: This doesn't catch interrupts
-                # outside the task threads, which means
-                # that most of the time the interrupts will
-                # not actually get caught, because the 
-                # majority of time is spent idling in the
-                # Hub's sleep loop.
                 @keepgoing = false
                 _unhandled_exception(e)
                 
@@ -63,9 +57,7 @@ class Hub
     end
 end
 
-# Run the hub in a new thread
-# __global_hub__ = Hub.new
-Thread.new do
-    Hub.new.run
-    # __global_hub__.run
-end
+# Run the hub in a new thread and join it at main thread exit
+__hub_thread = Thread.new() {Hub.new.run}
+at_exit { __hub_thread.join }
+
