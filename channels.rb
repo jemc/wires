@@ -1,5 +1,8 @@
 
 def on(event, channel='*', &codeblock)
+    if not codeblock then raise SyntaxError, \
+        "The 'on' function must be given a code block to execute " end
+    
     Channel(channel).register(event, codeblock)
 end
 

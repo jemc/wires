@@ -1,6 +1,5 @@
 require_relative 'tubes'
 
-# TODO: handle exceptions in task threads
 # TODO: allow firing multiple events and channels
 # TODO: allow receiving multiple events and channels
 # TODO: possibly have event handler filter with a hash of properties?
@@ -8,8 +7,12 @@ require_relative 'tubes'
 # TODO: pass events around as objects (optionally?)
 
 on :keydown do
+    raise NotImplementedError
     sleep 1
     puts "event: #{$event}"
 end
 
-fire :keydown
+on 'keydown' # do nothing
+
+# fire :keydown
+# fire 'keydown'

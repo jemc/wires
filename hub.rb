@@ -44,7 +44,8 @@ class Hub
     end
     
     def _unhandled_exception(x)
-        $stderr.puts $!,$@
+        $stderr.puts $!
+        $stderr.puts $@
     end
     
     def fire(x)
@@ -57,7 +58,9 @@ class Hub
     end
 end
 
-# Run the hub in a new thread and join it at main thread exit
-__hub_thread = Thread.new() {Hub.new.run}
-at_exit { __hub_thread.join }
 
+# Run the hub in a new thread and join it at main thread exit
+#   However, do not join if an exception caused the exit - 
+#     Such an exception indicates usually an error in user code
+__hub_thread = Thread.new() {Hub.new.run}
+at_exit { __hub_thread.join if not $! }
