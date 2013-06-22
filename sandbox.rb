@@ -7,28 +7,21 @@ require_relative 'tubes'
 # TODO: possibly allow event handler filtering with regexp?
 # TODO: pass events around as objects (optionally?)
 
-global_thing = 0
-
 on :keydown do
-    puts "event: #{$event}, global_thing: #{global_thing}"
+    sleep 1
+    raise Interrupt
+    puts "event: #{$event}"
 end
 
-on :keydown, 'keypad1' do
-    puts "event: #{$event}, global_thing: #{global_thing}"
-end
 
-
-global_thing = 4
+# raise NotImplementedError
 
 fire :keydown
 
-global_thing = 5
+# sleep 2.0
 
-fire :keydown, 'keypad1'
+puts Hub.new.inspect
+puts Hub.new.inspect
 
-global_thing = 6
-
-fire :keydown, 'keypad1'
-
-
-sleep 0.5
+# puts Thread.list.inspect
+Thread.list.each{|t| t.join if t != Thread.current}

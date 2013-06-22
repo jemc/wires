@@ -13,6 +13,7 @@ def Channel(*args) Channel.new(*args) end
 class Channel
     
     attr_reader :name
+    attr_reader :target_list
     
     def initialize(name)
         @name = name
