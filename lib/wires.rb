@@ -1,6 +1,6 @@
 require 'set'
 require 'thread'
 
-require_relative 'events'
-require_relative 'hub'
-require_relative 'channels'
+require 'wires/events'
+require 'wires/hub'
+require 'wires/channels'

@@ -1,4 +1,4 @@
-require_relative 'wires'
+require_relative 'lib/wires'
 
 
 # TODO: overload '==' in Event to compare with symbol/string
