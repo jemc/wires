@@ -1,15 +1,16 @@
-ruby-tubes
-==========
+convoy
+======
 
-Tubes is an asynchronous (threaded) (non-web-oriented) event routing framework in Ruby.  
+An asynchronous (threaded) event routing framework in Ruby.  
 
-**It's a series of tubes.**
+It's not a *big truck*.
+Or a *series of tubes*.
+It's more of a ***convoy***.
+Driving through a series of tunnels.
 
 Inspired by [the python 'circuits' framework](http://circuitsframework.com/).
 
-Tubes is a work in progress.
+Convoy is a work in progress.
 
 All rights temporarily reserved until permanent license is chosen.
-
-
 
