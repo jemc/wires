@@ -1,11 +1,14 @@
-# require_relative 'tubes'
+require_relative 'tubes'
 
 
 # TODO: overload '==' in Event to compare with symbol/string
 #       >> e.is_a? Symbol or e.is_a? String
 #       make BIDIRECTIONAL!
 
+# TODO: allow listening on objects for channels that get resolved with to_s
+
 # TODO: allow listening on Channel(/regexp/) (but not firing to it!)
+
 
 # class KeyDownEvent < Event
 # end
@@ -35,28 +38,44 @@
 
 # fire [:key_up, 22, cow:30], 'chanB'
 
-class A
-    def self.==(other)
-        p "s==A - #{other}"
-    end
-end
+# class A
+#     def self.==(other)
+#         p "s==A - #{other}"
+#     end
+# end
 
-class B < A
-end
+# class B < A
+# end
 
-class Symbol
-    def ==(other)
-        p "A==s - #{other}"
-        super
-    end
-end
+# class Symbol
+#     def ==(other)
+#         p "A==s - #{other}"
+#         super
+#     end
+# end
 
-A == :symbol
-p :symbol == A
+# A == :symbol
+# p :symbol == A
 
-case B
-when Class and (B<A)
-    puts 'yay'
-else
-    puts 'meh'
-end
+# case B
+# when Class and (B<A)
+#     puts 'yay'
+# else
+#     puts 'meh'
+# end
+
+# class FWHub < Hub
+# end
+
+# class FWChannel < Channel
+#     @@channel_list = Set.new
+#     @@hub = FWHub.new
+# end
+
+# puts Hub.new
+# puts FWHub.new
+# puts FWHub.new
+# puts Channel.new('a')
+# puts FWChannel.new('a')
+
+
