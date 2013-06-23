@@ -18,11 +18,14 @@ class KeyUpEvent < Event
 end
 
 
-on [:key_down, :key_up] do
-    p $event
+on [:key_down, :key_up], 'chanA' do
+    p "#{$event} event on channel A"
 end
 
+on [:key_down, :key_up], 'chanB' do
+    p "#{$event} event on channel B"
+end
 
-fire :key_down
+# fire :key_down
 sleep 0.5
-fire :key_up
+fire :key_up, "chanB"

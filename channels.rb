@@ -1,6 +1,9 @@
 
-def on(event, channel='*', &codeblock)
-    Channel(channel).register(event, codeblock)
+def on(events, channels='*', &codeblock)
+    channels = [channels] unless channels.is_a? Array
+    for channel in channels
+        Channel(channel).register(events, codeblock)
+    end
 end
 
 
@@ -45,14 +48,12 @@ class Channel
         events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
         events.uniq!
         
-        
         @target_list << [events, proc]
     end
     
     # Fire an event on this channel (and the global channel)
     def fire(_event)
-        
-        event = (_event.is_a?(Event) ? 
+        event = (_event.is_a?(Class) ? 
             _event : 
             Event.from_codestring(_event.to_s))
         if not event
@@ -65,7 +66,7 @@ class Channel
         end
 
         if @@channel_star != self
-            @@channel_star.fire(event)
+            @@channel_star.fire(_event)
         end
     end
 end
