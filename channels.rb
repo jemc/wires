@@ -65,7 +65,7 @@ class Channel
             when Event
                 _event
             when Class
-                _event.new(*args)
+                _event.new(*args) if _event < Event
             else
                 cls = Event.from_codestring(_event.to_s)
                 if not cls then raise NameError,
