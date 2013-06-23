@@ -53,7 +53,10 @@ class Channel
     end
     
     # Fire an event on this channel (and the global channel)
-    def fire(_event, *args)
+    def fire(_event)
+        _event = [_event] unless _event.is_a? Array
+        _event, *args = _event
+        
         event = \
         case _event
             when Event
@@ -61,11 +64,13 @@ class Channel
             when Class
                 _event.new(*args)
             else
-                Event.from_codestring(_event.to_s).new(*args)
+                cls = Event.from_codestring(_event.to_s)
+                if not cls then raise NameError,
+                    "Cannot fire unknown event: #{_event} - "\
+                    "no known Event subclass with that name" end
+                
+                cls.new(*args)
         end
-        if not event
-            raise NameError, "Cannot fire unknown event: #{_event}" end
-        
         
         if @@channel_star == self
             target_chans = @@channel_list
