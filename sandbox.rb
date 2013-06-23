@@ -19,13 +19,19 @@ end
 
 
 on [:key_down, :key_up], 'chanA' do
-    p "#{$event} event on channel A"
+    p "Event on channel A:"
+    # p $event
 end
 
 on [:key_down, :key_up], 'chanB' do
-    p "#{$event} event on channel B"
+    p "Event on channel B:"
+    # p $event
 end
 
-# fire :key_down
+k = KeyDownEvent.new(55, 20, cow:30, blah:'string') {nil}
+
+fire k
 sleep 0.5
-fire :key_up, "chanB"
+fire :key_up, 'chanA'
+sleep 0.5
+fire 'key_up', 'chanB'

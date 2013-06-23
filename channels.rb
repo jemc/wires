@@ -49,24 +49,36 @@ class Channel
         events.uniq!
         
         @target_list << [events, proc]
+        @target_list << [events, proc]
     end
     
     # Fire an event on this channel (and the global channel)
-    def fire(_event)
-        event = (_event.is_a?(Class) ? 
-            _event : 
-            Event.from_codestring(_event.to_s))
+    def fire(_event, *args)
+        event = \
+        case _event
+            when Event
+                _event
+            when Class
+                _event.new(*args)
+            else
+                Event.from_codestring(_event.to_s).new(*args)
+        end
         if not event
             raise NameError, "Cannot fire unknown event: #{_event}" end
         
-        for target in @target_list
-            for string in target[0] & event.codestrings
-                @@hub.enqueue([string, event, *target[1..-1]])
-            end
+        
+        if @@channel_star == self
+            target_chans = @@channel_list
+        else
+            target_chans = [@@channel_star, self]
         end
-
-        if @@channel_star != self
-            @@channel_star.fire(_event)
+        
+        for chan in target_chans
+            for target in chan.target_list
+                for string in target[0] & event.class.codestrings
+                    @@hub.enqueue([string, event, *target[1..-1]])
+                end
+            end
         end
     end
 end
