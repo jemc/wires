@@ -1,4 +1,4 @@
-require_relative 'tubes'
+require_relative 'wires'
 
 
 # TODO: overload '==' in Event to compare with symbol/string
