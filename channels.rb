@@ -52,12 +52,15 @@ class Channel
         @target_list << [events, proc]
     end
     
-    # Fire an event on this channel (and the global channel)
+    # Fire an event on this channel
     def fire(_event)
+        
+        # Pull out args from optional array notation
         _event = [_event] unless _event.is_a? Array
         _event, *args = _event
         
-        event = \
+        # Create event object from event as an object, class, or symbol/string
+        event = 
         case _event
             when Event
                 _event
@@ -72,18 +75,16 @@ class Channel
                 cls.new(*args)
         end
         
-        if @@channel_star == self
-            target_chans = @@channel_list
-        else
-            target_chans = [@@channel_star, self]
-        end
+        # Decide which channels to fire on
+        target_chans = 
+            (@@channel_star == self ? @@channel_list : [@@channel_star, self])
         
+        # Fire to each relevant target on each channel
         for chan in target_chans
             for target in chan.target_list
                 for string in target[0] & event.class.codestrings
                     @@hub.enqueue([string, event, *target[1..-1]])
-                end
-            end
-        end
+        end end end
+        
     end
 end
