@@ -1,61 +1,27 @@
-require_relative 'lib/wires'
+require 'wires'
 
-
-# TODO: overload '==' in Event to compare with symbol/string
-#       >> e.is_a? Symbol or e.is_a? String
-#       make BIDIRECTIONAL!
 
 # TODO: allow listening on objects for channels that get resolved with to_s
 
 # TODO: allow listening on Channel(/regexp/) (but not firing to it!)
 
 
-# class KeyDownEvent < Event
-# end
-# class KeyUpEvent < Event
-# end
+class ChildEvent < Event
+end
 
+# Test Event to Symbol/String comparison functions
+%w(== < > <= >=).each do |op|
+    [[:event, Event],
+     [:child, ChildEvent],
+     [:child, Event],
+     [:event, ChildEvent]].each do |one, two|
+        str = ":#{one} #{op} #{two}\t\t#=>\t"
+        result = eval(str)
+        puts str+result.to_s
+    end
+end
 
-# on [:key_down, :key_up], /A./ do
-#     puts "\nEvent on channel A:"
-#     p $event
-# end
-
-# on [:key_down, :key_up], /B./ do
-#     puts "\nEvent on channel B:"
-#     p $event
-# end
-
-
-# k = KeyDownEvent.new(55, 20, cow:30, blah:'string') {nil}
-# fire k
-
-# sleep 0.5
-
-# fire :key_up, 'A1'
-
-# sleep 0.5
-
-# fire [:key_up, 22, cow:30], 'chanB'
-
-# class A
-#     def self.==(other)
-#         p "s==A - #{other}"
-#     end
-# end
-
-# class B < A
-# end
-
-# class Symbol
-#     def ==(other)
-#         p "A==s - #{other}"
-#         super
-#     end
-# end
-
-# A == :symbol
-# p :symbol == A
+Hub.new.kill! # Stop process manually
 
 # case B
 # when Class and (B<A)

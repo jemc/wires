@@ -20,7 +20,7 @@ class Event
     def self.inherited(subcls)
         
         # Be sure codestring doesn't conflict
-        existing = self.from_codestring(subcls.codestring)
+        existing = self._from_codestring(subcls.codestring)
         if existing then raise NameError, \
                 "New Event subclass '#{subcls}' conflicts with"\
                 " existing Event subclass '#{existing}'."\
@@ -54,9 +54,15 @@ class Event
     
     # Pull class from registry by codestring 
     # (more reliable than crafting a reverse regexp)
-    def self.from_codestring(str)
+    def self._from_codestring(str)
         return EventRegistry.list
                             .select{|e| e.codestring==str}[0]
+    end
+    def self.from_codestring(str)
+        cls = self._from_codestring(str)
+        if not cls then raise NameError,
+            "No known Event subclass with codestring: '#{str}'" end
+        cls
     end
     
     # Create attributes and accessors for all arguments to the constructor.
@@ -80,4 +86,46 @@ class Event
     
     # Calling super in self.new with *args will complain if this isn't here
     def initialize(*args, &block) end
+end
+
+
+#
+# Comparison support for Events and Symbols/Strings
+#
+
+# Reopen Event and add comparison functions
+class Event
+    def self.==(other)
+        other.is_a?(Class) ? 
+            super : self.codestring==other.to_s
+    end
+    def self.<=(other)
+        other.is_a?(Class) ? 
+            super : self.codestrings.include?(other.to_s)
+    end
+    def self.<(other)
+        other.is_a?(Class) ? 
+            super : (self<=other and not self==other)
+    end
+    def self.>=(other)
+        other.is_a?(Class) ? 
+            super : Event.from_codestring(other.to_s)<=self
+    end
+    def self.>(other)
+        other.is_a?(Class) ? 
+            super : Event.from_codestring(other.to_s)<self
+    end
+end
+
+# Autogenerate the inverse comparison functions for Symbol and String
+for cls in [Symbol, String]
+    %w(== < > <= >=).zip(%w(== > < >= <=))
+                       .each do |ops|
+        op, opinv = ops # unzip operator and inverse operator
+        cls.class_eval(
+            "def #{op}(other)\n"\
+            "    (other.is_a?(Class) and other<=Event) ? \n"\
+            "        (other#{opinv}self) : super\n"\
+            "end\n")
+    end
 end

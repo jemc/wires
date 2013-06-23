@@ -67,12 +67,7 @@ class Channel
             when Class
                 _event.new(*args) if _event < Event
             else
-                cls = Event.from_codestring(_event.to_s)
-                if not cls then raise NameError,
-                    "Cannot fire unknown event: #{_event} - "\
-                    "no known Event subclass with that name" end
-                
-                cls.new(*args)
+                cls = Event.from_codestring(_event.to_s).new(*args)
         end
         
         # Decide which channels to fire on

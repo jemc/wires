@@ -12,6 +12,8 @@ class Hub
         @instance ||= super
     end
     
+    def kill!() @keepgoing=false end
+    
     def run
         @keepgoing = true
             
