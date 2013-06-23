@@ -1,14 +1,13 @@
 
 def on(event, channel='*', &codeblock)
-    if not codeblock then raise SyntaxError, \
-        "The 'on' function must be given a code block to execute " end
-    
     Channel(channel).register(event, codeblock)
 end
+
 
 def fire(event, channel='*') 
     Channel(channel).fire(event)
 end
+
 
 def Channel(*args) Channel.new(*args) end
 
@@ -35,15 +34,36 @@ class Channel
     @@hub = Hub.new
     
     # Register a proc to be triggered by an event on this channel
-    def register(event, proc)
-        @target_list << [event, proc]
+    def register(events, proc)
+        
+        if not proc then raise SyntaxError, \
+            "No Proc given to execute on event: #{events}" end
+        
+        # Convert all events to strings
+        events = [events] unless events.is_a? Array
+        events.flatten!
+        events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
+        events.uniq!
+        
+        
+        @target_list << [events, proc]
     end
     
     # Fire an event on this channel (and the global channel)
-    def fire(event)
-        @target_list
-            .select{|x| x[0]==event}
-            .each  {|x| @@hub.enqueue(x)}
+    def fire(_event)
+        
+        event = (_event.is_a?(Event) ? 
+            _event : 
+            Event.from_codestring(_event.to_s))
+        if not event
+            raise NameError, "Cannot fire unknown event: #{_event}" end
+        
+        for target in @target_list
+            for string in target[0] & event.codestrings
+                @@hub.enqueue([string, event, *target[1..-1]])
+            end
+        end
+
         if @@channel_star != self
             @@channel_star.fire(event)
         end

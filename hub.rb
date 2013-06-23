@@ -24,7 +24,7 @@ class Hub
     
     def _process_item(x)
         x, waiting_thread = x
-        event, proc = x
+        string, event, proc = x
         Thread.new do
             
             begin
