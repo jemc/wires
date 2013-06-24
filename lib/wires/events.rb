@@ -117,7 +117,7 @@ class Event
     end
 end
 
-# Autogenerate the inverse comparison functions for Symbol and String
+# Autogenerate the inverse comparison functions for Symbol/String
 for cls in [Symbol, String]
     %w(== < > <= >=).zip(%w(== > < >= <=))
                        .each do |ops|

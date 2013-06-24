@@ -70,16 +70,31 @@ class Channel
                 cls = Event.from_codestring(_event.to_s).new(*args)
         end
         
-        # Decide which channels to fire on
-        target_chans = 
-            (@@channel_star == self ? @@channel_list : [@@channel_star, self])
-        
         # Fire to each relevant target on each channel
-        for chan in target_chans
+        for chan in relevant_channels()
             for target in chan.target_list
                 for string in target[0] & event.class.codestrings
                     @@hub.enqueue([string, event, *target[1..-1]])
         end end end
         
+    end
+    
+    def relevant_channels
+        return @@channel_list if self==@@channel_star
+        
+        if self.name.is_a?(Regexp) then raise TypeError,
+            "Cannot fire on Regexp channel: #{self.name}."\
+            "  Regexp channels can only used in event handlers." end
+            
+        relevant = [@@channel_star, self]
+        for c in @@channel_list
+            relevant << c if case c.name
+            when Regexp
+                self.name =~ c.name
+            else String
+                self.name == c.name.to_s
+            end
+        end
+        return relevant.uniq
     end
 end
