@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.0.9'
+  s.version       = '0.1.0'
   s.date          = '2013-06-23'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
@@ -11,5 +11,5 @@ Gem::Specification.new do |s|
   s.files         = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/jemc/wires/'
-  s.licenses      = "All rights temporarily reserved "
+  s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
 end
