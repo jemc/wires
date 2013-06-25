@@ -40,11 +40,12 @@ private
     
     def self.process_item(x)
         x, waiting_thread = x
-        string, event, proc = x
+        string, event, blocking, proc = x
         Thread.new do
             begin
-                waiting_thread.wakeup
+                waiting_thread.wakeup unless blocking
                 proc.call($event = event)
+                waiting_thread.wakeup if blocking
                 
             rescue Interrupt, SystemExit => e
                 @keepgoing = false

@@ -8,7 +8,11 @@ nil end
 
 
 def fire(event, channel='*') 
-    Channel(channel).fire(event)
+    Channel(channel).fire(event, blocking=false)
+nil end
+
+def fire_and_wait(event, channel='*') 
+    Channel(channel).fire(event, blocking=true)
 nil end
 
 
@@ -56,7 +60,7 @@ class Channel
     nil end
     
     # Fire an event on this channel
-    def fire(_event)
+    def fire(_event, blocking=false)
         
         # Pull out args from optional array notation
         _event = [_event] unless _event.is_a? Array
@@ -76,7 +80,7 @@ class Channel
         for chan in relevant_channels()
             for target in chan.target_list
                 for string in target[0] & event.class.codestrings
-                    Hub << [string, event, *target[1..-1]]
+                    Hub << [string, event, blocking, *target[1..-1]]
         end end end
         
     nil end

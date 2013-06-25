@@ -3,11 +3,22 @@ require 'wires'
 Hub.run
 
 on :event do
-    puts 'hey'
+    puts "presleep: #{$event.val}"
+    sleep 0.5
+    puts "postsleep: #{$event.val}"
 end
 
-fire :event
+puts "\n fire_with_wait:"
+for v in 0..3
+    fire_and_wait [:event, val:v]
+end
 
-sleep 0.5
+puts "\n fire:"
+for v in 0..3
+    fire [:event, val:v]
+end
+
+
+sleep 6
 Hub.kill # Stop process manually
 
