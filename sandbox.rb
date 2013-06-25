@@ -1,23 +1,13 @@
 require 'wires'
 
-Hub.run!
+Hub.run
 
-class RegexpEvent < Event
-end
-# class AregexpEvent < Event
-# end
-
-on :event, /^reg/ do
-   puts 'received at regexp'
+on :event do
+    puts 'hey'
 end
 
-# on :event, 'aregexp' do
-#    puts 'received at string'
-# end
-
-fire :event, 'regexp'
-# fire :event, 'aregexp'
-
+fire :event
 
 sleep 0.5
-Hub.kill! # Stop process manually
+Hub.kill # Stop process manually
+
