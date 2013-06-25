@@ -4,12 +4,12 @@ def on(events, channels='*', &codeblock)
     for channel in channels
         Channel(channel).register(events, codeblock)
     end
-end
+nil end
 
 
 def fire(event, channel='*') 
     Channel(channel).fire(event)
-end
+nil end
 
 
 def Channel(*args) Channel.new(*args) end
@@ -23,13 +23,17 @@ class Channel
         @name = name
         @target_list = Set.new
         @@channel_list << self
-    end
+    nil end
     
     # Ensure that there is only one instance of Channel per name
     @@channel_list = Set.new
+    @@new_lock = Mutex.new
     def self.new(*args, &block)
-        (@@channel_list.select {|x| x.name == args[0]} [0]) \
-        or super(*args, &block)
+        @@new_lock.synchronize do
+            (@@channel_list.select {|x|
+                (x.name==args[0] and x.name.class==args[0].class)} [0]) \
+            or super(*args, &block)
+        end
     end
     
     # Class-wide reference to the global channel and event hub
@@ -39,7 +43,7 @@ class Channel
     # Register a proc to be triggered by an event on this channel
     def register(events, proc)
         
-        if not proc then raise SyntaxError, \
+        if not proc.is_a?(Proc) then raise SyntaxError, \
             "No Proc given to execute on event: #{events}" end
         
         # Convert all events to strings
@@ -49,8 +53,7 @@ class Channel
         events.uniq!
         
         @target_list << [events, proc]
-        @target_list << [events, proc]
-    end
+    nil end
     
     # Fire an event on this channel
     def fire(_event)
@@ -77,7 +80,7 @@ class Channel
                     @@hub.enqueue([string, event, *target[1..-1]])
         end end end
         
-    end
+    nil end
     
     def relevant_channels
         return @@channel_list if self==@@channel_star
@@ -88,11 +91,19 @@ class Channel
             
         relevant = [@@channel_star, self]
         for c in @@channel_list
-            relevant << c if case c.name
-            when Regexp
-                self.name =~ c.name
-            else String
-                self.name == c.name.to_s
+            for code in Event.from_codestring(self.name).codestrings
+                relevant << c if case c.name
+                when Regexp
+                    code =~ c.name
+                when Event
+                    code == c.name.class
+                when Class
+                    c.name <= Event ? 
+                        code == c.name : 
+                        code == c.name.to_s
+                else
+                    code == c.name.to_s
+                end
             end
         end
         return relevant.uniq
