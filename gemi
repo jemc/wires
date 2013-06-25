@@ -1,6 +1,0 @@
-#!/bin/sh
-
-rm wires*.gem
-gem uninstall wires
-gem build wires.gemspec
-gem install wires*.gem
