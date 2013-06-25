@@ -3,28 +3,30 @@
 def puts(x) $stdout.puts(x) end
 
 
+# An event hub. Event/proc associations come in, and the procs 
+# get called in new threads in the order received
 class Hub
-    def initialize
-        @queue = Queue.new
-    end
+    @@queue = Queue.new
     
-    def self.new
-        @instance ||= super
-    end
-    
-    def kill!() @keepgoing=false end
-    
-    def run
-        @keepgoing = true
+    def self._run
+        @@keepgoing = true
             
-        while @keepgoing
-            if @queue.empty? then sleep(0)
-            else _process_item(@queue.shift) end
+        while @@keepgoing
+            if @@queue.empty? then sleep(0)
+            else _process_item(@@queue.shift) end
         end
-        
     end
     
-    def _process_item(x)
+    def self.run!
+        @@thread = Thread.new() {Hub._run}
+        at_exit { @@thread.join if not $! }
+    end
+    
+    def self.run_in_place!() self._run() end
+    
+    def self.kill!() @@keepgoing=false end
+    
+    def self._process_item(x)
         x, waiting_thread = x
         string, event, proc = x
         Thread.new do
@@ -43,24 +45,20 @@ class Hub
         end
     end
     
-    def _unhandled_exception(x)
+    def self._unhandled_exception(x)
         $stderr.puts $!
         $stderr.puts $@
     end
     
-    def fire(x)
-        @queue << [x, Thread.current]
+    def self.fire(x)
+        @@queue << [x, Thread.current]
         sleep
     end
     
-    def enqueue(x)
-        fire x
-    end
+    def self.enqueue(x) fire(x) end
+    def self.<<(x)      fire(x) end
+    
+    private_class_method :new
 end
 
 
-# Run the hub in a new thread and join it at main thread exit
-#   However, do not join if an exception caused the exit - 
-#     Such an exception indicates usually an error in user code
-__hub_thread = Thread.new() {Hub.new.run}
-at_exit { __hub_thread.join if not $! }

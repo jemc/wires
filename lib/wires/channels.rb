@@ -38,7 +38,6 @@ class Channel
     
     # Class-wide reference to the global channel and event hub
     @@channel_star = Channel('*')
-    @@hub = Hub.new
     
     # Register a proc to be triggered by an event on this channel
     def register(events, proc)
@@ -77,7 +76,7 @@ class Channel
         for chan in relevant_channels()
             for target in chan.target_list
                 for string in target[0] & event.class.codestrings
-                    @@hub.enqueue([string, event, *target[1..-1]])
+                    Hub << [string, event, *target[1..-1]]
         end end end
         
     nil end
