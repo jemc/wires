@@ -88,22 +88,12 @@ class Channel
             "Cannot fire on Regexp channel: #{self.name}."\
             "  Regexp channels can only used in event handlers." end
             
-        relevant = [@@channel_star, self]
+        relevant = [@@channel_star]
         for c in @@channel_list
-            for code in Event.from_codestring(self.name).codestrings
-                relevant << c if case c.name
-                when Regexp
-                    code =~ c.name
-                when Event
-                    code == c.name.class
-                when Class
-                    c.name <= Event ? 
-                        code == c.name : 
-                        code == c.name.to_s
-                else
-                    code == c.name.to_s
-                end
-            end
+            relevant << c if \
+                (c.name.is_a?(Regexp) ?
+                    self.name =~ c.name :
+                    self.name.to_s == c.name.to_s)
         end
         return relevant.uniq
     end

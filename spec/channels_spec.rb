@@ -70,38 +70,4 @@ describe Channel do
     lambda {chan.register(:event, Proc.new{nil})}
   end
   
-  # it "gives a list of channels that would receive fire as relevant_channels" do
-  #   class ThingEvent < Event; end
-  #   class OtherEvent < ThingEvent; end
-  #   matches = [Channel('*'), Channel(/th.[nm]g$/), Channel('thing'), 
-  #              Channel(ThingEvent), Channel(ThingEvent.new), 
-  #              Channel(:event), Channel(Event), Channel(Event.new)]
-  #   notches = [Channel(:other), Channel(OtherEvent), Channel(OtherEvent.new),
-  #              Channel(:arbitrary), Channel(/therem.[nm]$/)]
-  #   relevant = Channel('thing').relevant_channels
-    
-  #   for m in matches
-  #     relevant.must_include m
-  #   end
-  #   for m in relevant
-  #     matches.must_include m
-  #   end
-  #   (relevant&notches).must_be_empty
-  # end
 end
-
-# class ThingEvent < Event; end
-# class OtherEvent < ThingEvent; end
-
-# matches = [Channel('*'), Channel(/th.[nm]g$/), Channel('thing'), 
-#            Channel(ThingEvent), Channel(ThingEvent.new), 
-#            Channel(:event), Channel(Event), Channel(Event.new)]
-# notches = [Channel(:other), Channel(OtherEvent), Channel(OtherEvent.new),
-#            Channel(:arbitrary), Channel(/therem.[nm]$/)]
-# relevant = Channel('thing').relevant_channels.to_a
-
-# # p matches.map{|x| x.name}
-# # p matches
-# # p relevant.map{|x| x.name}
-# p (relevant&matches)==relevant
-# p (relevant&notches).empty?
