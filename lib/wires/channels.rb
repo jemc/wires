@@ -22,7 +22,6 @@ class Channel
     def initialize(name)
         @name = name
         @target_list = Set.new
-        @@channel_list << self
     nil end
     
     # Ensure that there is only one instance of Channel per name
@@ -30,9 +29,11 @@ class Channel
     @@new_lock = Mutex.new
     def self.new(*args, &block)
         @@new_lock.synchronize do
-            (@@channel_list.select {|x|
-                (x.name==args[0] and x.name.class==args[0].class)} [0]) \
-            or super(*args, &block)
+            if not (inst = (@@channel_list.select {|x| \
+                (x.name==args[0] and x.name.class==args[0].class)} [0]))
+                @@channel_list << (inst = super(*args, &block))
+            end
+            inst
         end
     end
     
@@ -62,8 +63,7 @@ class Channel
         _event, *args = _event
         
         # Create event object from event as an object, class, or symbol/string
-        event = 
-        case _event
+        event = case _event
             when Event
                 _event
             when Class

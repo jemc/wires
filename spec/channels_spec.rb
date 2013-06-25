@@ -5,6 +5,11 @@ require 'minitest/autorun'
 
 describe Channel do
   
+  # Clean out channel list between each test
+  def setup
+    Channel.class_variable_set('@@channel_list', Set.new([Channel('*')]))
+  end
+  
   it "takes exactly one argument" do
     lambda {Channel.new}.must_raise ArgumentError
     for i in 2..20
@@ -40,7 +45,6 @@ describe Channel do
   end
   
   it "assigns new unique object IDs in a threadsafe way" do
-    Channel.class_variable_set('@@channel_list', Set.new)
     for n in 1..25
       threads = []
       channels = []
@@ -70,4 +74,17 @@ describe Channel do
     lambda {chan.register(:event, Proc.new{nil})}
   end
   
+  it "correctly routes activity on one channel to relevant channels" do
+    relevant = [(chan=Channel('relevant')), Channel(:relevant), 
+                      Channel(/^rel.van(t|ce)/), Channel('*')]
+    irrelevant = [Channel('irrelevant'), Channel(/mal.vole(t|ce)/)]
+    
+    for c in chan.relevant_channels
+      relevant.must_include c end
+    for c in relevant
+      chan.relevant_channels.must_include c end
+    (chan.relevant_channels&irrelevant).must_be_empty
+  end
+  
 end
+
