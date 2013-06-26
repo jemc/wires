@@ -37,10 +37,10 @@ describe Channel do
     Channel.new('new').must_equal Channel('new')
   end
   
-  it "registers itself into @@channel_list" do
-    chanlist = Channel.class_variable_get('@@channel_list').to_a
+  it "registers itself into @@channel_hash" do
+    chanlist = Channel.class_variable_get('@@channel_hash').values
     newchan = Channel('new_channel')
-    chanlist = Channel.class_variable_get('@@channel_list').to_a - chanlist
+    chanlist = Channel.class_variable_get('@@channel_hash').values - chanlist
     chanlist.must_equal [newchan]
   end
   

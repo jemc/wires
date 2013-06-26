@@ -29,15 +29,11 @@ class Channel
     nil end
     
     # Ensure that there is only one instance of Channel per name
-    @@channel_list = Set.new
+    @@channel_hash = Hash.new
     @@new_lock = Mutex.new
     def self.new(*args, &block)
         @@new_lock.synchronize do
-            if not (inst = (@@channel_list.select {|x| \
-                (x.name==args[0] and x.name.class==args[0].class)} [0]))
-                @@channel_list << (inst = super(*args, &block))
-            end
-            inst
+            @@channel_hash[args[0]] ||= super(*args, &block)
         end
     end
     
@@ -86,21 +82,23 @@ class Channel
     nil end
     
     def relevant_channels
-        return @@channel_list if self==@@channel_star
+        return @@channel_hash.values if self==@@channel_star
         
         if self.name.is_a?(Regexp) then raise TypeError,
             "Cannot fire on Regexp channel: #{self.name}."\
             "  Regexp channels can only used in event handlers." end
             
         relevant = [@@channel_star]
-        for c in @@channel_list
+        for c in @@channel_hash.values
             relevant << c if \
-                (c.name.is_a?(Regexp) ?
-                    self.name =~ c.name :
-                    (defined?(c.name.channel_name) and
-                     defined?(self.name.channel_name) ?
-                        self.name.channel_name == c.name.channel_name :
-                        self.name.to_s == c.name.to_s))
+                if c.name.is_a?(Regexp)
+                    self.name =~ c.name
+                elsif (defined?(c.name.channel_name) and
+                       defined?(self.name.channel_name))
+                    self.name.channel_name == c.name.channel_name
+                else
+                    self.name.to_s == c.name.to_s
+                end
         end
         return relevant.uniq
     end
