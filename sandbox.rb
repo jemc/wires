@@ -1,5 +1,6 @@
 require 'wires'
 
+
 Hub.run
 
 on :event do
@@ -19,6 +20,6 @@ for v in 0..3
 end
 
 
-sleep 6
+sleep 0.2
 Hub.kill # Stop process manually
 

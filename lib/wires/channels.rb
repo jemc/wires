@@ -97,7 +97,10 @@ class Channel
             relevant << c if \
                 (c.name.is_a?(Regexp) ?
                     self.name =~ c.name :
-                    self.name.to_s == c.name.to_s)
+                    (defined?(c.name.channel_name) and
+                     defined?(self.name.channel_name) ?
+                        self.name.channel_name == c.name.channel_name :
+                        self.name.to_s == c.name.to_s))
         end
         return relevant.uniq
     end
