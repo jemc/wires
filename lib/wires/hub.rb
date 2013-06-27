@@ -7,6 +7,7 @@ def puts(x) $stdout.puts(x) end
 # get called in new threads in the order received
 class Hub
     @@queue = Queue.new
+    @@running = false
     
     # Start the Hub event loop in a new thread
     def self.run
@@ -18,21 +19,22 @@ class Hub
     def self.run_in_place() self.run_loop() end
     
     # Kill the Hub event loop (softly)
-    def self.kill() @@keepgoing=false end
+    def self.kill() @@running=false end
     
     # Put x in the queue, and block until x is processed
     def self.fire(x)
         @@queue << [x, Thread.current]
-        sleep # yield to event loop thread until awoken by it later
+        # yield to event loop thread until awoken by it later
+        sleep unless not @@running
     end
     def self.<<(x) fire(x) end
     
 private
     
     def self.run_loop
-        @@keepgoing = true
+        @@running = true
             
-        while @@keepgoing
+        while @@running
             if @@queue.empty? then sleep(0)
             else process_item(@@queue.shift) end
         end
@@ -48,7 +50,7 @@ private
                 waiting_thread.wakeup if blocking
                 
             rescue Interrupt, SystemExit => e
-                @keepgoing = false
+                @running = false
                 unhandled_exception(e)
                 
             rescue Exception => e
