@@ -1,7 +1,9 @@
 require 'wires'
 
 
+p Hub.running?
 Hub.run
+p Hub.running?
 
 on :event do
     puts "presleep: #{$event.val}"

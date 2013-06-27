@@ -9,14 +9,21 @@ class Hub
     @@queue = Queue.new
     @@running = false
     
+    def self.running?; @@running; end
+    
     # Start the Hub event loop in a new thread
     def self.run
-        @@thread = Thread.new() {Hub.run_loop}
-        at_exit { @@thread.join if not $! }
-    end
+        if not @@running
+            @@running = true
+            @@thread = Thread.new() {Hub.run_loop}
+            at_exit { @@thread.join if not $! }
+        end
+    nil end
     
     # Start the Hub event loop in the current thread
-    def self.run_in_place() self.run_loop() end
+    def self.run_in_place() 
+        self.run_loop() unless @@running
+    nil end
     
     # Kill the Hub event loop (softly)
     def self.kill() @@running=false end
