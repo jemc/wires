@@ -7,7 +7,7 @@ def puts(x) $stdout.puts(x) end
 # get called in new threads in the order received
 class Hub
   @queue = Queue.new
-  @running = false
+  @state = [:dead, :alive, :dying][0]
   
   @before_kills = Queue.new
   @after_kills  = Queue.new
@@ -15,13 +15,17 @@ class Hub
   # Operate on the metaclass as a type of singleton pattern
   class << self
     
-    def running?; @running; end
+    def dead?;  @state==:dead  end
+    def alive?; @state==:alive end
+    def dying?; @state==:dying end
+    def state;  @state         end
+    
+    def clear;  @queue.clear   end
     
     # Start the Hub event loop in a new thread
     def run
-      if not @running
+      if dead?
         @thread = Thread.new() do
-          @running = true
           self.send(:run_loop)
         end
         
@@ -31,17 +35,13 @@ class Hub
     
     # Start the Hub event loop in the current thread
     def run_in_place()
-      self.send(:run_loop) unless @running
+      self.send(:run_loop) if dead?
     nil end
     
     # Kill the Hub event loop (softly)
-    def kill(); 
-      # Call the before kill hooks
-      while not @before_kills.empty?
-        @before_kills.shift.call
-      end
+    def kill()
       # Stop the main event loop
-      @running=false;
+      @state=:dying;
     end
     
     # Register hook to execute before kill - can call multiple times
@@ -64,7 +64,7 @@ class Hub
     
     # Put x in the queue, and block until x is processed (if Hub is running)
     def fire(x)
-      if @running # yield to event loop thread until awoken by it later
+      if not dead? # yield to event loop thread until awoken by it later
         @queue << [x, Thread.current]
         sleep
       else        # don't wait if Hub isn't running - would cause lockup
@@ -74,13 +74,23 @@ class Hub
     def <<(x); fire(x); end
     
   private
+  
+    def die
+      # Call the before kill hooks # TODO move
+      while not @before_kills.empty?
+        @before_kills.shift.call
+      end
+      @state = :dead
+    end
     
     def run_loop
-      @running = true
+      @state = :alive
         
-      while @running
+      while not dead?
         if @queue.empty? then sleep(0)
         else process_item(@queue.shift) end
+        
+        if dying?; die_thread ||= Thread.new { die } end
       end
       
       while not @after_kills.empty?
@@ -98,7 +108,7 @@ class Hub
           waiting_thread.wakeup if blocking and waiting_thread
           
         rescue Interrupt, SystemExit => e
-          @running = false
+          @state = :dying
           unhandled_exception(e)
           
         rescue Exception => e

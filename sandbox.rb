@@ -1,19 +1,15 @@
 require 'wires'
 
 
-
-
-
 Hub.run
 
-puts 'firing block'
+on :event do p $event end
 
-1.seconds.from_now do 
-  puts 'time-delayed block' 
-end
-
-sleep 2
+sleep 1
 
 puts 'killtime!'
+
+Hub.before_kill { puts 'prekill'; fire  [:event, dog:5] }
+Hub.after_kill  { puts 'postkill'; fire [:event, blog:72] }
 
 Hub.kill
