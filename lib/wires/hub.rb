@@ -20,8 +20,10 @@ class Hub
     # Start the Hub event loop in a new thread
     def run
       if not @running
-        @running = true
-        @thread = Thread.new() {self.send(:run_loop)};
+        
+        @thread = Thread.new() {
+          @running = true
+          self.send(:run_loop)};
         at_exit { @thread.join if not $! }
       end
     nil end
@@ -59,11 +61,14 @@ class Hub
       @after_kills << func
     end
     
-    # Put x in the queue, and block until x is processed
+    # Put x in the queue, and block until x is processed (if Hub is running)
     def fire(x)
-      @queue << [x, Thread.current]
-      # yield to event loop thread until awoken by it later
-      sleep unless not @running
+      if @running # yield to event loop thread until awoken by it later
+        @queue << [x, Thread.current]
+        sleep
+      else        # don't wait if Hub isn't running - would cause lockup
+        @queue << [x, nil]
+      end
     end
     def <<(x); fire(x); end
     
@@ -87,9 +92,9 @@ class Hub
       string, event, blocking, proc = x
       Thread.new do
         begin
-          waiting_thread.wakeup unless blocking
+          waiting_thread.wakeup unless blocking or not waiting_thread
           proc.call($event = event)
-          waiting_thread.wakeup if blocking
+          waiting_thread.wakeup if blocking and waiting_thread
           
         rescue Interrupt, SystemExit => e
           @running = false
