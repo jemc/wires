@@ -1,34 +1,18 @@
 require 'wires'
 
+Hub.run
+TimeScheduler.grain = 0.1.seconds
 
+p Time.now
+3.seconds.from_now.fire [:event, "A thing"]
+1.seconds.from_now.fire [:event, "B thing"]
+2.seconds.from_now.fire [:event, "C thing"]
 
-class StartSchedulerEvent < Event; end
-
-class Thing
-  class << self
-  
-  
-  
-    private
-  
-    def main_loop
-      puts 'a'
-    end
-  end
-  
-  on :start_scheduler, self do; main_loop; end;
-  Channel(self).fire(:start_scheduler)
+on :event do
+  puts "#{Time.now} : #{$event.inspect}"
 end
 
-sleep 0.2
+sleep 4
 
-Hub.run
-
-Hub.before_kill do puts Hub.running? end
-Hub.before_kill lambda { puts Hub.running? }
-Hub.after_kill do puts Hub.running? end
-Hub.after_kill lambda { puts Hub.running? }
-
-sleep 0.2
-
+puts 'killtime!'
 Hub.kill
