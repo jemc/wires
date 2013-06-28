@@ -63,10 +63,43 @@ class TimeScheduler
   Channel(self).fire(:start_scheduler)
 end
 
+
 # Reopen the Time class and add the fire method to enable nifty syntax like:
 # 32.minutes.from_now.fire :event
 class Time
   def fire(*args)
     TimeScheduler.fire(self, *args)
   end
+end
+
+
+# Reopen ActiveSupport::Duration to enable nifty syntax like:
+# 32.minutes.from_now do some_stuff end
+class TimeSchedulerAnonEvent < Event; end
+class ActiveSupport::Duration
+  
+  alias :__original_since :since
+  def since(*args, &block)
+    if block
+      on :time_scheduler_anon, block.object_id do block.call end
+      __original_since(*args).fire :time_scheduler_anon, block.object_id
+      nil
+    else
+      __original_since(*args)
+    end
+  end
+  alias :from_now :since
+  
+  alias :__original_ago :ago
+  def ago(*args, &block)
+    if block
+      on :time_scheduler_anon, block.object_id do block.call end
+      __original_ago(*args).fire :time_scheduler_anon, block.object_id
+      nil
+    else
+      __original_ago(*args)
+    end
+  end
+  alias :until :ago
+  
 end

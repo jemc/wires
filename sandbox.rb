@@ -1,18 +1,19 @@
 require 'wires'
 
+
+
+
+
 Hub.run
-TimeScheduler.grain = 0.1.seconds
 
-p Time.now
-3.seconds.from_now.fire [:event, "A thing"]
-1.seconds.from_now.fire [:event, "B thing"]
-2.seconds.from_now.fire [:event, "C thing"]
+puts 'firing block'
 
-on :event do
-  puts "#{Time.now} : #{$event.inspect}"
+1.seconds.from_now do 
+  puts 'time-delayed block' 
 end
 
-sleep 4
+sleep 2
 
 puts 'killtime!'
+
 Hub.kill

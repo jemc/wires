@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.1.7'
+  s.version       = '0.1.8'
   s.date          = '2013-06-27'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
@@ -12,4 +12,6 @@ Gem::Specification.new do |s|
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/jemc/wires/'
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
+  
+  s.add_dependency('activesupport')
 end
