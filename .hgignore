@@ -1,1 +1,1 @@
-^wires.*gem$
+.*\\.gem$

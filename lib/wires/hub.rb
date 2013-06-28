@@ -20,10 +20,11 @@ class Hub
     # Start the Hub event loop in a new thread
     def run
       if not @running
-        
-        @thread = Thread.new() {
+        @thread = Thread.new() do
           @running = true
-          self.send(:run_loop)};
+          self.send(:run_loop)
+        end
+        
         at_exit { @thread.join if not $! }
       end
     nil end
