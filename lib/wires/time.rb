@@ -16,6 +16,11 @@ class TimeScheduler
     # Get or set the time grain from outside the class
     attr_accessor :grain
     
+    # Get a copy of the event schedule from outside the class
+    def list;  @schedule_lock.synchronize {@schedule.clone} end
+    # Clear the event schedule from outside the class
+    def clear; @schedule_lock.synchronize {@schedule.clear} end
+    
     # Fire an event delayed by time value
     def fire(time, event, channel='*')
       if not time.is_a? Time
