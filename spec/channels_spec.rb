@@ -45,7 +45,7 @@ describe Channel do
   end
   
   it "assigns new unique object IDs in a threadsafe way" do
-    for n in 1..25
+    for n in 1..5
       threads = []
       channels = []
       proc = Proc.new {channels<<Channel.new(n)}
