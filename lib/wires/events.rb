@@ -1,3 +1,6 @@
+
+module Wires
+
 # Store a list of all Event classes that get loaded.
 class EventRegistry
     @@registry = []
@@ -41,9 +44,8 @@ class Event
     # Convert class <ClassNameEvent> to string "class_name"
     def self.codestring(cls=self)
         cls.to_s
-           .gsub(/(?<!(?:_|^))([A-Z])/, "_\\1")
-           .downcase
-           .gsub(/_event/, "")
+           .undescore
+           .gsub(/_event$/, "")
     end
     
     # List of codestrings associated with this event and ancestors
