@@ -41,8 +41,13 @@ class Hub
     # Kill the Hub event loop (softly)
     def kill()
       # Stop the main event loop
-      @state=:dying;
-    end
+      @state=:dying if alive?
+    nil end
+    
+    def kill_and_wait()
+      kill
+      @thread.join
+    nil end
     
     # Register hook to execute before kill - can call multiple times
     def before_kill(proc=nil, &block)
@@ -51,7 +56,7 @@ class Hub
         raise TypeError, "Expected a Proc or code block to execute."
       end
       @before_kills << func
-    end
+    nil end
     
     # Register hook to execute after kill - can call multiple times
     def after_kill(proc=nil, &block)
@@ -60,7 +65,7 @@ class Hub
         raise TypeError, "Expected a Proc or code block to execute."
       end
       @after_kills << func
-    end
+    nil end
     
     # Put x in the queue, and block until x is processed (if Hub is running)
     def fire(x)
@@ -70,7 +75,7 @@ class Hub
       else        # don't wait if Hub isn't running - would cause lockup
         @queue << [x, nil]
       end
-    end
+    nil end
     def <<(x); fire(x); end
     
   private
@@ -81,7 +86,7 @@ class Hub
         @before_kills.shift.call
       end
       @state = :dead
-    end
+    nil end
     
     def run_loop
       @state = :alive
@@ -96,7 +101,7 @@ class Hub
       while not @after_kills.empty?
         @after_kills.shift.call
       end
-    end
+    nil end
     
     def process_item(x)
       x, waiting_thread = x
@@ -115,11 +120,11 @@ class Hub
           unhandled_exception(e)
         end
       end
-    end
+    nil end
     
     def unhandled_exception(x)
       $stderr.puts $!
       $stderr.puts $@
-    end
+    nil end
   end
 end
