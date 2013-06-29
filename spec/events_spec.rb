@@ -99,6 +99,13 @@ describe Event do
     end
   end
   
+  it "can tell you the codestrings of it and its ancestors" do
+    events = [MyFavoriteEvent, CoolEvent, Event]
+    events.each_index do |i|
+      events[i].codestrings.must_equal events[i..-1].map{|cls| cls.codestring}
+    end
+  end
+  
   it "automatically creates attributes, getters, and setters "\
      "from the initial arguments passed to the constructor" do
     cool = CoolEvent.new(13, 24, 10, 
@@ -120,6 +127,8 @@ describe Event do
     
     assert cool.codeblock.is_a? Proc
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
+    cool.codeblock = nil
+    cool.codeblock.must_be_nil
   end
   
 end
