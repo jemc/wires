@@ -22,10 +22,13 @@ class TimeScheduler
     def clear; @schedule_lock.synchronize {@schedule.clear} end
     
     # Fire an event delayed by time value
-    def fire(time, event, channel='*')
+    def fire(time, event, channel='*', ignore_past=false)
       if not time.is_a? Time
         raise TypeError, "Expected #{time.inspect} to be an instance of Time."
       end
+      
+      # Ignore past events if flag is set
+      if ignore_past and time < Time.now; return nil; end
       
       # Under mutex, push the event into the schedule and sort
       @schedule_lock.synchronize do
@@ -33,7 +36,7 @@ class TimeScheduler
         @schedule.sort! { |a,b| a[0] <=> b[0] }
       end
       
-    nil end
+    true end
     
   private
     
