@@ -1,6 +1,4 @@
 
-module Wires
-
 # Store a list of all Event classes that get loaded.
 class EventRegistry
     @@registry = []
@@ -56,8 +54,12 @@ class Event
     
     # Pull class from registry by codestring 
     # (more reliable than crafting a reverse regexp)
+    def self._from_codestring(str)
+        return EventRegistry.list
+                            .select{|e| e.codestring==str}[0]
+    end
     def self.from_codestring(str)
-        cls = EventRegistry.list.select{|e| e.codestring==str}[0]
+        cls = self._from_codestring(str)
         if not cls then raise NameError,
             "No known Event subclass with codestring: '#{str}'" end
         cls

@@ -1,6 +1,8 @@
 
 
-class StartSchedulerEvent < Event; end
+class TimeSchedulerEvent < Event; end
+class TimeSchedulerStartEvent < TimeSchedulerEvent; end
+class TimeSchedulerAnonEvent  < TimeSchedulerEvent; end
 
 # A singleton class to schedule future firing of events
 class TimeScheduler
@@ -59,8 +61,8 @@ class TimeScheduler
   
   # Use fired event to only start scheduler when Hub is running
   # This also gets the scheduler loop its own thread within the Hub's threads
-  on :start_scheduler, self do; main_loop; end;
-  Channel(self).fire(:start_scheduler)
+  on :time_scheduler_start, self do; main_loop; end;
+  Channel(self).fire(:time_scheduler_start)
 end
 
 
@@ -75,7 +77,6 @@ end
 
 # Reopen ActiveSupport::Duration to enable nifty syntax like:
 # 32.minutes.from_now do some_stuff end
-class TimeSchedulerAnonEvent < Event; end
 class ActiveSupport::Duration
   
   alias :__original_since :since
