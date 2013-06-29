@@ -33,7 +33,7 @@ class TimeScheduler
         @schedule.sort! { |a,b| a[0] <=> b[0] }
       end
       
-    end
+    nil end
     
   private
     
@@ -60,7 +60,7 @@ class TimeScheduler
         sleep [@grain-(Time.now-this_time), 0].max
         
       end
-    end
+    nil end
     
   end
   
