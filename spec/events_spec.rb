@@ -15,10 +15,14 @@ describe Event do
     EventRegistry.list.must_include MyFavoriteEvent
   end
   
-  it "generates a corresponding codestring upon request" do
+  it "generates a corresponding codestring upon subclass definition" do
     Event.codestring.must_equal           'event'
     CoolEvent.codestring.must_equal       'cool'
     MyFavoriteEvent.codestring.must_equal 'my_favorite'
+  end
+  
+  it "enforces that new subclasses must have a unique codestring" do
+    proc{class My_FavoriteEvent < CoolEvent; end}.must_raise NameError
   end
   
   it "can be compared directly with a codestring or symbol (bidirectional)" do
@@ -36,7 +40,7 @@ describe Event do
     :my_favorite.must_equal     MyFavoriteEvent
   end
   
-  it "can check inheritance to/from a codestring or symbol" do
+  it "can check inheritance with a codestring or symbol (bidirectional)" do
     CoolEvent.must_be        :<=, :event
     CoolEvent.must_be        :<,  :event
     CoolEvent.must_be        :>,  :my_favorite
@@ -78,6 +82,21 @@ describe Event do
     :my_favorite.must_be     :>=, MyFavoriteEvent
     :my_favorite.wont_be     :<,  MyFavoriteEvent
     :my_favorite.wont_be     :>,  MyFavoriteEvent
+  end
+  
+  it "can be used to retrieve the Event class associated with a codestring" do
+    Event.from_codestring('event').must_be_same_as Event
+    Event.from_codestring(:event ).must_be_same_as Event
+    for cls in [CoolEvent, MyFavoriteEvent]
+      Event.from_codestring(cls.codestring).must_be_same_as cls
+    end
+  end
+  
+  it "can tell you all about its ancestry" do
+    events = [MyFavoriteEvent, CoolEvent, Event]
+    events.each_index do |i|
+      events[i].ancestry.must_equal events[i..-1]
+    end
   end
   
 end

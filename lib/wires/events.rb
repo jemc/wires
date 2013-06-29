@@ -14,7 +14,7 @@ class EventRegistry
 end
 
 # All Event classes should inherit from this one
-class Event
+class Event < Object # explicit for the sake of Event.ancestry
   
   # Register with the EventRegistry and make subclasses do the same
   EventRegistry << self
@@ -64,7 +64,7 @@ class Event
     end; private :_from_codestring
     
     def from_codestring(str)
-      cls = _from_codestring(str)
+      cls = _from_codestring(str.to_s)
       if not cls then raise NameError,
         "No known Event subclass with codestring: '#{str}'" end
         cls
