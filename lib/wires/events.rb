@@ -44,7 +44,7 @@ class Event
     # Convert class <ClassNameEvent> to string "class_name"
     def self.codestring(cls=self)
         cls.to_s
-           .undescore
+           .underscore
            .gsub(/_event$/, "")
     end
     
@@ -56,12 +56,8 @@ class Event
     
     # Pull class from registry by codestring 
     # (more reliable than crafting a reverse regexp)
-    def self._from_codestring(str)
-        return EventRegistry.list
-                            .select{|e| e.codestring==str}[0]
-    end
     def self.from_codestring(str)
-        cls = self._from_codestring(str)
+        cls = EventRegistry.list.select{|e| e.codestring==str}[0]
         if not cls then raise NameError,
             "No known Event subclass with codestring: '#{str}'" end
         cls
