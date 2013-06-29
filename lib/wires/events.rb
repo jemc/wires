@@ -93,7 +93,7 @@ class Event
   
   # Calling super in new with *args will complain if this isn't here
   def initialize(*args, &block) end
-  end
+end
 
 
 #
