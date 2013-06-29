@@ -78,7 +78,7 @@ class Event < Object # explicit for the sake of Event.ancestry
       
       kwargs = args[-1].is_a?(Hash) ? args.pop : Hash.new
       kwargs[:args] = args
-      kwargs[:proc] = block if block
+      kwargs[:codeblock] = block if block
       for key in kwargs.keys
         att = key.to_s
         obj.instance_variable_set("@#{att}", kwargs[key])

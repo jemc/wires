@@ -99,4 +99,27 @@ describe Event do
     end
   end
   
+  it "automatically creates attributes, getters, and setters "\
+     "from the initial arguments passed to the constructor" do
+    cool = CoolEvent.new(13, 24, 10, 
+                         dogname:'Grover', 
+                         fishscales:7096) \
+                           {'even a passed codeblock gets internalized!'}
+    
+    cool.args.must_equal [13, 24, 10]
+    cool.args          = [1,2,3]
+    cool.args.must_equal [1,2,3]
+    
+    cool.dogname.must_equal 'Grover'
+    cool.dogname          = 'Trusty'
+    cool.dogname.must_equal 'Trusty'
+    
+    cool.fishscales.must_equal 7096
+    cool.fishscales          = 4122 # An unfortunate encounter with Trusty
+    cool.fishscales.must_equal 4122
+    
+    assert cool.codeblock.is_a? Proc
+    cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
+  end
+  
 end
