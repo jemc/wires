@@ -1,4 +1,4 @@
-
+require 'pry'
 
 class TimeSchedulerEvent < Event; end
 class TimeSchedulerStartEvent < TimeSchedulerEvent; end
@@ -19,7 +19,7 @@ class TimeScheduler
     def clear; @schedule_lock.synchronize {@schedule.clear} end
     
     # Fire an event at a specific time
-    def fire(time, event, channel='*', ignore_past=false)
+    def fire(time, event, channel='*', ignore_past:false)
       if not time.is_a? Time
         raise TypeError, "Expected #{time.inspect} to be an instance of Time."
       end
@@ -71,10 +71,8 @@ class TimeScheduler
         
       end
       
-      # Hub is dead.
-      # Fire start event so that loop starts again next time Hub runs.
-      Channel(self).fire(:time_scheduler_start)
     nil end
+    
     
   end
   
@@ -82,6 +80,13 @@ class TimeScheduler
   # This also gets the scheduler loop its own thread within the Hub's threads
   on :time_scheduler_start, self do; main_loop; end;
   Channel(self).fire(:time_scheduler_start)
+  
+  # Refire the start event after Hub dies in case it restarts
+  Hub.after_kill(retain:true) do 
+    Channel(self).fire(:time_scheduler_start)
+  end
+  
+  
 end
 
 
@@ -102,7 +107,8 @@ class ActiveSupport::Duration
   def since(*args, &block)
     if block
       on :time_scheduler_anon, block.object_id do block.call end
-      __original_since(*args).fire :time_scheduler_anon, block.object_id
+      __original_since(*args).fire(:time_scheduler_anon, 
+                                    block.object_id)
       nil
     else
       __original_since(*args)
@@ -114,7 +120,8 @@ class ActiveSupport::Duration
   def ago(*args, &block)
     if block
       on :time_scheduler_anon, block.object_id do block.call end
-      __original_ago(*args).fire :time_scheduler_anon, block.object_id
+      __original_ago(*args).fire(:time_scheduler_anon, 
+                                  block.object_id)
       nil
     else
       __original_ago(*args)

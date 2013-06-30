@@ -50,21 +50,21 @@ class Hub
     nil end
     
     # Register hook to execute before kill - can call multiple times
-    def before_kill(proc=nil, &block)
+    def before_kill(proc=nil, retain:false, &block)
       func = (block or proc)
       if not func.is_a?(Proc)
         raise TypeError, "Expected a Proc or code block to execute."
       end
-      @before_kills << func
+      @before_kills << [func, retain]
     nil end
     
     # Register hook to execute after kill - can call multiple times
-    def after_kill(proc=nil, &block)
+    def after_kill(proc=nil, retain:false, &block)
       func = (block or proc)
       if not func.is_a?(Proc)
         raise TypeError, "Expected a Proc or code block to execute."
       end
-      @after_kills << func
+      @after_kills << [func, retain]
     nil end
     
     # Put x in the queue, and block until x is processed (if Hub is running)
@@ -80,11 +80,22 @@ class Hub
     
   private
   
-    def die
-      # Call the before kill hooks # TODO move
-      while not @before_kills.empty?
-        @before_kills.shift.call
+    # Flush/run queue of [proc, retain]s, retaining those with retain==true
+    def run_hooks(queue)
+      retained = Queue.new
+      while not queue.empty?
+        proc, retain = queue.shift
+        retained << [proc, retain] if retain
+        proc.call
       end
+      while not retained.empty?
+        queue << retained.shift
+      end
+    nil end
+  
+    def die
+      # Call the before kill hooks
+      run_hooks(@before_kills)
       @state = :dead
     nil end
     
@@ -98,9 +109,7 @@ class Hub
         if dying?; die_thread ||= Thread.new { die } end
       end
       
-      while not @after_kills.empty?
-        @after_kills.shift.call
-      end
+      run_hooks(@after_kills)
     nil end
     
     def process_item(x)
