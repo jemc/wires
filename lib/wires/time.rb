@@ -8,20 +8,17 @@ class TimeSchedulerAnonEvent  < TimeSchedulerEvent; end
 class TimeScheduler
   @schedule      = Array.new
   @schedule_lock = Mutex.new
-  @grain         = 0.2.seconds
+  @thread        = Thread.new {nil}
   
   # Operate on the metaclass as a type of singleton pattern
   class << self
-    
-    # Get or set the time grain from outside the class
-    attr_accessor :grain
     
     # Get a copy of the event schedule from outside the class
     def list;  @schedule_lock.synchronize {@schedule.clone} end
     # Clear the event schedule from outside the class
     def clear; @schedule_lock.synchronize {@schedule.clear} end
     
-    # Fire an event delayed by time value
+    # Fire an event at a specific time
     def fire(time, event, channel='*', ignore_past=false)
       if not time.is_a? Time
         raise TypeError, "Expected #{time.inspect} to be an instance of Time."
@@ -32,37 +29,46 @@ class TimeScheduler
       
       # Under mutex, push the event into the schedule and sort
       @schedule_lock.synchronize do
-        @schedule << [time, event, channel]
-        @schedule.sort! { |a,b| a[0] <=> b[0] }
+        @schedule << {time:time, event:event, channel:channel]
+        @schedule.sort! { |a,b| a[:time] <=> b[:time] }
       end
       
-    true end
+      # Wakeup main_loop thread if it is sleeping
+      begin @thread.wakeup; rescue ThreadError; end
+      
+    nil end
     
   private
     
+    # Do scheduled firing of events as long as Hub is alive
     def main_loop
       
+      @thread = Thread.current
       pending = Array.new
       
-      while true
+      while not Hub.dead?
         
+        # Under mutex, pull any events that are ready into pending
         pending.clear
-        this_time = Time.now
-        
-        # Under mutex, pull any events that are ready
         @schedule_lock.synchronize do
-          while ((not @schedule.empty?) and (this_time > @schedule[0][0]))
+          while ((not @schedule.empty?) and 
+                 (this_time > @schedule[0][:time]))
             pending << @schedule.shift
           end
+          on_deck = @schedule[0]
         end
         
         # Fire pending events
-        pending.each { |x| Channel(x[2]).fire(x[1]) }
+        pending.each { |x| Channel(x[:channel]).fire(x[:event]) }
         
-        # Calculate the time to sleep based on the time left in the "grain"
-        sleep [@grain-(Time.now-this_time), 0].max
+        # Calculate the time to sleep based on next event's time
+        sleep [(on_deck[:time]-Time.now), 0].max
         
       end
+      
+      # Hub is dead.
+      # Fire start event so that loop starts again next time Hub runs.
+      Channel(self).fire(:time_scheduler_start)
     nil end
     
   end
