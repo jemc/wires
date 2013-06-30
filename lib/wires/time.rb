@@ -48,7 +48,7 @@ class TimeScheduler
       pending = Array.new
       on_deck = nil
       
-      while not @keepgoing
+      while @keepgoing
         
         # Under mutex, pull any events that are ready into pending
         pending.clear
@@ -85,6 +85,8 @@ class TimeScheduler
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
     @keepgoing=false
+    @thread.wakeup
+    sleep 0
   end
   # Refire the start event after Hub dies in case it restarts
   Hub.after_kill(retain:true) do 
