@@ -9,6 +9,9 @@ class Hub
   @queue = Queue.new
   @state = [:dead, :alive, :dying][0]
   
+  @child_threads = Array.new
+  @child_threads_lock = Mutex.new
+  
   @before_kills = Queue.new
   @after_kills  = Queue.new
   
@@ -40,7 +43,8 @@ class Hub
     nil end
     
     # Kill the Hub event loop (softly)
-    def kill
+    def kill(process_all:false)
+      @process_all = process_all
       @state=:dying if alive?
     nil end
     
@@ -98,6 +102,19 @@ class Hub
     def die
       # Call the before kill hooks
       run_hooks(@before_kills)
+      
+      # Wait for all events to process if instructed to do so
+      if @process_all
+        a_thread = Thread.new{nil}
+        while a_thread
+          @child_threads_lock.synchronize do
+            a_thread = child_threads.shift
+          end
+          a_thread.join
+        end
+      end
+      
+      # Finally, die
       @state = :dead
       
     nil end
@@ -115,26 +132,31 @@ class Hub
       end
       
       run_hooks(@after_kills)
-      
+      @process_all = false
     nil end
     
     def process_item(x)
       x, waiting_thread = x
       string, event, blocking, proc = x
-      Thread.new do
-        begin
-          waiting_thread.wakeup unless blocking or not waiting_thread
-          proc.call($event = event)
-          waiting_thread.wakeup if blocking and waiting_thread
-          
-        rescue Interrupt, SystemExit => e
-          @state = :dying
-          unhandled_exception(e)
-          
-        rescue Exception => e
-          unhandled_exception(e)
+      
+      @child_threads_lock.synchronize do
+        @child_threads.select! {|t| t.status}
+        @child_threads << Thread.new do
+          begin
+            waiting_thread.wakeup unless blocking or not waiting_thread
+            proc.call($event = event)
+            waiting_thread.wakeup if blocking and waiting_thread
+            
+          rescue Interrupt, SystemExit => e
+            @state = :dying
+            unhandled_exception(e)
+            
+          rescue Exception => e
+            unhandled_exception(e)
+          end
         end
       end
+    
     nil end
     
     def unhandled_exception(x)
