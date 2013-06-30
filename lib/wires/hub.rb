@@ -31,6 +31,7 @@ class Hub
         
         at_exit { @thread.join if not $! }
       end
+      sleep 0 # Give new thread a chance to start
     nil end
     
     # Start the Hub event loop in the current thread
@@ -39,15 +40,14 @@ class Hub
     nil end
     
     # Kill the Hub event loop (softly)
-    def kill(process_all:false)
-      @process_all = process_all
+    def kill
       @state=:dying if alive?
     nil end
     
     # Kill the Hub and wait for full death
     # (optionally ensure the Hub finishes processing all events)
-    def kill_and_wait(process_all:false)
-      kill(process_all)
+    def kill_and_wait(*args)
+      kill(*args)
       @thread.join
     nil end
     
@@ -98,10 +98,8 @@ class Hub
     def die
       # Call the before kill hooks
       run_hooks(@before_kills)
-      
-      # Wait for all events to process if instructed to do so
-      while (@process_all and not @queue.empty?); sleep 0.1; end
       @state = :dead
+      
     nil end
     
     def run_loop
@@ -111,13 +109,13 @@ class Hub
         if @queue.empty? then sleep(0)
         else process_item(@queue.shift) end
         
-        if dying? and (@process_all==false or @queue.empty?)
+        if dying?
           die_thread ||= Thread.new { die } 
         end
       end
       
       run_hooks(@after_kills)
-      @process_all = false
+      
     nil end
     
     def process_item(x)

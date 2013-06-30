@@ -2,16 +2,16 @@ require 'wires'
 
 Hub.run
 
-p Time.now
-0.1.seconds.from_now.fire [:event, "A thing"]
-0.1.seconds.from_now.fire [:event, "B thing"]
-0.1.seconds.from_now.fire [:event, "C thing"]
+count = 0
+maxcount = 100
 
 on :event do
-  puts "#{Time.now} : #{$event.inspect}"
+  count += 1
+  # puts "#{Time.now} : #{$event.inspect}"
+  puts count
+  fire_and_wait :event if count < maxcount
 end
 
-# sleep 0.2
+fire_and_wait :event
 
-sleep 0.01 until TimeScheduler.list.empty?
-Hub.kill(process_all:true)
+Hub.kill
