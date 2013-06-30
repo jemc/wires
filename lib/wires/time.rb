@@ -29,7 +29,7 @@ class TimeScheduler
       
       # Under mutex, push the event into the schedule and sort
       @schedule_lock.synchronize do
-        @schedule << {time:time, event:event, channel:channel]
+        @schedule << {time:time, event:event, channel:channel}
         @schedule.sort! { |a,b| a[:time] <=> b[:time] }
       end
       
@@ -45,6 +45,7 @@ class TimeScheduler
       
       @thread = Thread.current
       pending = Array.new
+      on_deck = nil
       
       while not Hub.dead?
         
@@ -52,7 +53,7 @@ class TimeScheduler
         pending.clear
         @schedule_lock.synchronize do
           while ((not @schedule.empty?) and 
-                 (this_time > @schedule[0][:time]))
+                 (Time.now > @schedule[0][:time]))
             pending << @schedule.shift
           end
           on_deck = @schedule[0]
@@ -62,7 +63,11 @@ class TimeScheduler
         pending.each { |x| Channel(x[:channel]).fire(x[:event]) }
         
         # Calculate the time to sleep based on next event's time
-        sleep [(on_deck[:time]-Time.now), 0].max
+        if on_deck
+          sleep [(on_deck[:time]-Time.now), 0].max
+        else
+          sleep # sleep until wakeup if no event is on deck
+        end
         
       end
       

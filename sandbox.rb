@@ -1,15 +1,17 @@
 require 'wires'
 
-
 Hub.run
 
-on :event do p $event end
+p Time.now
+3.seconds.from_now.fire [:event, "A thing"]
+1.seconds.from_now.fire [:event, "B thing"]
+2.seconds.from_now.fire [:event, "C thing"]
 
-sleep 1
+on :event do
+  puts "#{Time.now} : #{$event.inspect}"
+end
+
+sleep 4
 
 puts 'killtime!'
-
-Hub.before_kill { puts 'prekill'; fire  [:event, dog:5] }
-Hub.after_kill  { puts 'postkill'; fire [:event, blog:72] }
-
 Hub.kill
