@@ -9,7 +9,7 @@ class Hub
   @queue = Queue.new
   @state = [:dead, :alive, :dying][0]
   
-  @child_threads = Array.new
+  @child_threads      = Array.new
   @child_threads_lock = Mutex.new
   
   @before_kills = Queue.new
@@ -23,36 +23,47 @@ class Hub
     def dying?; @state==:dying end
     def state;  @state         end
     
+    # Clear the Hub queue, but do not kill working threads
     def clear;  @queue.clear   end
     
-    # Start the Hub event loop in a new thread
-    def run
-      if dead?
-        @thread = Thread.new() do
-          self.send(:run_loop)
-        end
+    ##
+    # Start the Hub event loop (optional flags change thread behavior)
+    #
+    # valid flags:
+    # [+:blocking+] Hub event loop will be run in calling thread,
+    #               blocking until Hub is killed.  If this flag is not
+    #               specified, the Hub event loop is run in a new thread, 
+    #               which the main thread joins in at_exit.
+    def run(*flags)
+      if dead? # Only run if not already alive or dying
         
-        at_exit { @thread.join if not $! }
+        # If :blocking is not set, run in a new thread and join at_exit
+        if not (flags.include? :blocking)
+          @thread = Thread.new() do
+            self.send(:run_loop)
+          end
+          # Only join if main thread wasn't killed by an exception
+          at_exit { @thread.join if not $! }
+        
+        # If :blocking is set, run in main thread and block until Hub death
+        else self.send(:run_loop) end
+        
       end
-      sleep 0 # Give new thread a chance to start
+      
+      sleep 0 # Yield to other threads
+      
     nil end
     
-    # Start the Hub event loop in the current thread
-    def run_in_place()
-      self.send(:run_loop) if dead?
-    nil end
-    
-    # Kill the Hub event loop (softly)
-    def kill(process_all:false)
-      @process_all = process_all
+    ##
+    # Kill the Hub event loop (optional flags change thread behavior)
+    #
+    # valid flags:
+    # [+:finish_all+] Hub thread won't be done until all child threads done
+    # [+:blocking+] calling thread won't be done until Hub thread is done
+    def kill(*flags)
+      @finish_all = (flags.include? :finish_all)
       @state=:dying if alive?
-    nil end
-    
-    # Kill the Hub and wait for full death
-    # (optionally ensure the Hub finishes processing all events)
-    def kill_and_wait(*args)
-      kill(*args)
-      @thread.join
+      @thread.join if (flags.include? :blocking)
     nil end
     
     # Register hook to execute before kill - can call multiple times
@@ -86,6 +97,41 @@ class Hub
     
   private
   
+    # Kill all currently working child threads
+    # Newly fired events could still queue up, 
+    # Waiting to be born until this thread is done killing
+    def kill_children
+      @child_threads_lock.synchronize do
+        until @child_threads.empty?
+          @child_threads.shift.exit
+        end
+      end
+    nil end
+    
+    # Kill all currently working child threads
+    # Newly fired events could still queue up, 
+    # But they will be cleared out and never be born
+    def kill_children_and_clear
+      @child_threads_lock.synchronize do
+        until @child_threads.empty?
+          @child_threads.shift.exit
+        end
+        clear
+      end
+    nil end
+    
+    # Join child threads, one by one, allowing more children to appear
+    def join_children
+      a_thread = Thread.new{nil}
+      while a_thread
+        @child_threads_lock.synchronize do
+          a_thread = @child_threads.shift
+        end
+        a_thread.join if a_thread
+        sleep 0 # Yield to other threads
+      end
+    nil end
+    
     # Flush/run queue of [proc, retain]s, retaining those with retain==true
     def run_hooks(queue)
       retained = Queue.new
@@ -99,26 +145,14 @@ class Hub
       end
     nil end
   
+    # Run before_kill hooks, optionally join child threads, then die
     def die
-      # Call the before kill hooks
       run_hooks(@before_kills)
-      
-      # Wait for all events to process if instructed to do so
-      if @process_all
-        a_thread = Thread.new{nil}
-        while a_thread
-          @child_threads_lock.synchronize do
-            a_thread = child_threads.shift
-          end
-          a_thread.join
-        end
-      end
-      
-      # Finally, die
+      join_children if @finish_all
       @state = :dead
-      
     nil end
     
+    # Run main event loop, not finished until Hub is killed
     def run_loop
       @state = :alive
         
@@ -127,20 +161,26 @@ class Hub
         else process_item(@queue.shift) end
         
         if dying?
-          die_thread ||= Thread.new { die } 
+          die_thread ||= Thread.new { die }
         end
       end
       
       run_hooks(@after_kills)
-      @process_all = false
+      @finish_all = false
+      
     nil end
     
     def process_item(x)
       x, waiting_thread = x
       string, event, blocking, proc = x
       
+      # Do all dealings with @child_threads under mutex
       @child_threads_lock.synchronize do
+        
+        # Clear dead child threads to free up memory
         @child_threads.select! {|t| t.status}
+        
+        # Start the new child thread
         @child_threads << Thread.new do
           begin
             waiting_thread.wakeup unless blocking or not waiting_thread

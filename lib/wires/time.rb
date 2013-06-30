@@ -43,11 +43,12 @@ class TimeScheduler
     # Do scheduled firing of events as long as Hub is alive
     def main_loop
       
+      @keepgoing = true
       @thread = Thread.current
       pending = Array.new
       on_deck = nil
       
-      while not Hub.dead?
+      while not @keepgoing
         
         # Under mutex, pull any events that are ready into pending
         pending.clear
@@ -81,6 +82,10 @@ class TimeScheduler
   on :time_scheduler_start, self do; main_loop; end;
   Channel(self).fire(:time_scheduler_start)
   
+  # Stop the main loop upon death of Hub
+  Hub.before_kill(retain:true) do 
+    @keepgoing=false
+  end
   # Refire the start event after Hub dies in case it restarts
   Hub.after_kill(retain:true) do 
     Channel(self).fire(:time_scheduler_start)
