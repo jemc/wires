@@ -87,20 +87,22 @@ end
 describe TimeScheduler do
   include TimeTester
   
-  # it "can handle a barrage of events without dropping any" do
+  it "can handle a barrage of events without dropping any" do
     
-  #   fire_count = 25
-  #   done_count = 0
-  #   go_time = 0.2.seconds.from_now
+    fire_count = 25
+    done_count = 0
+    go_time = 0.2.seconds.from_now
     
-  #   on :event, 'TS_A' do done_count += 1 end
+    on :event, 'TS_A' do done_count += 1 end
     
-  #   fire_count.times {go_time.fire :event, 'TS_A'}
+    fire_count.times {go_time.fire :event, 'TS_A'}
     
-  #   until TimeScheduler.list.empty?
-  #     sleep 0.1; end
-  #   done_count.must_equal fire_count
+    until TimeScheduler.list.empty?
+      sleep 0; end
+    sleep 0.1 # TODO: breaks without this sleep
     
-  # end
+    done_count.must_equal fire_count
+    
+  end
   
 end
