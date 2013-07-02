@@ -89,19 +89,33 @@ describe TimeScheduler do
   
   it "can handle a barrage of events without dropping any" do
     
-    fire_count = 25
+    fire_count = 50
     done_count = 0
-    go_time = 0.2.seconds.from_now
+    go_time = 0.1.seconds.from_now
     
     on :event, 'TS_A' do done_count += 1 end
     
     fire_count.times {go_time.fire :event, 'TS_A'}
     
-    until TimeScheduler.list.empty?
-      sleep 0; end
-    sleep 0.1 # TODO: breaks without this sleep
+    sleep 0.2
     
     done_count.must_equal fire_count
+    
+  end
+  
+  it "can provide a list of scheduled future events" do
+  
+    fire_count = 50
+    done_count = 0
+    go_time = 0.1.seconds.from_now
+    
+    on :event, 'TS_B' do done_count += 1 end
+    
+    fire_count.times {go_time.fire :event, 'TS_B'}
+    
+    sleep 0.05
+    
+    TimeScheduler.list.size.must_equal fire_count
     
   end
   
