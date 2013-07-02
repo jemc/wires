@@ -138,19 +138,26 @@ describe TimeScheduler do
   
   it "correctly sorts the scheduled future events" do
   
-    on :event, 'TS_C' do nil end
+    count = 0
     
-    e0 = [:event, 0]
-    e1 = [:event, 1]
-    e2 = [:event, 2]
+    on :event, 'TS_C' do |event|
+      count += 1
+      event.index.must_equal count%3
+    end
     
-    0.20.seconds.from_now.fire e0, 'TS_C'
-    0.10.seconds.from_now.fire e1, 'TS_C'
-    0.15.seconds.from_now.fire e2, 'TS_C'
+    e = []
+    3.times do |i| e << [:event, index:i] end
+    
+    0.20.seconds.from_now.fire e[0], 'TS_C'
+    0.10.seconds.from_now.fire e[1], 'TS_C'
+    0.15.seconds.from_now.fire e[2], 'TS_C'
     
     sleep 0.05
     
-    [e1,e2,e0].must_equal TimeScheduler.list.map { |x| x[:event] }
+    e << e.shift
+    e.must_equal TimeScheduler.list.map { |x| x[:event] }
+    
+    sleep 0.20
     
   end
   
