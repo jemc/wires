@@ -119,7 +119,24 @@ describe TimeScheduler do
     
   end
   
-  it "correctly sorts the list of scheduled future events" do
+  it "can clear the scheduled future events" do
+  
+    fire_count = 50
+    done_count = 0
+    go_time = 0.1.seconds.from_now
+    
+    on :event, 'TS_D' do done_count += 1 end
+    
+    fire_count.times {go_time.fire :event, 'TS_D'}
+    
+    sleep 0.05
+    
+    TimeScheduler.clear
+    TimeScheduler.list.must_be_empty
+    
+  end
+  
+  it "correctly sorts the scheduled future events" do
   
     on :event, 'TS_C' do nil end
     
