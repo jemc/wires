@@ -61,8 +61,14 @@ class TimeScheduler
           on_deck = @schedule[0]
         end
         
-        # Fire pending events
-        pending.each { |x| Channel(x[:channel]).fire(x[:event]) }
+        # Fire pending events, and requeue repeating ones
+        pending.each do |x| 
+          Channel(x[:channel]).fire(x[:event])
+          if x.has_key? :repeat
+            x[:time] += x[:repeat]
+            @schedule_lock.synchronize do @schedule << x end
+          end
+        end
         
         # Calculate the time to sleep based on next event's time
         if on_deck
