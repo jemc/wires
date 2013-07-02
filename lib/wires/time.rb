@@ -66,8 +66,8 @@ class TimeScheduler
         # Calculate the time to sleep based on next event's time
         if on_deck
           sleep [(on_deck[:time]-Time.now), 0].max
-        else
-          sleep # sleep until wakeup if no event is on deck
+        else # sleep until wakeup if no event is on deck
+          sleep if @keepgoing
         end
         
       end
