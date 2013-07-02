@@ -82,8 +82,29 @@ describe ActiveSupport::Duration do
     
   end
   
+  it "can now fire timed anonymous events, which don't match with eachother" do
+    
+    fire_count = 20
+    done_count = 0
+    past_events = []
+    
+    for i in 0...fire_count
+      (i*0.01+0.1).seconds.from_now do |event|
+        done_count += 1
+        past_events.wont_include event
+        past_events << event
+      end
+    end
+    
+    sleep (fire_count*0.01+0.2)
+    
+    done_count.must_equal fire_count
+    
+  end
+  
 end
 
+# TimeScheduler is the main time-handling object
 describe TimeScheduler do
   include TimeTester
   

@@ -116,7 +116,7 @@ class ActiveSupport::Duration
   alias :__original_since :since
   def since(*args, &block)
     if block
-      on :time_scheduler_anon, block.object_id do block.call end
+      on :time_scheduler_anon, block.object_id do |e| block.call(e) end
       __original_since(*args).fire(:time_scheduler_anon, 
                                     block.object_id)
       nil
@@ -129,7 +129,7 @@ class ActiveSupport::Duration
   alias :__original_ago :ago
   def ago(*args, &block)
     if block
-      on :time_scheduler_anon, block.object_id do block.call end
+      on :time_scheduler_anon, block.object_id do |e| block.call(e) end
       __original_ago(*args).fire(:time_scheduler_anon, 
                                   block.object_id)
       nil
