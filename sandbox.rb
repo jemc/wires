@@ -2,10 +2,14 @@ require 'wires'
 
 Hub.run
 
-0.2.seconds.from_now do
+puts 'hey'
+
+0.5.seconds.from_now do
   puts 'hey'
 end
 
-sleep 0.5
+sleep 1
+
+puts 'hey'
 
 Hub.kill :finish_all, :blocking
