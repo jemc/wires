@@ -6,9 +6,10 @@ class TimeSchedulerAnonEvent  < TimeSchedulerEvent; end
 
 # A singleton class to schedule future firing of events
 class TimeScheduler
-  @schedule      = Array.new
-  @schedule_lock = Mutex.new
-  @thread        = Thread.new {nil}
+  @schedule       = Array.new
+  @schedule_lock  = Mutex.new
+  @thread         = Thread.new {nil}
+  @keepgoing_lock = Mutex.new
   
   # Operate on the metaclass as a type of singleton pattern
   class << self
@@ -84,8 +85,10 @@ class TimeScheduler
   
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
-    @keepgoing=false
-    @thread.wakeup
+    @keepgoing_lock.synchronize do
+      @keepgoing=false
+      @thread.wakeup
+    end
     sleep 0
   end
   # Refire the start event after Hub dies in case it restarts

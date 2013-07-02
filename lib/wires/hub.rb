@@ -184,7 +184,7 @@ class Hub
         @child_threads << Thread.new do
           begin
             waiting_thread.wakeup unless blocking or not waiting_thread
-            proc.call($event = event)
+            proc.call(event)
             waiting_thread.wakeup if blocking and waiting_thread
             
           rescue Interrupt, SystemExit => e
