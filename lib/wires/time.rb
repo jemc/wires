@@ -10,9 +10,7 @@ class TimeSchedulerItem
   
   def initialize(time, event, channel='*', repeat:nil, ignore_past:false)
     
-    unless time.is_a? Time
-      raise TypeError, "Expected #{time.inspect} to be an instance of Time."
-    end
+    expect_type time, Time
     
     @active = true
     
@@ -65,11 +63,7 @@ class TimeScheduler
     
     # Add an event to the schedule
     def add(new_item)
-      
-      # TODO: create generic global expect_type(x, type) function
-      unless new_item.is_a? TimeSchedulerItem
-        raise TypeError, "Expected #{new_item.inspect} to be an instance of Time."
-      end
+      expect_type new_item, TimeSchedulerItem
       
       # Under mutex, push the event into the schedule and sort
       @schedule_lock.synchronize do

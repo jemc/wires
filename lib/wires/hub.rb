@@ -69,18 +69,14 @@ class Hub
     # Register hook to execute before kill - can call multiple times
     def before_kill(proc=nil, retain:false, &block)
       func = (block or proc)
-      if not func.is_a?(Proc)
-        raise TypeError, "Expected a Proc or code block to execute."
-      end
+      expect_type func, Proc
       @before_kills << [func, retain]
     nil end
     
     # Register hook to execute after kill - can call multiple times
     def after_kill(proc=nil, retain:false, &block)
       func = (block or proc)
-      if not func.is_a?(Proc)
-        raise TypeError, "Expected a Proc or code block to execute."
-      end
+      expect_type func, Proc
       @after_kills << [func, retain]
     nil end
     
