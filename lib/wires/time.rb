@@ -1,8 +1,53 @@
 require 'pry'
+require 'ostruct'
 
-class TimeSchedulerEvent < Event; end
-class TimeSchedulerStartEvent < TimeSchedulerEvent; end
-class TimeSchedulerAnonEvent  < TimeSchedulerEvent; end
+class TimeSchedulerStartEvent < Event; end
+class TimeSchedulerAnonEvent  < Event; end
+
+
+# TODO: add thread protection mixin for all instance methods
+# TODO: add repeat_count kwarg
+class TimeSchedulerItem
+  
+  attr_reader :time, :event, :channel, :repeat
+  
+  def initialize(time, event, channel='*', repeat:nil, ignore_past:false)
+    
+    unless time.is_a? Time
+      raise TypeError, "Expected #{time.inspect} to be an instance of Time."
+    end
+    
+    @active = true
+    
+    if repeat
+      while (time < Time.now)
+        time += repeat
+      end
+      time -= repeat unless ignore_past
+    else
+      @active = false if (ignore_past and (time < Time.now))
+    end
+    
+    @time    = time
+    @event   = event
+    @channel = channel
+    @repeat  = repeat
+    
+  end
+  
+  def active?;     @active                                      end
+  def inactive?;   not @active                                  end
+  def ready?;      @active and (Time.now >= @time)              end
+  def time_until; (@active ? [(Time.now - @time), 0].max : nil) end
+  
+  def cancel;      @active = false                        ;nil  end
+  
+  def fire
+    Channel.new(@channel).fire(@event)
+    (@repeat ? @time += @repeat : @active = false)
+  nil end
+  
+end
 
 # A singleton class to schedule future firing of events
 class TimeScheduler
@@ -19,19 +64,18 @@ class TimeScheduler
     # Clear the event schedule from outside the class
     def clear; @schedule_lock.synchronize {@schedule.clear} end
     
-    # Fire an event at a specific time
-    def fire(time, event, channel='*', ignore_past:false)
-      if not time.is_a? Time
-        raise TypeError, "Expected #{time.inspect} to be an instance of Time."
-      end
+    # Add an event to the schedule
+    def add(new_item)
       
-      # Ignore past events if flag is set
-      if ignore_past and time < Time.now; return nil; end
+      # TODO: create generic global expect_type(x, type) function
+      unless new_item.is_a? TimeSchedulerItem
+        raise TypeError, "Expected #{new_item.inspect} to be an instance of Time."
+      end
       
       # Under mutex, push the event into the schedule and sort
       @schedule_lock.synchronize do
-        @schedule << {time:time, event:event, channel:channel}
-        @schedule.sort! { |a,b| a[:time] <=> b[:time] }
+        @schedule << new_item
+        schedule_reshuffle
       end
       
       # Wakeup main_loop thread if it is sleeping
@@ -39,7 +83,15 @@ class TimeScheduler
       
     nil end
     
+    # Add an event to the schedule using << operator
+    alias_method :<<, :add
+    
   private
+  
+    def schedule_reshuffle
+      @schedule.select! {|x| x.active?}
+      @schedule.sort! {|a,b| a.time <=> b.time}
+    end
     
     # Do scheduled firing of events as long as Hub is alive
     def main_loop
@@ -54,25 +106,25 @@ class TimeScheduler
         # Under mutex, pull any events that are ready into pending
         pending.clear
         @schedule_lock.synchronize do
-          while ((not @schedule.empty?) and 
-                 (Time.now > @schedule[0][:time]))
+          while ((not @schedule.empty?) and @schedule[0].ready?)
             pending << @schedule.shift
           end
           on_deck = @schedule[0]
         end
         
-        # Fire pending events, and requeue repeating ones
-        pending.each do |x| 
-          Channel(x[:channel]).fire(x[:event])
-          if x.has_key? :repeat
-            x[:time] += x[:repeat]
-            @schedule_lock.synchronize do @schedule << x end
-          end
+        # Fire pending events
+        pending.each { |x| x.fire }
+        
+        # Requeue pending events (in case they are repeating) and reshuffle
+        @schedule_lock.synchronize do 
+          @schedule.concat pending
+          schedule_reshuffle
         end
         
+        # TODO - properly handle sleep/wakeup thread safety
         # Calculate the time to sleep based on next event's time
         if on_deck
-          sleep [(on_deck[:time]-Time.now), 0].max
+          sleep on_deck.time_until
         else # sleep until wakeup if no event is on deck
           sleep if @keepgoing
         end
@@ -109,8 +161,8 @@ end
 # Reopen the Time class and add the fire method to enable nifty syntax like:
 # 32.minutes.from_now.fire :event
 class Time
-  def fire(*args)
-    TimeScheduler.fire(self, *args)
+  def fire(event, channel='*', **kwargs)
+    TimeScheduler << TimeSchedulerItem.new(self, event, channel, **kwargs)
   end
 end
 
@@ -146,3 +198,7 @@ class ActiveSupport::Duration
   alias :until :ago
   
 end
+
+
+# TODO: Repeatable event sugar?
+# TODO: Tests for all new functionality

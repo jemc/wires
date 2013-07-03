@@ -176,7 +176,7 @@ describe TimeScheduler do
     sleep 0.05
     
     e << e.shift
-    e.must_equal TimeScheduler.list.map { |x| x[:event] }
+    e.must_equal TimeScheduler.list.map { |x| x.event }
     
     sleep 0.20
     
