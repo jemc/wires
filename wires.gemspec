@@ -14,4 +14,5 @@ Gem::Specification.new do |s|
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
   
   s.add_dependency('activesupport')
+  s.add_dependency('threadlock')
 end

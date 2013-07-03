@@ -1,11 +1,8 @@
-require 'pry'
-require 'ostruct'
 
 class TimeSchedulerStartEvent < Event; end
 class TimeSchedulerAnonEvent  < Event; end
 
 
-# TODO: add thread protection mixin for all instance methods
 # TODO: add repeat_count kwarg
 class TimeSchedulerItem
   
@@ -47,6 +44,8 @@ class TimeSchedulerItem
     (@repeat ? @time += @repeat : @active = false)
   nil end
   
+  # Lock all instance methods with common re-entrant lock
+  threadlock instance_methods-superclass.instance_methods
 end
 
 # A singleton class to schedule future firing of events
