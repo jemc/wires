@@ -49,9 +49,10 @@ end
 # A singleton class to schedule future firing of events
 class TimeScheduler
   @schedule       = Array.new
-  @schedule_lock  = Monitor.new
   @thread         = Thread.new {nil}
+  @schedule_lock  = Monitor.new
   @keepgoing_lock = Mutex.new
+  @dont_sleep     = false
   
   # Operate on the metaclass as a type of singleton pattern
   class << self
@@ -59,15 +60,9 @@ class TimeScheduler
     # Add an event to the schedule
     def add(new_item)
       expect_type new_item, TimeSchedulerItem
-      
-      # Under mutex, push the event into the schedule and sort
       schedule_add(new_item)
-      
-      # Wakeup main_loop thread if it is sleeping
-      begin @thread.wakeup; rescue ThreadError; end
-      
+      wakeup
     nil end
-    
     # Add an event to the schedule using << operator
     alias_method :<<, :add
     
@@ -130,13 +125,19 @@ class TimeScheduler
         if on_deck
           sleep on_deck.time_until
         else # sleep until wakeup if no event is on deck
-          sleep if @keepgoing
+          sleep unless @dont_sleep
+          @dont_sleep = false
         end
         
       end
       
     nil end
     
+    def wakeup
+      begin @thread.wakeup
+      rescue ThreadError; @dont_sleep=true
+      end
+    nil end
     
   end
   
@@ -149,7 +150,7 @@ class TimeScheduler
   Hub.before_kill(retain:true) do 
     @keepgoing_lock.synchronize do
       @keepgoing=false
-      @thread.wakeup
+      wakeup
     end
     sleep 0
   end
