@@ -49,27 +49,19 @@ end
 # A singleton class to schedule future firing of events
 class TimeScheduler
   @schedule       = Array.new
-  @schedule_lock  = Mutex.new
+  @schedule_lock  = Monitor.new
   @thread         = Thread.new {nil}
   @keepgoing_lock = Mutex.new
   
   # Operate on the metaclass as a type of singleton pattern
   class << self
     
-    # Get a copy of the event schedule from outside the class
-    def list;  @schedule_lock.synchronize {@schedule.clone} end
-    # Clear the event schedule from outside the class
-    def clear; @schedule_lock.synchronize {@schedule.clear} end
-    
     # Add an event to the schedule
     def add(new_item)
       expect_type new_item, TimeSchedulerItem
       
       # Under mutex, push the event into the schedule and sort
-      @schedule_lock.synchronize do
-        @schedule << new_item
-        schedule_reshuffle
-      end
+      schedule_add(new_item)
       
       # Wakeup main_loop thread if it is sleeping
       begin @thread.wakeup; rescue ThreadError; end
@@ -79,12 +71,44 @@ class TimeScheduler
     # Add an event to the schedule using << operator
     alias_method :<<, :add
     
+    # Get a copy of the event schedule from outside the class
+    def list;  @schedule.clone end
+    # Clear the event schedule from outside the class
+    def clear; @schedule.clear end
+    
   private
   
     def schedule_reshuffle
       @schedule.select! {|x| x.active?}
       @schedule.sort! {|a,b| a.time <=> b.time}
+    nil end
+    
+    def schedule_add(new_item)
+      @schedule << new_item
+      schedule_reshuffle
+    nil end
+    
+    def schedule_concat(other_list)
+      @schedule.concat other_list
+      schedule_reshuffle
+    nil end
+    
+    def schedule_pull
+      pending = Array.new
+      while ((not @schedule.empty?) and @schedule[0].ready?)
+        pending << @schedule.shift
+      end
+      [pending, @schedule[0]]
     end
+    
+    # Put all functions dealing with @schedule under @schedule_lock
+    threadlock :list,
+               :clear,
+               :schedule_reshuffle,
+               :schedule_add,
+               :schedule_concat,
+               :schedule_pull,
+         lock: :@schedule_lock
     
     # Do scheduled firing of events as long as Hub is alive
     def main_loop
@@ -96,23 +120,10 @@ class TimeScheduler
       
       while @keepgoing
         
-        # Under mutex, pull any events that are ready into pending
-        pending.clear
-        @schedule_lock.synchronize do
-          while ((not @schedule.empty?) and @schedule[0].ready?)
-            pending << @schedule.shift
-          end
-          on_deck = @schedule[0]
-        end
-        
-        # Fire pending events
+        # Pull, fire, and requeue relevant events
+        pending, on_deck = schedule_pull
         pending.each { |x| x.fire }
-        
-        # Requeue pending events (in case they are repeating) and reshuffle
-        @schedule_lock.synchronize do 
-          @schedule.concat pending
-          schedule_reshuffle
-        end
+        schedule_concat pending
         
         # TODO - properly handle sleep/wakeup thread safety
         # Calculate the time to sleep based on next event's time
