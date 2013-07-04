@@ -120,7 +120,6 @@ class TimeScheduler
         pending.each { |x| x.fire }
         schedule_concat pending
         
-        # TODO - properly handle sleep/wakeup thread safety
         # Calculate the time to sleep based on next event's time
         if on_deck
           sleep on_deck.time_until
@@ -152,13 +151,12 @@ class TimeScheduler
       @keepgoing=false
       wakeup
     end
-    sleep 0
   end
+  
   # Refire the start event after Hub dies in case it restarts
   Hub.after_kill(retain:true) do 
     Channel(self).fire(:time_scheduler_start)
   end
-  
   
 end
 
