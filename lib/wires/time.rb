@@ -51,7 +51,6 @@ class TimeScheduler
   @schedule       = Array.new
   @thread         = Thread.new {nil}
   @schedule_lock  = Monitor.new
-  @keepgoing_lock = Mutex.new
   @dont_sleep     = false
   
   # Operate on the metaclass as a type of singleton pattern
@@ -147,10 +146,8 @@ class TimeScheduler
   
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
-    @keepgoing_lock.synchronize do
-      @keepgoing=false
-      wakeup
-    end
+    @keepgoing=false
+    wakeup
   end
   
   # Refire the start event after Hub dies in case it restarts
