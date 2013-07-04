@@ -11,6 +11,10 @@ module TimeTester
                 TimeScheduler.clear;  end
 end
 
+describe TimeSchedulerItem do
+  include TimeTester
+
+
 # Time objects get extended to call TimeScheduler.fire
 describe Time do
   include TimeTester

@@ -3,7 +3,8 @@ class TimeSchedulerStartEvent < Event; end
 class TimeSchedulerAnonEvent  < Event; end
 
 
-# TODO: add repeat_count kwarg
+# TODO: add :count kwarg
+# TODO: add #join method
 class TimeSchedulerItem
   
   attr_reader :time, :event, :channel, :repeat
@@ -43,7 +44,8 @@ class TimeSchedulerItem
   nil end
   
   # Lock all instance methods with common re-entrant lock
-  threadlock instance_methods-superclass.instance_methods
+  threadlock instance_methods-superclass.instance_methods\
+                             -[:join]
 end
 
 # A singleton class to schedule future firing of events
