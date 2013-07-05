@@ -5,47 +5,76 @@ class TimeSchedulerAnonEvent  < Event; end
 
 # TODO: add :count kwarg
 # TODO: add #join method
+# TODO: convert event array to Event on receive??
 class TimeSchedulerItem
   
-  attr_reader :time, :event, :channel, :repeat
+  attr_reader :time, :event, :channel, :interval
   
-  def initialize(time, event, channel='*', repeat:nil, ignore_past:false)
+  def initialize(time, event, channel='*', interval:0.seconds, count:1, 
+                 ignore_past:false, cancel:false)
     
     expect_type time, Time
     
-    @active = true
+    @active = (not cancel)
+    tempcount  = count
     
-    if repeat
-      while (time < Time.now)
-        time += repeat
-      end
-      time -= repeat unless ignore_past
+    while (time < Time.now) and (tempcount > 0)
+      time += interval
+      tempcount -= 1
+    end
+    if not ignore_past
+      time -= interval
+      self.count = count
     else
-      @active = false if (ignore_past and (time < Time.now))
+      self.count = tempcount
     end
     
-    @time    = time
-    @event   = event
-    @channel = channel
-    @repeat  = repeat
+    @time     = time
+    @event    = event
+    @channel  = channel
+    @interval = interval
     
   end
   
-  def active?;     @active                                      end
-  def inactive?;   not @active                                  end
-  def ready?;      @active and (Time.now >= @time)              end
-  def time_until; (@active ? [(Time.now - @time), 0].max : nil) end
+  def active?;        @active                                      end
+  def inactive?;      not @active                                  end
+  def ready?;         @active and (Time.now >= @time)              end
+  def time_until;    (@active ? [(Time.now - @time), 0].max : nil) end
   
-  def cancel;      @active = false                        ;nil  end
+  def cancel;         @active = false                         ;nil end
   
-  def fire
-    Channel.new(@channel).fire(@event)
-    (@repeat ? @time += @repeat : @active = false)
+  # Get/set @count (and apply constraints on set)
+  def count;          @count                                       end
+                                        #TODO: handle explicit cancel?
+  def count=(x);      @count=[x,0].max; @active&&=(count>0)   ;nil end
+  
+  # Inc/dec @count. Necessary because += and -= outside of lock are not atomic!
+  def count_inc(x=1); self.count=(@count+x)                        end
+  def count_dec(x=1); self.count=(@count-x)                        end
+  
+  # Fire the event now, regardless of time or active status
+  def fire(*args)
+    Channel.new(@channel).fire(@event, *args)
+    count_dec
+    @time += @interval if @active
   nil end
   
-  # Lock all instance methods with common re-entrant lock
-  threadlock instance_methods-superclass.instance_methods\
-                             -[:join]
+  # Fire the event only if it is ready
+  def fire_if_ready(*args); self.fire(*args) if ready? end
+  
+  # Block until event is ready
+  def wait_until_ready; sleep(0) until ready? end
+  
+  # Block until event is ready, then fire and block until it is done
+  def fire_when_ready(*args);
+    wait_until_ready
+    fire_if_ready(*args)
+  end
+  
+  # Lock (almost) all instance methods with common re-entrant lock
+  threadlock instance_methods-superclass.instance_methods-[
+                              :block_until_ready,
+                              :fire_when_ready]
 end
 
 # A singleton class to schedule future firing of events

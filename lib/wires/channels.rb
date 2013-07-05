@@ -8,11 +8,11 @@ nil end
 
 
 def fire(event, channel='*') 
-  Channel(channel).fire(event, blocking=false)
+  Channel(channel).fire(event, blocking:false)
 nil end
 
 def fire_and_wait(event, channel='*') 
-  Channel(channel).fire(event, blocking=true)
+  Channel(channel).fire(event, blocking:true)
 nil end
 
 
@@ -56,7 +56,7 @@ class Channel
   nil end
   
   # Fire an event on this channel
-  def fire(_event, blocking=false)
+  def fire(_event, blocking:false)
     
     # Pull out args from optional array notation
     _event = [_event] unless _event.is_a? Array
