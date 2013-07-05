@@ -9,11 +9,7 @@ module TimeTester
     Hub.run
   end
   def teardown
-    # puts "ti #{TimeScheduler.instance_variable_get(:@thread).inspect}"
-    # puts "ti"
-    # sleep 0.1
     Hub.kill :blocking, :finish_all
-    # puts 'tm'
     TimeScheduler.clear
   end
 end
@@ -103,175 +99,177 @@ describe TimeSchedulerItem do
 end
 
 
-# # Time objects get extended to call TimeScheduler.fire
-# describe Time do
-#   include TimeTester
+# Time objects get extended to call TimeScheduler.fire
+describe Time do
+  include TimeTester
   
-#   it "can now fire events at a specific time" do
+  it "can now fire events at a specific time" do
     
-#     var = 'before'
-#     on :event, 'T_A' do var='after' end
-#     0.1.seconds.from_now.fire :event
-#     sleep 0.05
-#     var.must_equal 'before'
-#     sleep 0.15
-#     var.must_equal 'after'
+    var = 'before'
+    on :event, 'T_A' do var='after' end
+    0.1.seconds.from_now.fire :event
+    sleep 0.05
+    var.must_equal 'before'
+    sleep 0.15
+    var.must_equal 'after'
     
-#   end
+  end
   
-#   it "will immediately fire events aimed at a time in the past" do
+  it "will immediately fire events aimed at a time in the past" do
     
-#     var = 'before'
-#     on :event, 'T_B' do var='after' end
-#     0.1.seconds.ago.fire :event
-#     sleep 0.05
-#     var.must_equal 'after'
-#     sleep 0.15
-#     var.must_equal 'after'
+    var = 'before'
+    on :event, 'T_B' do var='after' end
+    0.1.seconds.ago.fire :event
+    sleep 0.05
+    var.must_equal 'after'
+    sleep 0.15
+    var.must_equal 'after'
     
-#   end
+  end
   
-#   it "can be told not to fire events aimed at a time in the past" do
+  it "can be told not to fire events aimed at a time in the past" do
     
-#     var = 'before'
-#     on :event, 'T_C' do var='after' end
-#     0.1.seconds.ago.fire :event, ignore_past:true
-#     sleep 0.05
-#     var.must_equal 'before'
-#     sleep 0.15
-#     var.must_equal 'before'
+    var = 'before'
+    on :event, 'T_C' do var='after' end
+    0.1.seconds.ago.fire :event, ignore_past:true
+    sleep 0.05
+    var.must_equal 'before'
+    sleep 0.15
+    var.must_equal 'before'
     
-#   end
+  end
   
-# end
+end
 
-# # Duration objects get extended to fire anonymous event blocks
-# describe ActiveSupport::Duration do
-#   include TimeTester
+# Duration objects get extended to fire anonymous event blocks
+describe ActiveSupport::Duration do
+  include TimeTester
   
-#   it "can now fire timed anonymous events, given a code block" do
+  it "can now fire timed anonymous events, given a code block" do
     
-#     var = 'before'
-#     0.1.seconds.from_now do 
-#       var = 'after'
-#     end
-#     sleep 0.05
-#     var.must_equal 'before'
-#     sleep 0.15
-#     var.must_equal 'after'
+    var = 'before'
+    0.1.seconds.from_now do 
+      var = 'after'
+    end
+    sleep 0.05
+    var.must_equal 'before'
+    sleep 0.15
+    var.must_equal 'after'
     
-#   end
+  end
   
-#   it "can now fire anonymous events at at time related to another time" do
-#     var = 'before'
-#     0.1.seconds.until(0.2.seconds.from_now) do 
-#       var = 'after'
-#     end
-#     sleep 0.05
-#     var.must_equal 'before'
-#     sleep 0.15
-#     var.must_equal 'after'
+  it "can now fire anonymous events at at time related to another time" do
+    var = 'before'
+    0.1.seconds.until(0.2.seconds.from_now) do 
+      var = 'after'
+    end
+    sleep 0.05
+    var.must_equal 'before'
+    sleep 0.15
+    var.must_equal 'after'
     
-#   end
+  end
   
-#   it "can now fire timed anonymous events, which don't match with eachother" do
+  it "can now fire timed anonymous events, which don't match with eachother" do
     
-#     fire_count = 20
-#     done_count = 0
-#     past_events = []
+    fire_count = 20
+    done_count = 0
+    past_events = []
     
-#     for i in 0...fire_count
-#       (i*0.01+0.1).seconds.from_now do |event|
-#         done_count += 1
-#         past_events.wont_include event
-#         past_events << event
-#       end
-#     end
+    for i in 0...fire_count
+      (i*0.01+0.1).seconds.from_now do |event|
+        done_count += 1
+        past_events.wont_include event
+        past_events << event
+      end
+    end
     
-#     sleep (fire_count*0.01+0.2)
+    sleep (fire_count*0.01+0.2)
     
-#     done_count.must_equal fire_count
+    done_count.must_equal fire_count
     
-#   end
+  end
   
-# end
+end
 
-# # TimeScheduler is the main time-handling object
-# describe TimeScheduler do
-#   include TimeTester
+# TimeScheduler is the main time-handling object
+describe TimeScheduler do
+  include TimeTester
   
-#   it "can handle a barrage of events without dropping any" do
+  it "can handle a barrage of events without dropping any" do
     
-#     fire_count = 50
-#     done_count = 0
-#     go_time = 0.1.seconds.from_now
+    fire_count = 50
+    done_count = 0
+    go_time = 0.1.seconds.from_now
     
-#     on :event, 'TS_A' do done_count += 1 end
+    on :event, 'TS_A' do done_count += 1 end
     
-#     fire_count.times {go_time.fire :event, 'TS_A'}
+    fire_count.times {go_time.fire :event, 'TS_A'}
     
-#     sleep 0.2
+    sleep 0.2
     
-#     done_count.must_equal fire_count
+    done_count.must_equal fire_count
     
-#   end
+  end
   
-#   it "can provide a list of scheduled future events" do
+  # it "can provide a list of scheduled future events" do
   
-#     fire_count = 50
-#     done_count = 0
-#     go_time = 0.1.seconds.from_now
+  #   fire_count = 50
+  #   done_count = 0
+  #   go_time = 0.1.seconds.from_now
     
-#     on :event, 'TS_B' do done_count += 1 end
+  #   on :event, 'TS_B' do done_count += 1 end
     
-#     fire_count.times {go_time.fire :event, 'TS_B'}
+  #   fire_count.times {go_time.fire :event, 'TS_B'}
     
-#     sleep 0.05
+  #   p TimeScheduler.list
+  #   sleep 0.05
+  #   p TimeScheduler.list
     
-#     TimeScheduler.list.size.must_equal fire_count
+  #   TimeScheduler.list.size.must_equal fire_count
     
-#   end
+  # end
   
-#   it "can clear the scheduled future events" do
+  it "can clear the scheduled future events" do
   
-#     fire_count = 50
-#     done_count = 0
-#     go_time = 0.1.seconds.from_now
+    fire_count = 50
+    done_count = 0
+    go_time = 0.1.seconds.from_now
     
-#     on :event, 'TS_D' do done_count += 1 end
+    on :event, 'TS_D' do done_count += 1 end
     
-#     fire_count.times {go_time.fire :event, 'TS_D'}
+    fire_count.times {go_time.fire :event, 'TS_D'}
     
-#     sleep 0.05
+    sleep 0.05
     
-#     TimeScheduler.clear
-#     TimeScheduler.list.must_be_empty
+    TimeScheduler.clear
+    TimeScheduler.list.must_be_empty
     
-#   end
+  end
   
-#   it "correctly sorts the scheduled future events" do
+  it "correctly sorts the scheduled future events" do
   
-#     count = 0
+    count = 0
     
-#     on :event, 'TS_C' do |event|
-#       count += 1
-#       event.index.must_equal count%3
-#     end
+    on :event, 'TS_C' do |event|
+      count += 1
+      event.index.must_equal count%3
+    end
     
-#     e = []
-#     3.times do |i| e << [:event, index:i] end
+    e = []
+    3.times do |i| e << Event.new_from([:event, index:i]) end
     
-#     0.20.seconds.from_now.fire e[0], 'TS_C'
-#     0.10.seconds.from_now.fire e[1], 'TS_C'
-#     0.15.seconds.from_now.fire e[2], 'TS_C'
+    0.20.seconds.from_now.fire e[0], 'TS_C'
+    0.10.seconds.from_now.fire e[1], 'TS_C'
+    0.15.seconds.from_now.fire e[2], 'TS_C'
     
-#     sleep 0.05
+    sleep 0.05
     
-#     e << e.shift
-#     e.must_equal TimeScheduler.list.map { |x| x.event }
+    e << e.shift
+    e.must_equal TimeScheduler.list.map { |x| x.event }
     
-#     sleep 0.20
+    sleep 0.20
     
-#   end
+  end
   
-# end
+end
