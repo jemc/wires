@@ -56,21 +56,10 @@ class Channel
   nil end
   
   # Fire an event on this channel
-  def fire(_event, blocking:false)
+  def fire(event, blocking:false)
     
-    # Pull out args from optional array notation
-    _event = [_event] unless _event.is_a? Array
-    _event, *args = _event
-    
-    # Create event object from event as an object, class, or symbol/string
-    event = case _event
-      when Event
-        _event
-      when Class
-        _event.new(*args) if _event < Event
-      else
-        cls = Event.from_codestring(_event.to_s).new(*args)
-    end
+    # Create an instance object from one of several acceptable input forms
+    event = Event.new_from event
     
     # Fire to each relevant target on each channel
     for chan in relevant_channels()

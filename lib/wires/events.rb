@@ -69,7 +69,26 @@ class Event < Object # explicit for the sake of Event.ancestry
         "No known Event subclass with codestring: '#{str}'" end
         cls
       end
+    
+    # Convert an event from 'array notation' to an Event subclass instance
+    # TODO: List acceptable input forms here for documentation
+    def new_from(input)
       
+      # Standardize to array and pull out arguments if they exist
+      input = [input] unless input.is_a? Array
+      input, *args = input
+      
+      # Create event object from event as an object, class, or symbol/string
+      event = case input
+        when Event
+          input
+        when Class
+          input.new(*args) if input < Event
+        else
+          Event.from_codestring(input.to_s).new(*args)
+      end
+    end
+    
     # Create attributes and accessors for all arguments to the constructor.
     # This is done here rather than in initialize so that the functionality
     # will remain if the user developer overrides initialize in the subclass.
