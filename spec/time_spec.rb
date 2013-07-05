@@ -5,14 +5,24 @@ require 'minitest/autorun'
 
 # Module to ease testing of Time events
 module TimeTester
-  def setup;    Hub.run;              end
-  def teardown; Hub.kill :blocking, 
-                         :finish_all;
-                TimeScheduler.clear;  end
+  def setup
+    Hub.run
+  end
+  def teardown
+    # puts "ti #{TimeScheduler.instance_variable_get(:@thread).inspect}"
+    # puts "ti"
+    # sleep 0.1
+    Hub.kill :blocking, :finish_all
+    # puts 'tm'
+    TimeScheduler.clear
+  end
 end
 
 describe TimeSchedulerItem do
   include TimeTester
+  
+  it "blah" do
+  end
   
   it "creates an active item if time is in the future" do
     time = 5.seconds.from_now
@@ -42,12 +52,33 @@ describe TimeSchedulerItem do
     item.inactive?.must_equal true
   end
   
-  it "can manually fire an event that isn't 'ready'" do
-    time = 10.years.from_now
+  it "knows when it is 'ready' to fire" do
+    time = 0.1.seconds.from_now
     item = TimeSchedulerItem.new(time, :event, 'TSI_A')
     
     var = 'before'
     on :event, 'TSI_A' do var = 'after' end
+      
+    sleep 0.05
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+    item.ready?   .must_equal false
+    sleep 0.1
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+    item.ready?   .must_equal true
+    item.fire
+    item.active?  .must_equal false
+    item.inactive?.must_equal true
+    item.ready?   .must_equal false
+  end
+  
+  it "can manually fire an event that isn't 'ready'" do
+    time = 10.years.from_now
+    item = TimeSchedulerItem.new(time, :event, 'TSI_B')
+    
+    var = 'before'
+    on :event, 'TSI_B' do var = 'after' end
       
     item.active?  .must_equal true
     item.inactive?.must_equal false

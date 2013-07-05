@@ -62,8 +62,9 @@ class Hub
     # [+:blocking+] calling thread won't be done until Hub thread is done
     def kill(*flags)
       @finish_all = (flags.include? :finish_all)
-      @state=:dying if alive?
-      @thread.join if (flags.include? :blocking)
+      sleep 0 until alive?
+      @state=:dying
+      @thread.join if (dying? and flags.include? :blocking)
     nil end
     
     # Register hook to execute before kill - can call multiple times
@@ -191,6 +192,7 @@ class Hub
             unhandled_exception(e)
           end
         end
+        
       end
     
     nil end

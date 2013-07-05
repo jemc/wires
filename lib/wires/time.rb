@@ -3,9 +3,6 @@ class TimeSchedulerStartEvent < Event; end
 class TimeSchedulerAnonEvent  < Event; end
 
 
-# TODO: add :count kwarg
-# TODO: add #join method
-# TODO: convert event array to Event on receive??
 class TimeSchedulerItem
   
   attr_reader :time, :event, :channel, :interval
@@ -151,22 +148,22 @@ class TimeScheduler
         pending.each { |x| x.fire }
         schedule_concat pending
         
+        @sleepzone = true
         # Calculate the time to sleep based on next event's time
         if on_deck
           sleep on_deck.time_until
         else # sleep until wakeup if no event is on deck
-          sleep unless @dont_sleep
-          @dont_sleep = false
+          sleep
         end
-        
+        @sleepzone = false
       end
       
     nil end
     
     def wakeup
-      begin @thread.wakeup
-      rescue ThreadError; @dont_sleep=true
-      end
+      sleep 0 until @sleepzone==true
+      sleep 0 until @thread.status=='sleep'
+      @thread.wakeup
     nil end
     
   end
@@ -178,6 +175,7 @@ class TimeScheduler
   
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
+    sleep 0 until @sleepzone==true
     @keepgoing=false
     wakeup
   end
