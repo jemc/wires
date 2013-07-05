@@ -31,7 +31,7 @@ class TimeSchedulerItem
     end
     
     @time     = time
-    @event    = event
+    @event    = Event.new_from(event)
     @channel  = channel
     @interval = interval
     
