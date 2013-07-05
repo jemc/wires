@@ -10,13 +10,14 @@ class TimeSchedulerItem
   
   attr_reader :time, :event, :channel, :interval
   
-  def initialize(time, event, channel='*', interval:0.seconds, count:1, 
+  def initialize(time, event, channel='*', 
+                 interval:0.seconds, count:1, 
                  ignore_past:false, cancel:false)
     
     expect_type time, Time
     
     @active = (not cancel)
-    tempcount  = count
+    tempcount = count
     
     while (time < Time.now) and (tempcount > 0)
       time += interval

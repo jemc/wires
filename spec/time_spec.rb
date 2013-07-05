@@ -42,6 +42,33 @@ describe TimeSchedulerItem do
     item.inactive?.must_equal true
   end
   
+  it "can manually fire an event that isn't 'ready'" do
+    time = 10.years.from_now
+    item = TimeSchedulerItem.new(time, :event, 'TSI_A')
+    
+    var = 'before'
+    on :event, 'TSI_A' do var = 'after' end
+      
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+    item.ready?   .must_equal false
+    item.fire
+    var           .must_equal 'after'
+    item.active?  .must_equal false
+    item.inactive?.must_equal true
+    item.ready?   .must_equal false
+  end
+  
+  it "can hold a repeating event" do
+    time = Time.now
+    count = 25
+    interval = 1.seconds
+    item = TimeSchedulerItem.new(time, :event, count:count, interval:interval)
+    item.active? .must_equal true
+    item.count   .must_equal count
+    item.interval.must_equal interval
+  end
+  
 end
 
 
