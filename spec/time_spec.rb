@@ -17,9 +17,6 @@ end
 describe TimeSchedulerItem do
   include TimeTester
   
-  it "blah" do
-  end
-  
   it "creates an active item if time is in the future" do
     time = 5.seconds.from_now
     item = TimeSchedulerItem.new(time, :event)
@@ -212,23 +209,21 @@ describe TimeScheduler do
     
   end
   
-  # it "can provide a list of scheduled future events" do
+  it "can provide a list of scheduled future events" do
   
-  #   fire_count = 50
-  #   done_count = 0
-  #   go_time = 0.1.seconds.from_now
+    fire_count = 50
+    done_count = 0
+    go_time = 10.seconds.from_now
     
-  #   on :event, 'TS_B' do done_count += 1 end
+    on :event, 'TS_B' do done_count += 1 end
     
-  #   fire_count.times {go_time.fire :event, 'TS_B'}
+    fire_count.times {go_time.fire :event, 'TS_B'}
     
-  #   p TimeScheduler.list
-  #   sleep 0.05
-  #   p TimeScheduler.list
+    sleep 0.05
     
-  #   TimeScheduler.list.size.must_equal fire_count
+    TimeScheduler.list.size.must_equal fire_count
     
-  # end
+  end
   
   it "can clear the scheduled future events" do
   

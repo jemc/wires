@@ -62,7 +62,6 @@ class Hub
     # [+:blocking+] calling thread won't be done until Hub thread is done
     def kill(*flags)
       @finish_all = (flags.include? :finish_all)
-      sleep 0 until alive?
       @state=:dying
       @thread.join if (dying? and flags.include? :blocking)
     nil end

@@ -37,12 +37,12 @@ describe Channel do
     Channel.new('new').must_equal Channel('new')
   end
   
-  it "registers itself into @@channel_hash" do
-    chanlist = Channel.class_variable_get('@@channel_hash').values
-    newchan = Channel('new_channel')
-    chanlist = Channel.class_variable_get('@@channel_hash').values - chanlist
-    chanlist.must_equal [newchan]
-  end
+  # it "registers itself into @@channel_hash" do
+  #   chanlist = Channel.class_variable_get('@@channel_hash').values
+  #   newchan = Channel('new_channel')
+  #   chanlist = Channel.class_variable_get('@@channel_hash').values - chanlist
+  #   chanlist.must_equal [newchan]
+  # end
   
   it "assigns new unique object IDs in a threadsafe way" do
     for n in 1..5

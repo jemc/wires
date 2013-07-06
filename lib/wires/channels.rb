@@ -2,17 +2,17 @@
 def on(events, channels='*', &codeblock)
   channels = [channels] unless channels.is_a? Array
   for channel in channels
-    Channel(channel).register(events, codeblock)
+    Channel.new(channel).register(events, codeblock)
   end
 nil end
 
 
 def fire(event, channel='*') 
-  Channel(channel).fire(event, blocking:false)
+  Channel.new(channel).fire(event, blocking:false)
 nil end
 
 def fire_and_wait(event, channel='*') 
-  Channel(channel).fire(event, blocking:true)
+  Channel.new(channel).fire(event, blocking:true)
 nil end
 
 
@@ -28,17 +28,30 @@ class Channel
     @target_list = Set.new
   nil end
   
-  # Ensure that there is only one instance of Channel per name
+  
+  # Redefine this class method to use an alternate Hub
+  def self.hub; Hub; end
+  # Don't redefine this instance method!
+  def hub; self.class.hub; end
+  
+  # Channel registry hash and star channel reference are values
+  # In this Hash with the key being the reference to the Hub
   @@channel_hash = Hash.new
+  @@channel_star = Hash.new
+  
+  # Give out references to the star channel
+  def self.channel_star; @@channel_star[self.hub]; end
+  def      channel_star; @@channel_star[self.hub]; end
+  
+  # Ensure that there is only one instance of Channel per name
   @@new_lock = Mutex.new
   def self.new(*args, &block)
+    @@channel_star[self.hub] ||= Channel.new('*') unless (args[0]=='*')
     @@new_lock.synchronize do
-      @@channel_hash[args[0]] ||= super(*args, &block)
+      @@channel_hash[self.hub] ||= Hash.new
+      @@channel_hash[self.hub][args[0]] ||= super(*args, &block)
     end
   end
-  
-  # Class-wide reference to the global channel and event hub
-  @@channel_star = Channel('*')
   
   # Register a proc to be triggered by an event on this channel
   def register(events, proc)
@@ -65,20 +78,20 @@ class Channel
     for chan in relevant_channels()
       for target in chan.target_list
         for string in target[0] & event.class.codestrings
-          Hub << [string, event, blocking, *target[1..-1]]
+          self.class.hub << [string, event, blocking, *target[1..-1]]
     end end end
     
   nil end
   
   def relevant_channels
-    return @@channel_hash.values if self==@@channel_star
+    return @@channel_hash[hub].values if self==channel_star
     
     if self.name.is_a?(Regexp) then raise TypeError,
       "Cannot fire on Regexp channel: #{self.name}."\
       "  Regexp channels can only used in event handlers." end
       
-    relevant = [@@channel_star]
-    for c in @@channel_hash.values
+    relevant = [channel_star]
+    for c in @@channel_hash[hub].values
       relevant << c if \
         if c.name.is_a?(Regexp)
           self.name =~ c.name

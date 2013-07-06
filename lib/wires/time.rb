@@ -61,7 +61,7 @@ class TimeSchedulerItem
   def fire_if_ready(*args); self.fire(*args) if ready? end
   
   # Block until event is ready
-  def wait_until_ready; sleep(0) until ready? end
+  def wait_until_ready; sleep 0 until ready? end
   
   # Block until event is ready, then fire and block until it is done
   def fire_when_ready(*args);
@@ -171,7 +171,7 @@ class TimeScheduler
   # Use fired event to only start scheduler when Hub is running
   # This also gets the scheduler loop its own thread within the Hub's threads
   on :time_scheduler_start, self do; main_loop; end;
-  Channel(self).fire(:time_scheduler_start)
+  Channel.new(self).fire(:time_scheduler_start)
   
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
@@ -182,7 +182,7 @@ class TimeScheduler
   
   # Refire the start event after Hub dies in case it restarts
   Hub.after_kill(retain:true) do 
-    Channel(self).fire(:time_scheduler_start)
+    Channel.new(self).fire(:time_scheduler_start)
   end
   
 end
