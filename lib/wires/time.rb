@@ -174,14 +174,14 @@ class TimeScheduler
   Wires::Channel.new(self).fire(:time_scheduler_start)
   
   # Stop the main loop upon death of Hub
-  Hub.before_kill(retain:true) do 
+  Wires::Hub.before_kill(retain:true) do 
     sleep 0 until @sleepzone==true
     @keepgoing=false
     wakeup
   end
   
   # Refire the start event after Hub dies in case it restarts
-  Hub.after_kill(retain:true) do 
+  Wires::Hub.after_kill(retain:true) do 
     Channel.new(self).fire(:time_scheduler_start)
   end
   
