@@ -6,30 +6,28 @@ module Wires
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
   class Hub
-    
-    @queue = Queue.new
-    
-    @child_threads      = Array.new
-    @child_threads_lock = Mutex.new
-    
-    @before_kills = Queue.new
-    @after_kills  = Queue.new
-    
-    @please_finish_all = false
-    @please_kill       = false
-    
     # Operate on the metaclass as a type of singleton pattern
     class << self
       
-      # Clone all clonable instance variables as well
-      def clone_deeper
-        result = clone
-        self.instance_variables.each do |sym|
-          begin varcopy = instance_variable_get(sym).clone
-          rescue TypeError; end
-          result.instance_variable_set(sym, varcopy)
-        end
-        result
+      # Moved to a dedicated method for subclass' sake
+      def class_init
+        @queue = Queue.new
+        
+        @child_threads      = Array.new
+        @child_threads_lock = Mutex.new
+        
+        @before_kills = Queue.new
+        @after_kills  = Queue.new
+        
+        @please_finish_all = false
+        @please_kill       = false
+        
+        state_machine_init
+      nil end
+      
+      # Make subclasses call class_init
+      def inherited(subcls)
+        subcls.class_init
       end
       
       def dead?;  state==:dead  end
@@ -212,7 +210,7 @@ module Wires
         
       end
     end
-    state_machine_init
     
+    class_init
   end
 end
