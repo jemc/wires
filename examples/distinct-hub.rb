@@ -4,10 +4,10 @@ require 'wires'
 # require 'minitest/autorun'
 
 # Define SysHub
-SysHub = Hub.clone
+SysHub = Wires::Hub.clone
 
 # Define SysChannel
-class SysChannel < Channel
+class SysChannel < Wires::Channel
   def self.hub; SysHub; end
 end
 
@@ -28,3 +28,19 @@ def sys_fire_and_wait(event, channel='*')
 nil end
 
 def SysChannel(*args) SysChannel.new(*args) end
+
+
+
+# Test of distinct Hub system
+class MyCoolEvent < Wires::Event; end
+Wires::Hub.run
+SysHub.run
+
+on :my_cool do puts "hola" end
+sys_on :my_cool do puts "holaback" end
+
+fire(:my_cool)
+sys_fire(:my_cool)
+
+Wires::Hub.kill :blocking, :finish_all
+SysHub.kill     :blocking, :finish_all

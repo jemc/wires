@@ -47,7 +47,10 @@ module Wires
     # Ensure that there is only one instance of Channel per name
     @@new_lock = Mutex.new
     def self.new(*args, &block)
-      @@channel_star[self.hub] ||= Channel.new('*') unless (args[0]=='*')
+      (args.include? :recursion_guard) ?
+        (args.delete :recursion_guard) :
+        (@@channel_star[self.hub] ||= self.new('*', :recursion_guard))
+      
       @@new_lock.synchronize do
         @@channel_hash[self.hub] ||= Hash.new
         @@channel_hash[self.hub][args[0]] ||= super(*args, &block)
