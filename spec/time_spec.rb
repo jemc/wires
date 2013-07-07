@@ -1,7 +1,7 @@
 require 'wires'
 
-require 'minitest/spec'
 require 'minitest/autorun'
+require 'minitest/spec'
 
 # Module to ease testing of Time events
 module TimeTester

@@ -1,7 +1,7 @@
 require 'wires'
 
-require 'minitest/spec'
 require 'minitest/autorun'
+require 'minitest/spec'
 
 describe Channel do
   
