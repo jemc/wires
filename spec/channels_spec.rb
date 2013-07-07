@@ -3,24 +3,24 @@ require 'wires'
 require 'minitest/autorun'
 require 'minitest/spec'
 
-describe Channel do
+describe Wires::Channel do
   
   # Clean out channel list between each test
   def setup
-    Channel.class_variable_set('@@channel_list', Set.new([Channel('*')]))
+    Wires::Channel.class_variable_set('@@channel_list', Set.new([Channel('*')]))
   end
   
   it "takes exactly one argument" do
-    lambda {Channel.new}.must_raise ArgumentError
+    lambda {Wires::Channel.new}.must_raise ArgumentError
     for i in 2..20
-      lambda {Channel.new(*Array(i,'arg'))}
+      lambda {Wires::Channel.new(*Array(i,'arg'))}
         .must_raise ArgumentError
     end
   end
   
   it "copies exactly its one argument into Channel#name" do
     for name in ['name', :name, /regex/, Event, Event.new, Object]
-      Channel.new(name).name.must_equal name
+      Wires::Channel.new(name).name.must_equal name
     end
   end
   
@@ -34,7 +34,7 @@ describe Channel do
   end
   
   it "can be created with the alias Channel(arg)" do
-    Channel.new('new').must_equal Channel('new')
+    Wires::Channel.new('new').must_equal Channel('new')
   end
   
   # it "registers itself into @@channel_hash" do
@@ -48,7 +48,7 @@ describe Channel do
     for n in 1..5
       threads = []
       channels = []
-      proc = Proc.new {channels<<Channel.new(n)}
+      proc = Proc.new {channels<<Wires::Channel.new(n)}
       for m in 0..100
         threads[m] = Thread.new(&proc)
       end

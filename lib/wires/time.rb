@@ -171,7 +171,7 @@ class TimeScheduler
   # Use fired event to only start scheduler when Hub is running
   # This also gets the scheduler loop its own thread within the Hub's threads
   on :time_scheduler_start, self do; main_loop; end;
-  Channel.new(self).fire(:time_scheduler_start)
+  Wires::Channel.new(self).fire(:time_scheduler_start)
   
   # Stop the main loop upon death of Hub
   Hub.before_kill(retain:true) do 
