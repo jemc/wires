@@ -19,14 +19,14 @@ describe Wires::Channel do
   end
   
   it "copies exactly its one argument into Channel#name" do
-    for name in ['name', :name, /regex/, Event, Event.new, Object]
+    for name in ['name', :name, /regex/, Wires::Event, Wires::Event.new, Object]
       Wires::Channel.new(name).name.must_equal name
     end
   end
   
   it "creates exactly one unique instance for each unique name" do
     past_channels = []
-    for name in ['event', :event, /regex/, Event, Event.new, Object]
+    for name in ['event', :event, /regex/, Wires::Event, Wires::Event.new, Object]
       past_channels << (c = Channel(name))
       Channel(name).must_be_same_as c
     end

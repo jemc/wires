@@ -4,19 +4,19 @@ require 'minitest/autorun'
 require 'minitest/spec'
 
 # Set up some events for testing
-class CoolEvent       < Event;     end
+class CoolEvent       < Wires::Event;     end
 class MyFavoriteEvent < CoolEvent; end
 
-describe Event do
+describe Wires::Event do
   
   it "registers itself and its subclasses in EventRegistry.list" do
-    EventRegistry.list.must_include Event
-    EventRegistry.list.must_include CoolEvent
-    EventRegistry.list.must_include MyFavoriteEvent
+    Wires::EventRegistry.list.must_include Wires::Event
+    Wires::EventRegistry.list.must_include CoolEvent
+    Wires::EventRegistry.list.must_include MyFavoriteEvent
   end
   
   it "generates a corresponding codestring upon subclass definition" do
-    Event.codestring.must_equal           'event'
+    Wires::Event.codestring.must_equal    'event'
     CoolEvent.codestring.must_equal       'cool'
     MyFavoriteEvent.codestring.must_equal 'my_favorite'
   end
@@ -26,16 +26,16 @@ describe Event do
   end
   
   it "can be compared directly with a codestring or symbol (bidirectional)" do
-    Event.must_equal           'event'
+    Wires::Event.must_equal    'event'
     CoolEvent.must_equal       'cool'
     MyFavoriteEvent.must_equal 'my_favorite'
-    Event.must_equal           :event
+    Wires::Event.must_equal    :event
     CoolEvent.must_equal       :cool
     MyFavoriteEvent.must_equal :my_favorite
-    'event'.must_equal          Event
+    'event'.must_equal          Wires::Event
     'cool'.must_equal           CoolEvent
     'my_favorite'.must_equal    MyFavoriteEvent
-    :event.must_equal           Event
+    :event.must_equal           Wires::Event
     :cool.must_equal            CoolEvent
     :my_favorite.must_equal     MyFavoriteEvent
   end
@@ -46,18 +46,18 @@ describe Event do
     CoolEvent.must_be        :>,  :my_favorite
     CoolEvent.must_be        :>=, :my_favorite
         
-    :event.must_be           :<=, Event
-    :event.must_be           :>=, Event
-    :event.wont_be           :<,  Event
-    :event.wont_be           :>,  Event
-    :cool.must_be            :<=, Event
-    :cool.wont_be            :>=, Event
-    :cool.must_be            :<,  Event
-    :cool.wont_be            :>,  Event
-    :my_favorite.must_be     :<=, Event
-    :my_favorite.wont_be     :>=, Event
-    :my_favorite.must_be     :<,  Event
-    :my_favorite.wont_be     :>,  Event
+    :event.must_be           :<=, Wires::Event
+    :event.must_be           :>=, Wires::Event
+    :event.wont_be           :<,  Wires::Event
+    :event.wont_be           :>,  Wires::Event
+    :cool.must_be            :<=, Wires::Event
+    :cool.wont_be            :>=, Wires::Event
+    :cool.must_be            :<,  Wires::Event
+    :cool.wont_be            :>,  Wires::Event
+    :my_favorite.must_be     :<=, Wires::Event
+    :my_favorite.wont_be     :>=, Wires::Event
+    :my_favorite.must_be     :<,  Wires::Event
+    :my_favorite.wont_be     :>,  Wires::Event
     :event.wont_be           :<=, CoolEvent
     :event.must_be           :>=, CoolEvent
     :event.wont_be           :<,  CoolEvent
@@ -85,22 +85,22 @@ describe Event do
   end
   
   it "can be used to retrieve the Event class associated with a codestring" do
-    Event.from_codestring('event').must_be_same_as Event
-    Event.from_codestring(:event ).must_be_same_as Event
+    Wires::Event.from_codestring('event').must_be_same_as Wires::Event
+    Wires::Event.from_codestring(:event ).must_be_same_as Wires::Event
     for cls in [CoolEvent, MyFavoriteEvent]
-      Event.from_codestring(cls.codestring).must_be_same_as cls
+      Wires::Event.from_codestring(cls.codestring).must_be_same_as cls
     end
   end
   
   it "can tell you all about its ancestry" do
-    events = [MyFavoriteEvent, CoolEvent, Event]
+    events = [MyFavoriteEvent, CoolEvent, Wires::Event]
     events.each_index do |i|
       events[i].ancestry.must_equal events[i..-1]
     end
   end
   
   it "can tell you the codestrings of it and its ancestors" do
-    events = [MyFavoriteEvent, CoolEvent, Event]
+    events = [MyFavoriteEvent, CoolEvent, Wires::Event]
     events.each_index do |i|
       events[i].codestrings.must_equal events[i..-1].map{|cls| cls.codestring}
     end

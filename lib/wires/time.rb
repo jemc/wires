@@ -1,6 +1,6 @@
 
-class TimeSchedulerStartEvent < Event; end
-class TimeSchedulerAnonEvent  < Event; end
+class TimeSchedulerStartEvent < Wires::Event; end
+class TimeSchedulerAnonEvent  < Wires::Event; end
 
 
 class TimeSchedulerItem
