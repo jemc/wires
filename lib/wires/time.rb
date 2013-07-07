@@ -189,17 +189,18 @@ module Wires
     
   end
   
-  
-  # Reopen the Time class and add the fire method to enable nifty syntax like:
-  # 32.minutes.from_now.fire :event
-  class Time
-    def fire(event, channel='*', **kwargs)
-      TimeScheduler << TimeSchedulerItem.new(self, event, channel, **kwargs)
-    end
-  end
-  
 end # End Wires module.
-  
+
+# Reopen the Time class and add the fire method to enable nifty syntax like:
+# 32.minutes.from_now.fire :event
+class Time
+  def fire(event, channel='*', **kwargs)
+    Wires::TimeScheduler << \
+      Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+  end
+end
+
+
 # Reopen ActiveSupport::Duration to enable nifty syntax like:
 # 32.minutes.from_now do some_stuff end
 class ActiveSupport::Duration

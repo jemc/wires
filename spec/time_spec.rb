@@ -19,35 +19,35 @@ describe Wires::TimeSchedulerItem do
   
   it "creates an active item if time is in the future" do
     time = 5.seconds.from_now
-    item = TimeSchedulerItem.new(time, :event)
+    item = Wires::TimeSchedulerItem.new(time, :event)
     item.active?  .must_equal true
     item.inactive?.must_equal false
   end
   
   it "creates an active item if time is passed and ignore_past isn't used" do
     time = 5.seconds.ago
-    item = TimeSchedulerItem.new(time, :event)
+    item = Wires::TimeSchedulerItem.new(time, :event)
     item.active?  .must_equal true
     item.inactive?.must_equal false
   end
   
   it "creates an inactive item if time is passed and ignore_past is true" do
     time = 5.seconds.ago
-    item = TimeSchedulerItem.new(time, :event, ignore_past:true)
+    item = Wires::TimeSchedulerItem.new(time, :event, ignore_past:true)
     item.active?  .must_equal false
     item.inactive?.must_equal true
   end
   
   it "creates an inactive item if cancel is true" do
     time = 5.seconds.from_now
-    item = TimeSchedulerItem.new(time, :event, cancel:true)
+    item = Wires::TimeSchedulerItem.new(time, :event, cancel:true)
     item.active?  .must_equal false
     item.inactive?.must_equal true
   end
   
   it "knows when it is 'ready' to fire" do
     time = 0.1.seconds.from_now
-    item = TimeSchedulerItem.new(time, :event, 'TSI_A')
+    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_A')
     
     var = 'before'
     on :event, 'TSI_A' do var = 'after' end
@@ -68,7 +68,7 @@ describe Wires::TimeSchedulerItem do
   
   it "can manually fire an event that isn't 'ready'" do
     time = 10.years.from_now
-    item = TimeSchedulerItem.new(time, :event, 'TSI_B')
+    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_B')
     
     var = 'before'
     on :event, 'TSI_B' do var = 'after' end
@@ -87,7 +87,8 @@ describe Wires::TimeSchedulerItem do
     time = Time.now
     count = 25
     interval = 1.seconds
-    item = TimeSchedulerItem.new(time, :event, count:count, interval:interval)
+    item = Wires::TimeSchedulerItem.new(time, :event, 
+                                        count:count, interval:interval)
     item.active? .must_equal true
     item.count   .must_equal count
     item.interval.must_equal interval
@@ -221,7 +222,7 @@ describe Wires::TimeScheduler do
     
     sleep 0.05
     
-    TimeScheduler.list.size.must_equal fire_count
+    Wires::TimeScheduler.list.size.must_equal fire_count
     
   end
   
@@ -237,8 +238,8 @@ describe Wires::TimeScheduler do
     
     sleep 0.05
     
-    TimeScheduler.clear
-    TimeScheduler.list.must_be_empty
+    Wires::TimeScheduler.clear
+    Wires::TimeScheduler.list.must_be_empty
     
   end
   
@@ -252,7 +253,7 @@ describe Wires::TimeScheduler do
     end
     
     e = []
-    3.times do |i| e << Event.new_from([:event, index:i]) end
+    3.times do |i| e << Wires::Event.new_from([:event, index:i]) end
     
     0.20.seconds.from_now.fire e[0], 'TS_C'
     0.10.seconds.from_now.fire e[1], 'TS_C'
@@ -261,7 +262,7 @@ describe Wires::TimeScheduler do
     sleep 0.05
     
     e << e.shift
-    e.must_equal TimeScheduler.list.map { |x| x.event }
+    e.must_equal Wires::TimeScheduler.list.map { |x| x.event }
     
     sleep 0.20
     
