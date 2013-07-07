@@ -6,15 +6,15 @@ require 'minitest/spec'
 # Module to ease testing of Time events
 module TimeTester
   def setup
-    Hub.run
+    Wires::Hub.run
   end
   def teardown
-    Hub.kill :blocking, :finish_all
-    TimeScheduler.clear
+    Wires::Hub.kill :blocking, :finish_all
+    Wires::TimeScheduler.clear
   end
 end
 
-describe TimeSchedulerItem do
+describe Wires::TimeSchedulerItem do
   include TimeTester
   
   it "creates an active item if time is in the future" do
@@ -190,7 +190,7 @@ describe ActiveSupport::Duration do
 end
 
 # TimeScheduler is the main time-handling object
-describe TimeScheduler do
+describe Wires::TimeScheduler do
   include TimeTester
   
   it "can handle a barrage of events without dropping any" do
