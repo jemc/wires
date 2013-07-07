@@ -1,17 +1,18 @@
 
 require 'wires'
 
-Hub.run
+# Hub.run
 
-puts 'hey'
+# puts 'hey'
 
-0.5.seconds.from_now do
-  puts 'hey'
-end
+# 0.5.seconds.from_now do
+#   puts 'hey'
+# end
 
-sleep 1
+# sleep 1
 
-puts 'hey'
+# puts 'hey'
 
-Hub.kill :finish_all, :blocking
+# Hub.kill :finish_all, :blocking
+
 
