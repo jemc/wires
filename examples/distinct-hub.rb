@@ -4,7 +4,7 @@ require 'wires'
 # require 'minitest/autorun'
 
 # Define SysHub
-SysHub = Wires::Hub.clone
+SysHub = Wires::Hub.clone_deeper
 
 # Define SysChannel
 class SysChannel < Wires::Channel

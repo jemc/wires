@@ -106,7 +106,7 @@ describe Wires::Event do
     end
   end
   
-  it "automatically creates attributes, getters, and setters "\
+  it "automatically creates attributes, getters, but not setters "\
      "from the initial arguments passed to the constructor" do
     cool = CoolEvent.new(13, 24, 10, 
                          dogname:'Grover', 
@@ -114,21 +114,16 @@ describe Wires::Event do
                            {'even a passed codeblock gets internalized!'}
     
     cool.args.must_equal [13, 24, 10]
-    cool.args          = [1,2,3]
-    cool.args.must_equal [1,2,3]
+    proc{cool.args = [1,2,3]}.must_raise NoMethodError
+    cool.args << 6
+    cool.args.must_equal [13, 24, 10, 6]
     
     cool.dogname.must_equal 'Grover'
-    cool.dogname          = 'Trusty'
-    cool.dogname.must_equal 'Trusty'
     
     cool.fishscales.must_equal 7096
-    cool.fishscales          = 4122 # An unfortunate encounter with Trusty
-    cool.fishscales.must_equal 4122
     
     assert cool.codeblock.is_a? Proc
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
-    cool.codeblock = nil
-    cool.codeblock.must_be_nil
   end
   
 end

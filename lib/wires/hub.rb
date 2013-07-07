@@ -15,8 +15,22 @@ module Wires
     @before_kills = Queue.new
     @after_kills  = Queue.new
     
+    @please_finish_all = false
+    @please_kill       = false
+    
     # Operate on the metaclass as a type of singleton pattern
     class << self
+      
+      # Clone all clonable instance variables as well
+      def clone_deeper
+        result = clone
+        self.instance_variables.each do |sym|
+          begin varcopy = instance_variable_get(sym).clone
+          rescue TypeError; end
+          result.instance_variable_set(sym, varcopy)
+        end
+        result
+      end
       
       def dead?;  state==:dead  end
       def alive?; state==:alive end
@@ -165,7 +179,6 @@ module Wires
         impose_state :dead
         
         declare_state :dead do
-          # task { puts "I'm dead!" }
           
           transition_to :alive do
             after { start_hegemon_auto_thread }
@@ -173,8 +186,7 @@ module Wires
         end
         
         declare_state :alive do
-          # task { puts "I'm alive!" }
-          # task { sleep 0.05 } 
+          
           task do
             # puts "task #{Thread.current.inspect}"; 
             if @queue.empty? then sleep(0)
