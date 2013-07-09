@@ -14,16 +14,33 @@ module Wires
         @queue = Queue.new
         
         @child_threads      = Array.new
-        @child_threads_lock = Mutex.new
+        @child_threads_lock = Monitor.new
         
+        @before_runs = Queue.new
+        @after_runs  = Queue.new
         @before_kills = Queue.new
         @after_kills  = Queue.new
         
         @please_finish_all = false
         @please_kill       = false
         
+        @at_exit = Proc.new{nil}
+        at_exit do self.at_exit_proc end
+        
+        @fire_proc_alive = Proc.new do |x|
+          @queue << [x, Thread.current]
+          @thread.wakeup
+          sleep
+        end
+        @fire_proc_dead = Proc.new do |x|
+          @queue << [x, nil]
+        end
+        @fire_proc = @fire_proc_dead
+        
         state_machine_init
       nil end
+      
+      def at_exit_proc;  @at_exit.call; end
       
       # Make subclasses call class_init
       def inherited(subcls)
@@ -37,7 +54,7 @@ module Wires
       # Start the Hub event loop (optional flags change thread behavior)
       #
       # valid flags:
-      # [+:blocking+] Hub event loop will be run in calling thread,
+      # [+:in_place+] Hub event loop will be run in calling thread,
       #               blocking until Hub is killed.  If this flag is not
       #               specified, the Hub event loop is run in a new thread, 
       #               which the main thread joins in at_exit.
@@ -45,9 +62,9 @@ module Wires
         request_state :alive until alive?
         
         # If :blocking, block now, else block at exit
-        (flags.include? :blocking)   ?
-          (join_hegemon_auto_thread) :
-          (at_exit { join_hegemon_auto_thread unless $! })
+        (flags.include? :in_place)   ?
+          (@thread.join) :
+          (@at_exit = Proc.new { @thread.join if @thread and not $! })
       end
       
       ##
@@ -60,6 +77,20 @@ module Wires
         @please_finish_all = (flags.include? :finish_all)
         @please_kill = true
         block_until_state :dead if (flags.include? :blocking)
+      nil end
+      
+      # Register hook to execute before run - can call multiple times
+      def before_run(proc=nil, retain:false, &block)
+        func = (block or proc)
+        expect_type func, Proc
+        @before_runs << [func, retain]
+      nil end
+      
+      # Register hook to execute after run - can call multiple times
+      def after_run(proc=nil, retain:false, &block)
+        func = (block or proc)
+        expect_type func, Proc
+        @after_runs << [func, retain]
       nil end
       
       # Register hook to execute before kill - can call multiple times
@@ -78,13 +109,17 @@ module Wires
       
       # Put x in the queue, and block until x is processed (if Hub is running)
       def fire(x)
-        if not dead? # yield to event loop thread until awoken by it later
-          @queue << [x, Thread.current]
-          sleep
-        else        # don't wait if Hub isn't running - would cause lockup
-          @queue << [x, nil]
-        end
+        raise ThreadError, "You can't fire events from this thread." \
+          if Thread.current==@_hegemon_auto_thread \
+          or Thread.current==@thread
+        
+        @queue << [x, Thread.current]
+        (x[2] and @thread) ?
+          sleep            :
+          Thread.pass
+        
       nil end
+      # threadlock :fire, lock: :@child_threads_lock
       def <<(x); fire(x); end
       
       def flush_queue
@@ -93,7 +128,6 @@ module Wires
       
       
     private
-      
       
       # Flush/run queue of [proc, retain]s, retaining those with retain==true
       def run_hooks(hooks)
@@ -114,9 +148,9 @@ module Wires
         a_thread = Thread.new{nil}
         while a_thread
           @child_threads_lock.synchronize do
+            flush_queue
             a_thread = @child_threads.shift
           end
-          flush_queue if alive?
           a_thread.join if a_thread
           sleep 0 # Yield to other threads
         end
@@ -157,7 +191,6 @@ module Wires
           
           # Start the new child thread
           @child_threads << Thread.new do
-            waiting_thread.wakeup unless blocking or not waiting_thread
             proc.call(event)
             waiting_thread.wakeup if blocking and waiting_thread
           end
@@ -172,6 +205,19 @@ module Wires
     #***
     class << self
       include Hegemon
+      
+      # Protect Hub users methods that could cause deadlock
+      # if called from inside an event
+      private :state_obj,
+              :state_objs,
+              :request_state,
+              :update_state,
+              :do_state_tasks,
+              :iter_hegemon_auto_loop,
+              :start_hegemon_auto_thread,
+              :join_hegemon_auto_thread,
+              :end_hegemon_auto_thread
+      
       def state_machine_init
         
         impose_state :dead
@@ -179,16 +225,25 @@ module Wires
         declare_state :dead do
           
           transition_to :alive do
-            after { start_hegemon_auto_thread }
+            before { run_hooks @before_runs }
+            after  { run_hooks @after_runs }
+            after  { do_state_tasks }
+            after  { start_hegemon_auto_thread(0.1) }
+            # after  { @fire_proc = @fire_proc_alive }
           end
         end
         
         declare_state :alive do
           
-          task do
-            # puts "task #{Thread.current.inspect}"; 
-            if @queue.empty? then sleep(0)
-            else process_item(@queue.shift) end
+          task do |i|
+            
+            @thread = Thread.new do
+              while true
+                if @queue.empty? then sleep 0.1
+                else process_item(@queue.shift) end
+              end
+            end if i==0
+            
           end
           
           transition_to :dead do
@@ -198,10 +253,14 @@ module Wires
             
             before { join_children if @please_finish_all }
             
-            after  { run_hooks @after_kills  }
+            after  { @thread.kill; @thread = nil}
             
             after  { @please_kill = false }
             after  { @please_finish_all = false }
+            
+            after  { run_hooks @after_kills }
+            
+            # after  { @fire_proc = @fire_proc_dead }
             
             after  { end_hegemon_auto_thread }
             after  { do_state_tasks }
