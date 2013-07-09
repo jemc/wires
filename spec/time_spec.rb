@@ -1,102 +1,116 @@
 # require 'wires'
 
-# require 'minitest/autorun'
-# require 'minitest/spec'
+require 'set'
+require 'thread'
+require 'active_support/core_ext' # Convenience functions from Rails
+require 'threadlock' # Easily add re-entrant lock to instance methods
+require 'hegemon'    # State machine management
 
-# # Module to ease testing of Time events
-# module TimeTester
-#   def setup
-#     Wires::Hub.run
-#   end
-#   def teardown
-#     # Wires::Hub.kill :blocking, :finish_all
-#     Wires::Hub.kill 
-#     Wires::Hub.block_until_state :dead
-#     Wires::TimeScheduler.clear
-#   end
-# end
+require_relative '../lib/wires/expect_type'
+require_relative '../lib/wires/event'
+require_relative '../lib/wires/hub'
+require_relative '../lib/wires/channel'
+require_relative '../lib/wires/time'
 
-# describe Wires::TimeSchedulerItem do
-#   include TimeTester
+require 'minitest/autorun'
+require 'minitest/spec'
+
+# Module to ease testing of Time events
+module TimeTester
+  def setup
+    Wires::Hub.run
+    sleep 0.2
+  end
+  def teardown
+    sleep 0.2
+    puts "tear"
+    # Wires::Hub.kill :blocking, :finish_all
+    Wires::Hub.kill :blocking, :finish_all
+    # Wires::TimeScheduler.clear
+  end
+end
+
+describe Wires::TimeSchedulerItem do
+  include TimeTester
   
-#   it "creates an active item if time is in the future" do
-#     time = 5.seconds.from_now
-#     item = Wires::TimeSchedulerItem.new(time, :event)
-#     item.active?  .must_equal true
-#     item.inactive?.must_equal false
-#   end
+  it "creates an active item if time is in the future" do
+    time = 5.seconds.from_now
+    item = Wires::TimeSchedulerItem.new(time, :event)
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+  end
   
-#   it "creates an active item if time is passed and ignore_past isn't used" do
-#     time = 5.seconds.ago
-#     item = Wires::TimeSchedulerItem.new(time, :event)
-#     item.active?  .must_equal true
-#     item.inactive?.must_equal false
-#   end
+  it "creates an active item if time is passed and ignore_past isn't used" do
+    time = 5.seconds.ago
+    item = Wires::TimeSchedulerItem.new(time, :event)
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+  end
   
-#   it "creates an inactive item if time is passed and ignore_past is true" do
-#     time = 5.seconds.ago
-#     item = Wires::TimeSchedulerItem.new(time, :event, ignore_past:true)
-#     item.active?  .must_equal false
-#     item.inactive?.must_equal true
-#   end
+  # it "creates an inactive item if time is passed and ignore_past is true" do
+  #   time = 5.seconds.ago
+  #   item = Wires::TimeSchedulerItem.new(time, :event, ignore_past:true)
+  #   item.active?  .must_equal false
+  #   item.inactive?.must_equal true
+  # end
   
-#   it "creates an inactive item if cancel is true" do
-#     time = 5.seconds.from_now
-#     item = Wires::TimeSchedulerItem.new(time, :event, cancel:true)
-#     item.active?  .must_equal false
-#     item.inactive?.must_equal true
-#   end
+  # it "creates an inactive item if cancel is true" do
+  #   time = 5.seconds.from_now
+  #   item = Wires::TimeSchedulerItem.new(time, :event, cancel:true)
+  #   item.active?  .must_equal false
+  #   item.inactive?.must_equal true
+  # end
   
-#   it "knows when it is 'ready' to fire" do
-#     time = 0.1.seconds.from_now
-#     item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_A')
+  # it "knows when it is 'ready' to fire" do
+  #   time = 0.1.seconds.from_now
+  #   item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_A')
     
-#     var = 'before'
-#     # on :event, 'TSI_A' do var = 'after' end
+  #   var = 'before'
+  #   # on :event, 'TSI_A' do var = 'after' end
       
-#     sleep 0.05
-#     item.active?  .must_equal true
-#     item.inactive?.must_equal false
-#     item.ready?   .must_equal false
-#     sleep 0.1
-#     item.active?  .must_equal true
-#     item.inactive?.must_equal false
-#     item.ready?   .must_equal true
-#     item.fire
-#     item.active?  .must_equal false
-#     item.inactive?.must_equal true
-#     item.ready?   .must_equal false
-#   end
+  #   sleep 0.05
+  #   item.active?  .must_equal true
+  #   item.inactive?.must_equal false
+  #   item.ready?   .must_equal false
+  #   sleep 0.1
+  #   item.active?  .must_equal true
+  #   item.inactive?.must_equal false
+  #   item.ready?   .must_equal true
+  #   item.fire
+  #   item.active?  .must_equal false
+  #   item.inactive?.must_equal true
+  #   item.ready?   .must_equal false
+  # end
   
-#   it "can manually fire an event that isn't 'ready'" do
-#     time = 10.years.from_now
-#     item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_B')
+  # it "can manually fire an event that isn't 'ready'" do
+  #   time = 10.years.from_now
+  #   item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_B')
     
-#     var = 'before'
-#     on :event, 'TSI_B' do var = 'after' end
+  #   var = 'before'
+  #   on :event, 'TSI_B' do var = 'after' end
       
-#     item.active?  .must_equal true
-#     item.inactive?.must_equal false
-#     item.ready?   .must_equal false
-#     item.fire
-#     var           .must_equal 'after'
-#     item.active?  .must_equal false
-#     item.inactive?.must_equal true
-#     item.ready?   .must_equal false
-#   end
+  #   item.active?  .must_equal true
+  #   item.inactive?.must_equal false
+  #   item.ready?   .must_equal false
+  #   item.fire
+  #   var           .must_equal 'after'
+  #   item.active?  .must_equal false
+  #   item.inactive?.must_equal true
+  #   item.ready?   .must_equal false
+  # end
   
-#   it "can hold a repeating event" do
-#     time = Time.now
-#     count = 25
-#     interval = 1.seconds
-#     item = Wires::TimeSchedulerItem.new(time, :event, 
-#                                         count:count, interval:interval)
-#     item.active? .must_equal true
-#     item.count   .must_equal count
-#     item.interval.must_equal interval
-#   end
+  # it "can hold a repeating event" do
+  #   time = Time.now
+  #   count = 25
+  #   interval = 1.seconds
+  #   item = Wires::TimeSchedulerItem.new(time, :event, 
+  #                                       count:count, interval:interval)
+  #   item.active? .must_equal true
+  #   item.count   .must_equal count
+  #   item.interval.must_equal interval
+  # end
   
-# end
+end
 
 
 # # Time objects get extended to call TimeScheduler.fire

@@ -135,7 +135,6 @@ module Wires
                  :schedule_pull,
            lock: :@schedule_lock
       
-      # Do scheduled firing of events as long as Hub is alive
       def main_loop
         
         @keepgoing = true
@@ -174,16 +173,17 @@ module Wires
     # on :time_scheduler_start, self do; main_loop; end;
     # Channel.new(self).fire(:time_scheduler_start)
     
-    # Stop the main loop upon death of Hub
-    Hub.before_kill(retain:true) do 
-      sleep 0 until @sleepzone==true
-      @keepgoing=false
-      wakeup
-    end
-    
     # Refire the start event after Hub dies in case it restarts
     Hub.after_run(retain:true) do 
-      @thread = Thread.new { main_loop }
+      # @thread = Thread.new { main_loop }
+    end
+    
+    # Stop the main loop upon death of Hub
+    Hub.before_kill(retain:true) do 
+      # sleep 0 until @sleepzone==true
+      # @keepgoing=false
+      # wakeup
+      # @thread.kill
     end
     
   end

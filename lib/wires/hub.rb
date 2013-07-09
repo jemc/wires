@@ -27,25 +27,15 @@ module Wires
         @at_exit = Proc.new{nil}
         at_exit do self.at_exit_proc end
         
-        @fire_proc_alive = Proc.new do |x|
-          @queue << [x, Thread.current]
-          @thread.wakeup
-          sleep
-        end
-        @fire_proc_dead = Proc.new do |x|
-          @queue << [x, nil]
-        end
-        @fire_proc = @fire_proc_dead
-        
         state_machine_init
+        
       nil end
       
-      def at_exit_proc;  @at_exit.call; end
+      def at_exit_proc;  @at_exit.call;  end
       
       # Make subclasses call class_init
-      def inherited(subcls)
-        subcls.class_init
-      end
+      def inherited(subcls); subcls.class_init end
+      
       
       def dead?;  state==:dead  end
       def alive?; state==:alive end
@@ -71,12 +61,16 @@ module Wires
       # Kill the Hub event loop (optional flags change thread behavior)
       #
       # valid flags:
-      # [+:finish_all+] Hub thread won't be done until all child threads done
-      # [+:blocking+] calling thread won't be done until Hub thread is done
+      # [+:nonblocking+]
+      #   Without this flag, calling thread will be blocked
+      #   until Hub thread is done
+      # [+:purge_events+]
+      #   Without this flag, Hub thread won't be done 
+      #   until all child threads are done
       def kill(*flags)
-        @please_finish_all = (flags.include? :finish_all)
+        @please_finish_all = (not flags.include? :purge_events)
         @please_kill = true
-        block_until_state :dead if (flags.include? :blocking)
+        block_until_state :dead unless (flags.include? :nonblocking)
       nil end
       
       # Register hook to execute before run - can call multiple times
@@ -119,7 +113,6 @@ module Wires
           Thread.pass
         
       nil end
-      # threadlock :fire, lock: :@child_threads_lock
       def <<(x); fire(x); end
       
       def flush_queue
@@ -229,7 +222,6 @@ module Wires
             after  { run_hooks @after_runs }
             after  { do_state_tasks }
             after  { start_hegemon_auto_thread(0.1) }
-            # after  { @fire_proc = @fire_proc_alive }
           end
         end
         
@@ -259,8 +251,6 @@ module Wires
             after  { @please_finish_all = false }
             
             after  { run_hooks @after_kills }
-            
-            # after  { @fire_proc = @fire_proc_dead }
             
             after  { end_hegemon_auto_thread }
             after  { do_state_tasks }
