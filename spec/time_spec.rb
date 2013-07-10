@@ -1,4 +1,19 @@
-require 'wires'
+# require 'wires'
+
+require 'set'
+require 'thread'
+require 'active_support/core_ext' # Convenience functions from Rails
+require 'threadlock' # Easily add re-entrant lock to instance methods
+require 'hegemon'    # State machine management
+
+require_relative '../lib/wires/expect_type'
+require_relative '../lib/wires/event'
+require_relative '../lib/wires/hub'
+require_relative '../lib/wires/channel'
+require_relative '../lib/wires/time'
+
+require 'minitest/autorun'
+require 'minitest/spec'
 
 # Module to ease testing of Time events
 module TimeTester
@@ -76,6 +91,28 @@ describe Wires::TimeSchedulerItem do
     
     item.fire(blocking:true)
     
+    var           .must_equal 'after'
+    item.active?  .must_equal false
+    item.inactive?.must_equal true
+    item.ready?   .must_equal false
+    
+  end
+  
+  it "can block until an event is 'ready', then fire it" do
+    time = 0.1.seconds.from_now
+    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_C')
+    
+    var = 'before'
+    on :event, 'TSI_C' do var = 'after' end
+      
+    item.active?  .must_equal true
+    item.inactive?.must_equal false
+    item.ready?   .must_equal false
+    Time.now      .must_be :<=, time
+    
+    item.fire_when_ready(blocking:true)
+    
+    Time.now      .must_be :>=, time
     var           .must_equal 'after'
     item.active?  .must_equal false
     item.inactive?.must_equal true
@@ -232,9 +269,9 @@ describe Wires::TimeScheduler do
     done_count = 0
     go_time = 0.1.seconds.from_now
     
-    on :event, 'TS_D' do done_count += 1 end
+    on :event, 'TS_C' do done_count += 1 end
     
-    fire_count.times {go_time.fire :event, 'TS_D'}
+    fire_count.times {go_time.fire :event, 'TS_C'}
     
     sleep 0.05
     
@@ -247,7 +284,7 @@ describe Wires::TimeScheduler do
   
     count = 0
     
-    on :event, 'TS_C' do |event|
+    on :event, 'TS_D' do |event|
       count += 1
       event.index.must_equal count%3
     end
@@ -255,9 +292,9 @@ describe Wires::TimeScheduler do
     e = []
     3.times do |i| e << Wires::Event.new_from([:event, index:i]) end
     
-    0.20.seconds.from_now.fire e[0], 'TS_C'
-    0.10.seconds.from_now.fire e[1], 'TS_C'
-    0.15.seconds.from_now.fire e[2], 'TS_C'
+    0.20.seconds.from_now.fire e[0], 'TS_D'
+    0.10.seconds.from_now.fire e[1], 'TS_D'
+    0.15.seconds.from_now.fire e[2], 'TS_D'
     
     sleep 0.05
     
