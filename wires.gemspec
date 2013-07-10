@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.2.5'
-  s.date          = '2013-07-08'
+  s.version       = '0.2.6'
+  s.date          = '2013-07-09'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
                     " Patch your objects together with wires."\
@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
   
   s.add_dependency('activesupport')
-  s.add_dependency('hegemon', '~> 0.0.6')
+  s.add_dependency('hegemon', '~> 0.0.7')
   
   s.add_development_dependency('rake')
   s.add_development_dependency('minitest')

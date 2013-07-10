@@ -175,15 +175,16 @@ module Wires
     
     # Refire the start event after Hub dies in case it restarts
     Hub.after_run(retain:true) do 
-      # @thread = Thread.new { main_loop }
+      @thread = Thread.new { main_loop }
     end
     
     # Stop the main loop upon death of Hub
     Hub.before_kill(retain:true) do 
-      # sleep 0 until @sleepzone==true
-      # @keepgoing=false
-      # wakeup
-      # @thread.kill
+      sleep 0 until @sleepzone==true
+      sleep 0 until @thread.status=='sleep'
+      @keepgoing=false
+      wakeup
+      @thread.join
     end
     
   end

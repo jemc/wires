@@ -1,23 +1,5 @@
 require 'wires'
 
-require 'set'
-require 'thread'
-require 'active_support/core_ext' # Convenience functions from Rails
-require 'threadlock' # Easily add re-entrant lock to instance methods
-require_relative '../../hegemon/lib/hegemon'    # State machine management
-
-require_relative '../lib/wires/expect_type'
-require_relative '../lib/wires/event'
-require_relative '../lib/wires/hub'
-require_relative '../lib/wires/channel'
-require_relative '../lib/wires/time'
-
-require 'minitest/autorun'
-require 'minitest/spec'
-
-
-
-
 
 include Wires
 
@@ -26,7 +8,43 @@ class MyOtherEvent < Event; end
 
 describe Hub do
   
-  it "Can call hooks before and after run and kill" do
+  it "can be run and killed multiple times" do
+    
+    initial_threads = Thread.list
+    
+    Hub.dead?.must_equal true
+    Hub.state.must_equal :dead
+    
+    Hub.run
+    Hub.kill
+    
+    Thread.list.must_equal initial_threads
+    
+    Hub.run
+    Hub.kill
+    
+    Thread.list.must_equal initial_threads
+    
+    Hub.dead?.must_equal true
+    Hub.state.must_equal :dead
+    
+    Hub.run
+    
+    Hub.alive?.must_equal true
+    Hub.state.must_equal :alive
+    
+    Hub.kill
+    Hub.run
+    Hub.kill
+    
+    Hub.dead?.must_equal true
+    Hub.state.must_equal :dead
+    
+    Thread.list.must_equal initial_threads
+    
+  end
+  
+  it "can call hooks before and after run and kill" do
     
     hook_val = 'A'
     
@@ -45,42 +63,39 @@ describe Hub do
     hook_val.must_equal 'E'
     Hub.kill
     hook_val.must_equal 'I'
-    Hub.run
-    Hub.kill :purge_events
     
   end
   
-  it "can be run and killed multiple times" do
+  it "can handle events called from other events" do
     
-    assert Hub.dead?
+    count = 0
     
-    Hub.run
-    Hub.kill
-    Hub.run
-    Hub.kill
-    
-    assert Hub.dead?
+    on MyEvent, 'Hub_A' do |e|
+      count.must_equal e.i
+      count += 1
+    end
     
     Hub.run
-    
-    assert Hub.alive?
-    
+    fire MyEvent.new(i:0), 'Hub_A'
     Hub.kill
-    Hub.run
-    Hub.kill
-    
-    assert Hub.dead?
     
   end
+  
+  it "can block until the events are fired with fire_and_wait" do
     
-    # on MyEvent do
-    #   puts "my event! #{Thread.current}"
-    #   fire MyOtherEvent
-    # end
+    count = 0
     
-    # on MyOtherEvent do
-    #   puts "my other event! #{Thread.current}"
-    # end
+    on MyEvent, 'Hub_B' do |e|
+      count.must_equal e.i
+      count += 1
+      fire_and_wait(MyEvent.new(i:(e.i+1)), 'Hub_B') if e.i < 9
+      count.must_equal 10
+    end
     
-  # end
+    Hub.run
+    fire_and_wait MyEvent.new(i:0), 'Hub_B'
+    count.must_equal 10
+    Hub.kill
+    
+  end
 end

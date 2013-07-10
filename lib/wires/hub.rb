@@ -1,7 +1,5 @@
 
-# Make sure puts goes to $stdout for all threads!
-def puts(x) $stdout.puts(x) end
-
+#TODO: Allow custom grain times
 module Wires
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
@@ -49,12 +47,14 @@ module Wires
       #               specified, the Hub event loop is run in a new thread, 
       #               which the main thread joins in at_exit.
       def run(*flags)
-        request_state :alive until alive?
+        sleep 0 until request_state :alive
+        sleep 0 until @thread
         
         # If :blocking, block now, else block at exit
         (flags.include? :in_place)   ?
           (@thread.join) :
           (@at_exit = Proc.new { @thread.join if @thread and not $! })
+          
       end
       
       ##
@@ -109,7 +109,7 @@ module Wires
         
         @queue << [x, Thread.current]
         (x[2] and @thread) ?
-          sleep            :
+          sleep :
           Thread.pass
         
       nil end
@@ -220,21 +220,22 @@ module Wires
           transition_to :alive do
             before { run_hooks @before_runs }
             after  { run_hooks @after_runs }
-            after  { do_state_tasks }
-            after  { start_hegemon_auto_thread(0.1) }
+            after  { start_hegemon_auto_thread(0.05) }
           end
         end
         
         declare_state :alive do
           
           task do |i|
-            
-            @thread = Thread.new do
-              while true
-                if @queue.empty? then sleep 0.1
-                else process_item(@queue.shift) end
+            if i==0
+              @thread_continue = true
+              @thread = Thread.new do
+                while @thread_continue
+                  if @queue.empty? then sleep 0.01
+                  else process_item(@queue.shift) end
+                end
               end
-            end if i==0
+            end
             
           end
           
@@ -245,7 +246,9 @@ module Wires
             
             before { join_children if @please_finish_all }
             
-            after  { @thread.kill; @thread = nil}
+            after  { @thread_continue=false
+                     @thread.join
+                     @thread = nil }
             
             after  { @please_kill = false }
             after  { @please_finish_all = false }
@@ -253,7 +256,6 @@ module Wires
             after  { run_hooks @after_kills }
             
             after  { end_hegemon_auto_thread }
-            after  { do_state_tasks }
           end
         end
         
