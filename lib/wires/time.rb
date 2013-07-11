@@ -1,9 +1,8 @@
 
+
 module Wires
   
-  class TimeSchedulerStartEvent < Event; end
   class TimeSchedulerAnonEvent  < Event; end
-  
   
   class TimeSchedulerItem
     
@@ -68,7 +67,7 @@ module Wires
     # Block until event is ready, then fire and block until it is done
     def fire_when_ready(*args);
       wait_until_ready
-      fire_if_ready(*args)
+      fire(*args)
     end
     
     # Lock (almost) all instance methods with common re-entrant lock
@@ -233,6 +232,10 @@ class ActiveSupport::Duration
   
 end
 
+def fire_every(interval, event, channel='*', **kwargs)
+  Wires::TimeScheduler << \
+    Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+end
 
 # TODO: Repeatable event sugar?
 # TODO: Tests for all new functionality

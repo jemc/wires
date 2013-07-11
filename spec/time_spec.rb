@@ -306,3 +306,23 @@ describe Wires::TimeScheduler do
   end
   
 end
+
+describe :fire_every do
+  include TimeTester
+  
+  # Test not yet written - old copied text
+  # it "returns a repeating TimeSchedulerItem "\
+  #    "after enqueueing it in the TimeScheduler" do
+    
+  #   time = Time.now
+  #   count = 25
+  #   interval = 1.seconds
+  #   item = Wires::TimeSchedulerItem.new(time, :event, 
+  #                                       count:count, interval:interval)
+  #   item.active? .must_equal true
+  #   item.count   .must_equal count
+  #   item.interval.must_equal interval
+
+  # end
+  
+end

@@ -1,5 +1,21 @@
-require 'wires'
+# require 'wires'
 
+require 'set'
+require 'thread'
+require 'active_support/core_ext' # Convenience functions from Rails
+require 'threadlock' # Easily add re-entrant lock to instance methods
+require 'hegemon'    # State machine management
+
+require_relative '../lib/wires/expect_type'
+require_relative '../lib/wires/event'
+require_relative '../lib/wires/hub'
+require_relative '../lib/wires/channel'
+require_relative '../lib/wires/time'
+
+require 'minitest/autorun'
+require 'minitest/spec'
+
+require 'pry'
 
 include Wires
 
@@ -98,4 +114,77 @@ describe Hub do
     Hub.kill
     
   end
+  
+  it "allows the user to set an arbitrary maximum number of child_threads"\
+     " and temporarily neglects to spawn all further threads" do
+    stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
+    done_flag = false
+    spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
+    
+    Hub.max_child_threads = 3
+    Hub.max_child_threads.must_equal 3
+    Hub.run
+    Hub.max_child_threads.times do
+      Hub.spawn(*spargs).must_be_instance_of Thread
+    end
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    Hub.spawn(*spargs).must_equal false
+    Hub.instance_variable_get(:@neglected).size.must_equal 1
+    Hub.spawn(*spargs).must_equal false
+    Hub.instance_variable_get(:@neglected).size.must_equal 2
+    Hub.purge_neglected
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    Hub.spawn(*spargs).must_equal false
+    Hub.instance_variable_get(:@neglected).size.must_equal 1
+    
+    done_flag = true
+    Thread.pass
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    
+    Hub.kill
+    Hub.max_child_threads = nil
+    $stderr = stderr_save # Restore $stderr
+  end
+  
+  it "temporarily neglects procs that raise a ThreadError on creation;"\
+     " that is, when there are too many threads for the OS to handle" do
+    stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
+    done_flag = false
+    spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
+    Hub.run
+    
+    count = 0
+    while Hub.spawn(*spargs)
+      count += 1
+      Hub.instance_variable_get(:@neglected).size.must_equal 0
+    end
+    
+    Hub.instance_variable_get(:@neglected).size.must_equal 1
+    Hub.spawn(*spargs)
+    Hub.instance_variable_get(:@neglected).size.must_equal 2
+    
+    done_flag = true
+    Thread.pass
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    
+    Hub.kill
+    $stderr = stderr_save # Restore $stderr
+  end
+  
+  it "temporarily neglects procs that try to spawn before Hub is running" do
+    stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
+    var = 'before'
+    spargs = [nil, nil, proc{var = 'after'}, false]
+    
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    Hub.spawn(*spargs).must_equal false
+    Hub.instance_variable_get(:@neglected).size.must_equal 1
+    Hub.run
+    var.must_equal 'after'
+    Hub.instance_variable_get(:@neglected).size.must_equal 0
+    
+    Hub.kill
+    $stderr = stderr_save # Restore $stderr
+  end
+  
 end

@@ -82,7 +82,7 @@ module Wires
       for chan in relevant_channels()
         for target in chan.target_list
           for string in target[0] & event.class.codestrings
-            self.class.hub << [string, event, blocking, *target[1..-1]]
+            self.class.hub.spawn(event, string, *target[1], blocking)
       end end end
       
     nil end

@@ -7,12 +7,22 @@ module Wires
     # Operate on the metaclass as a type of singleton pattern
     class << self
       
+      # Allow user to get/set limit to number of child threads
+      attr_accessor :max_child_threads
+      
+      # Make subclasses call class_init
+      def inherited(subcls); subcls.class_init end
+      
       # Moved to a dedicated method for subclass' sake
       def class_init
-        @queue = Queue.new
-        
-        @child_threads      = Array.new
-        @child_threads_lock = Monitor.new
+        # @queue = Queue.new
+        @max_child_threads   = nil
+        @child_threads       = Array.new
+        @child_threads_lock  = Monitor.new
+        @neglected           = Array.new
+        @neglected_lock      = Monitor.new
+        @spawning_count      = 0
+        @spawning_count_lock = Monitor.new
         
         @before_runs = Queue.new
         @after_runs  = Queue.new
@@ -20,7 +30,6 @@ module Wires
         @after_kills  = Queue.new
         
         @please_finish_all = false
-        @please_kill       = false
         
         @at_exit = Proc.new{nil}
         at_exit do self.at_exit_proc end
@@ -31,31 +40,21 @@ module Wires
       
       def at_exit_proc;  @at_exit.call;  end
       
-      # Make subclasses call class_init
-      def inherited(subcls); subcls.class_init end
-      
       
       def dead?;  state==:dead  end
       def alive?; state==:alive end
       
       ##
-      # Start the Hub event loop (optional flags change thread behavior)
+      # Start the Hub to allow task spawning.
       #
-      # valid flags:
-      # [+:in_place+] Hub event loop will be run in calling thread,
-      #               blocking until Hub is killed.  If this flag is not
-      #               specified, the Hub event loop is run in a new thread, 
-      #               which the main thread joins in at_exit.
       def run(*flags)
-        sleep 0 until request_state :alive
-        sleep 0 until @thread
-        
-        # If :blocking, block now, else block at exit
-        (flags.include? :in_place)   ?
-          (@thread.join) :
-          (@at_exit = Proc.new { @thread.join if @thread and not $! })
-          
-      end
+        sleep 0 until @spawning_count <= 0
+        @spawning_count_lock.synchronize do
+          sleep 0 until request_state :alive
+        end
+        spawn_neglected_task_threads
+        join_children
+      nil end
       
       ##
       # Kill the Hub event loop (optional flags change thread behavior)
@@ -64,63 +63,113 @@ module Wires
       # [+:nonblocking+]
       #   Without this flag, calling thread will be blocked
       #   until Hub thread is done
-      # [+:purge_events+]
+      # [+:purge_tasks+]
       #   Without this flag, Hub thread won't be done 
       #   until all child threads are done
       def kill(*flags)
-        @please_finish_all = (not flags.include? :purge_events)
-        @please_kill = true
-        block_until_state :dead unless (flags.include? :nonblocking)
+        sleep 0 until @spawning_count <= 0
+        # @spawning_count_lock.synchronize do
+          @please_finish_all = (not flags.include? :purge_tasks)
+          sleep 0 until request_state :dead unless (flags.include? :nonblocking)
+        # end
       nil end
       
       # Register hook to execute before run - can call multiple times
-      def before_run(proc=nil, retain:false, &block)
-        func = (block or proc)
-        expect_type func, Proc
-        @before_runs << [func, retain]
+      def before_run(retain=false, &block)
+        @before_runs << [block, retain]
       nil end
       
       # Register hook to execute after run - can call multiple times
-      def after_run(proc=nil, retain:false, &block)
-        func = (block or proc)
-        expect_type func, Proc
-        @after_runs << [func, retain]
+      def after_run(retain=false, &block)
+        @after_runs << [block, retain]
       nil end
       
       # Register hook to execute before kill - can call multiple times
-      def before_kill(proc=nil, retain:false, &block)
-        func = (block or proc)
-        expect_type func, Proc
-        @before_kills << [func, retain]
+      def before_kill(retain=false, &block)
+        @before_kills << [block, retain]
       nil end
       
       # Register hook to execute after kill - can call multiple times
-      def after_kill(proc=nil, retain:false, &block)
-        func = (block or proc)
-        expect_type func, Proc
-        @after_kills << [func, retain]
+      def after_kill(retain=false, &block)
+        @after_kills << [block, retain]
       nil end
       
-      # Put x in the queue, and block until x is processed (if Hub is running)
-      def fire(x)
-        raise ThreadError, "You can't fire events from this thread." \
-          if Thread.current==@_hegemon_auto_thread \
-          or Thread.current==@thread
+      # Spawn a task
+      def spawn(*args) # :args: event, ch_string, proc, blocking
+        @spawning_count_lock.synchronize { @spawning_count += 1 }
         
-        @queue << [x, Thread.current]
-        (x[2] and @thread) ?
-          sleep :
-          Thread.pass
+        return neglect(*args) if dead?
         
-      nil end
-      def <<(x); fire(x); end
-      
-      def flush_queue
-        (process_item(@queue.shift) until @queue.empty?)
+        event, ch_string, proc, blocking = *args
+        
+        # If blocking, run the proc in this thread
+        if blocking
+          proc.call(event, ch_string)
+          return :done
+        end
+        
+        # If not blocking, clear old threads and spawn a new thread
+        new_thread = nil
+        
+        @child_threads_lock.synchronize do
+          
+          # Clear out dead threads
+          @child_threads.select!{|t| t.status}
+          
+          begin
+            # Raise ThreadError for user-set thread limit to mimic OS limit
+            raise ThreadError if (@max_child_threads) and \
+                                 (@max_child_threads <= @child_threads.size)
+            # Start the new child thread; follow with chain of neglected tasks
+            new_thread = Thread.new { proc.call(event, ch_string); \
+                                      spawn_neglected_task_chain }
+          # Capture ThreadError from either OS or user-set limitation
+          rescue ThreadError; return neglect(*args); end
+          
+          @child_threads << new_thread
+          return new_thread
+        end
+        
+      ensure
+        @spawning_count_lock.synchronize { @spawning_count -= 1 }
       end
       
+      def purge_neglected
+        @neglected_lock.synchronize do
+          @neglected = Array.new
+        end
+      end
       
     private
+      
+      # Temporarily neglect a task until resources are available to run it
+      def neglect(*args)
+        $stderr.puts "#{self} neglected to spawn #{args.inspect}"
+        @neglected_lock.synchronize do
+          @neglected << args
+        end
+      false end
+      
+      # Run a chain of @neglected tasks in place until no more are waiting
+      def spawn_neglected_task_chain
+        neglected_one = nil
+        @neglected_lock.synchronize do
+          return nil if @neglected.empty?
+          neglected_one = @neglected.shift
+        end
+        spawn(*((neglected_one)[0...-1]<<true)) # Call with blocking
+        spawn_neglected_task_chain
+      nil end
+      
+      # Flush @neglected task queue, each in a new thread
+      def spawn_neglected_task_threads
+        until (cease||=false)
+          @neglected_lock.synchronize do
+            break if (cease = @neglected.empty?)
+            spawn(*((@neglected.shift)[0...-1]<<false)) # Call without blocking
+          end
+        end
+      nil end
       
       # Flush/run queue of [proc, retain]s, retaining those with retain==true
       def run_hooks(hooks)
@@ -129,7 +178,7 @@ module Wires
           proc, retain = hooks.shift
           retained << [proc, retain] if retain
           proc.call
-          flush_queue if alive?
+          # flush_queue if alive?
         end
         while not retained.empty?
           hooks << retained.shift
@@ -141,52 +190,11 @@ module Wires
         a_thread = Thread.new{nil}
         while a_thread
           @child_threads_lock.synchronize do
-            flush_queue
+            # flush_queue
             a_thread = @child_threads.shift
           end
           a_thread.join if a_thread
           sleep 0 # Yield to other threads
-        end
-      nil end
-      
-      # Kill all currently working child threads
-      # Newly fired events could still queue up, 
-      # Waiting to be born until this thread is done killing
-      def kill_children
-        @child_threads_lock.synchronize do
-          until @child_threads.empty?
-            @child_threads.shift.exit
-          end
-        end
-      nil end
-      
-      # Kill all currently working child threads
-      # Newly fired events could still queue up, 
-      # But they will be cleared out and never be born
-      def kill_children_and_clear
-        @child_threads_lock.synchronize do
-          until @child_threads.empty?
-            @child_threads.shift.exit
-          end
-          clear
-        end
-      nil end
-      
-      def process_item(x)
-        x, waiting_thread = x
-        string, event, blocking, proc = x
-        
-        # Do all dealings with @child_threads under mutex
-        @child_threads_lock.synchronize do
-          
-          # Clear dead child threads to free up memory
-          @child_threads.select! {|t| t.status}
-          
-          # Start the new child thread
-          @child_threads << Thread.new do
-            proc.call(event)
-            waiting_thread.wakeup if blocking and waiting_thread
-          end
         end
       nil end
       
@@ -216,46 +224,19 @@ module Wires
         impose_state :dead
         
         declare_state :dead do
-          
           transition_to :alive do
             before { run_hooks @before_runs }
             after  { run_hooks @after_runs }
-            after  { start_hegemon_auto_thread(0.05) }
           end
         end
         
         declare_state :alive do
-          
-          task do |i|
-            if i==0
-              @thread_continue = true
-              @thread = Thread.new do
-                while @thread_continue
-                  if @queue.empty? then sleep 0.01
-                  else process_item(@queue.shift) end
-                end
-              end
-            end
-            
-          end
-          
           transition_to :dead do
-            condition {@please_kill}
-            
             before { run_hooks @before_kills }
-            
+            before { purge_neglected }
             before { join_children if @please_finish_all }
-            
-            after  { @thread_continue=false
-                     @thread.join
-                     @thread = nil }
-            
-            after  { @please_kill = false }
             after  { @please_finish_all = false }
-            
             after  { run_hooks @after_kills }
-            
-            after  { end_hegemon_auto_thread }
           end
         end
         
