@@ -10,6 +10,8 @@ module Wires
       # Allow user to get/set limit to number of child threads
       attr_accessor :max_child_threads
       
+    private
+    
       # Make subclasses call class_init
       def inherited(subcls); subcls.class_init end
       
@@ -31,15 +33,19 @@ module Wires
         
         @please_finish_all = false
         
-        @at_exit = Proc.new{nil}
-        at_exit do self.at_exit_proc end
+        @on_neglect = Proc.new do |args|
+          sleep 0.5
+          $stderr.puts "#{self} neglected to spawn task: #{args.inspect}"
+        end
+        @on_neglect_done = Proc.new do |args|
+          $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
+        end
         
         state_machine_init
         
       nil end
       
-      def at_exit_proc;  @at_exit.call;  end
-      
+    public
       
       def dead?;  state==:dead  end
       def alive?; state==:alive end
@@ -68,10 +74,8 @@ module Wires
       #   until all child threads are done
       def kill(*flags)
         sleep 0 until @spawning_count <= 0
-        # @spawning_count_lock.synchronize do
-          @please_finish_all = (not flags.include? :purge_tasks)
-          sleep 0 until request_state :dead unless (flags.include? :nonblocking)
-        # end
+        @please_finish_all = (not flags.include? :purge_tasks)
+        sleep 0 until request_state :dead unless (flags.include? :nonblocking)
       nil end
       
       # Register hook to execute before run - can call multiple times
@@ -93,6 +97,13 @@ module Wires
       def after_kill(retain=false, &block)
         @after_kills << [block, retain]
       nil end
+      
+      def on_neglect(&block)
+        @on_neglect=block
+      end
+      def on_neglect_done(&block)
+        @on_neglect_done=block
+      end
       
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking
@@ -136,38 +147,59 @@ module Wires
       
       def purge_neglected
         @neglected_lock.synchronize do
-          @neglected = Array.new
+          @neglected.clear
+        end
+      nil end
+      
+      def number_neglected
+        @neglected_lock.synchronize do
+          @neglected.size
         end
       end
+      
+      # Join child threads, one by one, allowing more children to appear
+      def join_children
+        a_thread = Thread.new{nil}
+        while a_thread
+          @child_threads_lock.synchronize do
+            a_thread = @child_threads.shift
+          end
+          a_thread.join if a_thread
+          sleep 0 # Yield to other threads
+        end
+      nil end
       
     private
       
       # Temporarily neglect a task until resources are available to run it
       def neglect(*args)
-        $stderr.puts "#{self} neglected to spawn #{args.inspect}"
         @neglected_lock.synchronize do
+          @on_neglect.call(args)
           @neglected << args
         end
       false end
       
       # Run a chain of @neglected tasks in place until no more are waiting
       def spawn_neglected_task_chain
-        neglected_one = nil
-        @neglected_lock.synchronize do
+        args = @neglected_lock.synchronize do
           return nil if @neglected.empty?
-          neglected_one = @neglected.shift
+          ((@neglected.shift)[0...-1]<<true) # Call with blocking
         end
-        spawn(*((neglected_one)[0...-1]<<true)) # Call with blocking
+        spawn(*args)
+        @on_neglect_done.call(args)
         spawn_neglected_task_chain
       nil end
       
       # Flush @neglected task queue, each in a new thread
       def spawn_neglected_task_threads
         until (cease||=false)
-          @neglected_lock.synchronize do
+          args = @neglected_lock.synchronize do
             break if (cease = @neglected.empty?)
-            spawn(*((@neglected.shift)[0...-1]<<false)) # Call without blocking
+            ((@neglected.shift)[0...-1]<<false) # Call without blocking
           end
+          break if cease
+          spawn(*args)
+          @on_neglect_done.call(args)
         end
       nil end
       
@@ -182,19 +214,6 @@ module Wires
         end
         while not retained.empty?
           hooks << retained.shift
-        end
-      nil end
-      
-      # Join child threads, one by one, allowing more children to appear
-      def join_children
-        a_thread = Thread.new{nil}
-        while a_thread
-          @child_threads_lock.synchronize do
-            # flush_queue
-            a_thread = @child_threads.shift
-          end
-          a_thread.join if a_thread
-          sleep 0 # Yield to other threads
         end
       nil end
       
