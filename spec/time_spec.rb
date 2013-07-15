@@ -4,6 +4,7 @@ require 'wires'
 require 'minitest/autorun'
 require 'minitest/spec'
 
+
 # Module to ease testing of Time events
 module TimeTester
   def setup

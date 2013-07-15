@@ -4,6 +4,7 @@ require 'wires'
 require 'minitest/autorun'
 require 'minitest/spec'
 
+
 describe Wires::Channel do
   
   # Clean out channel list between each test
