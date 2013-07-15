@@ -8,7 +8,9 @@ Gem::Specification.new do |s|
                     " Inspired by the python 'circuits' framework."
   s.authors       = ["Joe McIlvain"]
   s.email         = 'joe.eli.mac@gmail.com'
+  
   s.files         = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
+  
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/jemc/wires/'
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
