@@ -41,6 +41,8 @@ module Wires
           $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
         end
         
+        at_exit { (sleep 0.05 until dead?) unless $! }
+        
         state_machine_init
         
       nil end
