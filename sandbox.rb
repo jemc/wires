@@ -23,20 +23,26 @@ include Wires
 # fib.resume
 # p fib.resume
 
-def foo(x)
-  puts "hello"
-  if x==5
-    return 55
-  elsif x==6
-    return 66
-  else
-    return 0
-  end
-ensure
-  puts "goodbye"
-end
+# def foo(x)
+#   puts "hello"
+#   if x==5
+#     return 55
+#   elsif x==6
+#     return 66
+#   else
+#     return 0
+#   end
+# ensure
+#   puts "goodbye"
+# end
 
-puts foo 5
-puts foo 6
-puts foo 0
-      
+# puts foo 5
+# puts foo 6
+# puts foo 0
+#       
+
+# i,o = IO.pipe
+
+# Thread.new {i.readpartial(1); puts "hey!"}
+# Thread.new {sleep 0.5; o.write("blah")}
+# sleep 1

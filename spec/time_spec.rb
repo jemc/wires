@@ -1,16 +1,20 @@
-# require 'wires'
+require 'wires'
 
-require 'set'
-require 'thread'
-require 'active_support/core_ext' # Convenience functions from Rails
-require 'threadlock' # Easily add re-entrant lock to instance methods
-require 'hegemon'    # State machine management
+# require 'set'
+# require 'thread'
+# require 'active_support/core_ext' # Convenience functions from Rails
+# require 'threadlock' # Easily add re-entrant lock to instance methods
+# require 'hegemon'    # State machine management
 
-require_relative '../lib/wires/expect_type'
-require_relative '../lib/wires/event'
-require_relative '../lib/wires/hub'
-require_relative '../lib/wires/channel'
-require_relative '../lib/wires/time'
+# require_relative '../lib/wires/expect_type'
+# require_relative '../lib/wires/event'
+# require_relative '../lib/wires/hub'
+# require_relative '../lib/wires/channel'
+# require_relative '../lib/wires/time'
+
+# require 'pry'
+# Thread.new do sleep 5; binding.pry end
+
 
 require 'minitest/autorun'
 require 'minitest/spec'
@@ -267,7 +271,7 @@ describe Wires::TimeScheduler do
   
     fire_count = 50
     done_count = 0
-    go_time = 0.1.seconds.from_now
+    go_time = 10.hours.from_now
     
     on :event, 'TS_C' do done_count += 1 end
     
@@ -284,24 +288,15 @@ describe Wires::TimeScheduler do
   
     count = 0
     
-    on :event, 'TS_D' do |event|
-      count += 1
-      event.index.must_equal count%3
-    end
-    
     e = []
     3.times do |i| e << Wires::Event.new_from([:event, index:i]) end
     
-    0.20.seconds.from_now.fire e[0], 'TS_D'
-    0.10.seconds.from_now.fire e[1], 'TS_D'
-    0.15.seconds.from_now.fire e[2], 'TS_D'
-    
-    sleep 0.05
+    3.hours.from_now.fire e[0], 'TS_D'
+    1.hours.from_now.fire e[1], 'TS_D'
+    2.hours.from_now.fire e[2], 'TS_D'
     
     e << e.shift
     e.must_equal Wires::TimeScheduler.list.map { |x| x.event }
-    
-    sleep 0.20
     
   end
   
@@ -326,3 +321,4 @@ describe :fire_every do
   # end
   
 end
+

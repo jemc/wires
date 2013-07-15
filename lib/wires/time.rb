@@ -37,7 +37,9 @@ module Wires
     
     def active?;        @active                                      end
     def inactive?;      not @active                                  end
-    def ready?;         @active and (Time.now >= @time)              end
+    
+    def ready?(at_time=Time.now);  @active and (at_time >= @time)    end
+    
     def time_until;    (@active ? [(Time.now - @time), 0].max : nil) end
     
     def cancel;         @active = false                         ;nil end
@@ -83,6 +85,8 @@ module Wires
     @schedule_lock  = Monitor.new
     @dont_sleep     = false
     
+    @grain = 1.seconds
+    
     # Operate on the metaclass as a type of singleton pattern
     class << self
       
@@ -90,7 +94,6 @@ module Wires
       def add(new_item)
         expect_type new_item, TimeSchedulerItem
         schedule_add(new_item)
-        wakeup
       nil end
       # Add an event to the schedule using << operator
       alias_method :<<, :add
@@ -98,9 +101,13 @@ module Wires
       # Get a copy of the event schedule from outside the class
       def list;  @schedule.clone end
       # Clear the event schedule from outside the class
-      def clear; @schedule.clear end
+      def clear; schedule_clear end
       
     private
+    
+      def schedule_clear
+        @schedule.clear
+      end
     
       def schedule_reshuffle
         @schedule.select! {|x| x.active?}
@@ -108,8 +115,12 @@ module Wires
       nil end
       
       def schedule_add(new_item)
-        @schedule << new_item
-        schedule_reshuffle
+        if new_item.ready?(@next_pass)
+          Thread.new{ new_item.fire_when_ready(blocking:true) }
+        else
+          @schedule << new_item
+          schedule_reshuffle
+        end
       nil end
       
       def schedule_concat(other_list)
@@ -118,72 +129,69 @@ module Wires
       nil end
       
       def schedule_pull
-        pending = Array.new
+        pending_now  = Array.new
+        pending_soon = Array.new
         while ((not @schedule.empty?) and @schedule[0].ready?)
-          pending << @schedule.shift
+          pending_now << @schedule.shift
         end
-        [pending, @schedule[0]]
+        while ((not @schedule.empty?) and @schedule[0].ready?(@next_pass))
+          pending_soon << @schedule.shift
+        end
+        return [pending_now, pending_soon]
+      end
+      
+      def schedule_next_pass
+        @next_pass = Time.now+@grain
       end
       
       # Put all functions dealing with @schedule under @schedule_lock
       threadlock :list,
-                 :clear,
+                 :schedule_clear,
                  :schedule_reshuffle,
                  :schedule_add,
                  :schedule_concat,
                  :schedule_pull,
+                 :schedule_next_pass,
            lock: :@schedule_lock
       
       def main_loop
         
-        @keepgoing = true
+        # @keepgoing = true
         pending = Array.new
         on_deck = nil
         
         while @keepgoing
           
-          # Pull, fire, and requeue relevant events
-          pending, on_deck = schedule_pull
-          pending.each { |x| x.fire }
-          schedule_concat pending
+          schedule_next_pass
           
-          @sleepzone = true
-          # Calculate the time to sleep based on next event's time
-          if on_deck
-            sleep on_deck.time_until
-          else # sleep until wakeup if no event is on deck
-            sleep
-          end
-          @sleepzone = false
+          # Pull, fire, and requeue relevant events
+          pending_now, pending_soon = schedule_pull
+          pending_now.each { |x| x.fire }
+          pending_soon.each{ |x| Thread.new{ x.fire_when_ready(blocking:true) }}
+          # schedule_concat pending_now
+          
+          sleep [@next_pass-Time.now, 0].max
         end
         
       nil end
       
-      def wakeup
-        sleep 0 until @sleepzone==true
-        sleep 0 until @thread.status=='sleep'
-        @thread.wakeup
-      nil end
-      
     end
     
-    # Use fired event to only start scheduler when Hub is running
-    # This also gets the scheduler loop its own thread within the Hub's threads
-    # on :time_scheduler_start, self do; main_loop; end;
-    # Channel.new(self).fire(:time_scheduler_start)
-    
-    # Refire the start event after Hub dies in case it restarts
+    # Start the main loop upon run of Hub
     Hub.after_run(retain:true) do 
+      @keepgoing = true
       @thread = Thread.new { main_loop }
     end
     
     # Stop the main loop upon death of Hub
-    Hub.before_kill(retain:true) do 
-      sleep 0 until @sleepzone==true
-      sleep 0 until @thread.status=='sleep'
-      @keepgoing=false
-      wakeup
+    Hub.before_kill(retain:true) do
+      Thread.exclusive do
+        @keepgoing=false
+        @next_pass=Time.now
+        @thread.wakeup
+      end
       @thread.join
+      schedule_clear
     end
     
   end
