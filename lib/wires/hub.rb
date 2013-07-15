@@ -34,7 +34,6 @@ module Wires
         @please_finish_all = false
         
         @on_neglect = Proc.new do |args|
-          sleep 0.5
           $stderr.puts "#{self} neglected to spawn task: #{args.inspect}"
         end
         @on_neglect_done = Proc.new do |args|
@@ -166,7 +165,7 @@ module Wires
           @child_threads_lock.synchronize do
             a_thread = @child_threads.shift
           end
-          a_thread.join if a_thread
+          a_thread.join if ((a_thread) and (a_thread!=Thread.current))
           sleep 0 # Yield to other threads
         end
       nil end
