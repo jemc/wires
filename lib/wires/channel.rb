@@ -1,24 +1,28 @@
 
-def on(events, channels='*', &codeblock)
-  channels = [channels] unless channels.is_a? Array
-  for channel in channels
-    Wires::Channel.new(channel).register(events, codeblock)
-  end
-nil end
+module WiresConvenience
+  
+  def on(events, channels='*', &codeblock)
+    channels = [channels] unless channels.is_a? Array
+    for channel in channels
+      Wires::Channel.new(channel).register(events, codeblock)
+    end
+  nil end
+  
+  def fire(event, channel='*') 
+    Wires::Channel.new(channel).fire(event, blocking:false)
+  nil end
+  
+  def fire_and_wait(event, channel='*') 
+    Wires::Channel.new(channel).fire(event, blocking:true)
+  nil end
+  
+  def Channel(*args) Wires::Channel.new(*args) end
+    
+end
 
-
-def fire(event, channel='*') 
-  Wires::Channel.new(channel).fire(event, blocking:false)
-nil end
-
-def fire_and_wait(event, channel='*') 
-  Wires::Channel.new(channel).fire(event, blocking:true)
-nil end
-
-
-def Channel(*args) Wires::Channel.new(*args) end
 
 module Wires
+  
   class Channel
     
     attr_reader :name
@@ -28,7 +32,6 @@ module Wires
       @name = name
       @target_list = Set.new
     nil end
-    
     
     # Redefine this class method to use an alternate Hub
     def self.hub; Hub; end
@@ -108,5 +111,7 @@ module Wires
       end
       return relevant.uniq
     end
+    
   end
+  
 end

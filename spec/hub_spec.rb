@@ -10,11 +10,14 @@ class MyOtherEvent < Wires::Event; end
 
 describe Wires::Hub do
   
+  # it "allows the setting of custom grains"  # TODO
+  
   it "can be run and killed multiple times" do
     
     initial_threads = Thread.list
     
     Wires::Hub.dead?.must_equal true
+    Wires::Hub.state.must_equal :dead
     Wires::Hub.state.must_equal :dead
     
     Wires::Hub.run
@@ -211,7 +214,7 @@ describe Wires::Hub do
     count.must_be :==, 0
     Wires::Hub.kill
     
-    Wires::Hub.send(:class_init) # Reset neglect procs
+    Wires::Hub.reset_neglect_procs
     $stderr = stderr_save # Restore $stderr
   end
   

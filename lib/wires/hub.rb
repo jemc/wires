@@ -1,5 +1,4 @@
 
-#TODO: Allow custom grain times
 module Wires
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
@@ -33,12 +32,7 @@ module Wires
         
         @please_finish_all = false
         
-        @on_neglect = Proc.new do |args|
-          $stderr.puts "#{self} neglected to spawn task: #{args.inspect}"
-        end
-        @on_neglect_done = Proc.new do |args|
-          $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
-        end
+        reset_neglect_procs
         
         at_exit { (sleep 0.05 until dead?) unless $! }
         
@@ -101,10 +95,19 @@ module Wires
       
       def on_neglect(&block)
         @on_neglect=block
-      end
+      nil end
       def on_neglect_done(&block)
         @on_neglect_done=block
-      end
+      nil end
+      
+      def reset_neglect_procs
+        @on_neglect = Proc.new do |args|
+          $stderr.puts "#{self} neglected to spawn task: #{args.inspect}"
+        end
+        @on_neglect_done = Proc.new do |args|
+          $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
+        end
+      nil end
       
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking

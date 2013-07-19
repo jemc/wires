@@ -1,5 +1,4 @@
 
-
 module Wires
   
   class TimeSchedulerAnonEvent  < Event; end
@@ -240,9 +239,13 @@ class ActiveSupport::Duration
   
 end
 
-def fire_every(interval, event, channel='*', **kwargs)
-  Wires::TimeScheduler << \
-    Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+module WiresConvenience
+  
+  def fire_every(interval, event, channel='*', **kwargs)
+    Wires::TimeScheduler << \
+      Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+  end
+  
 end
 
 # TODO: Repeatable event sugar?

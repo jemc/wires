@@ -1,5 +1,5 @@
-require 'wires'
-# require 'wires-devel'
+# require 'wires'
+require_relative 'wires-devel'
 
 require 'minitest/autorun'
 require 'minitest/spec'
@@ -222,6 +222,7 @@ describe Wires::TimeScheduler do
   include TimeTester
   
   it "can handle a barrage of events without dropping any" do
+    # Wires::Hub.run
     
     fire_count = 50
     done_count = 0
@@ -235,6 +236,7 @@ describe Wires::TimeScheduler do
     
     done_count.must_equal fire_count
     
+    # Wires::Hub.kill
   end
   
   it "can provide a list of scheduled future events" do

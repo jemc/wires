@@ -9,3 +9,5 @@ require_relative '../lib/wires/event'
 require_relative '../lib/wires/hub'
 require_relative '../lib/wires/channel'
 require_relative '../lib/wires/time'
+
+include WiresConvenience

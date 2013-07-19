@@ -1,2 +1,5 @@
-require './spec/wires-devel'
-include Wires
+module A
+  def foo
+    puts "foob!"
+  end
+end
