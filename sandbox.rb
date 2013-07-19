@@ -12,14 +12,14 @@ end
 include A
 include B
 
-p method(:foo).owner
-p method(:bar)
+# p method(:foo).owner
+# p method(:bar)
 
 class << self
-  target_owner = WiresConvenience
-  ObjectSpace.each_object
+  target_owner = A
+p ObjectSpace.each_object
              .select { |o| o.is_a? Method }
-             .select { |m| m.owner==target_owner }
+             .reject { |m| m.owner==target_owner }
              .map {|m| m.name.to_sym }
-             .each { |m| undef_method m }
+             # .each { |m| undef_method m }
 end
