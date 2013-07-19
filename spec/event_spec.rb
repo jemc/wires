@@ -1,5 +1,5 @@
 require 'wires'
-# require 'wires-devel'
+# require_relative 'wires-devel'
 
 require 'minitest/autorun'
 require 'minitest/spec'
