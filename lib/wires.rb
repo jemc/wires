@@ -10,4 +10,4 @@ require 'wires/hub'
 require 'wires/channel'
 require 'wires/time'
 
-include WiresConvenience
+include Wires::Convenience # require 'wires/clean' to uninclude Convenience

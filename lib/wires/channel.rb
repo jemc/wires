@@ -1,23 +1,25 @@
 
-module WiresConvenience
-  
-  def on(events, channels='*', &codeblock)
-    channels = [channels] unless channels.is_a? Array
-    for channel in channels
-      Wires::Channel.new(channel).register(events, codeblock)
-    end
-  nil end
-  
-  def fire(event, channel='*') 
-    Wires::Channel.new(channel).fire(event, blocking:false)
-  nil end
-  
-  def fire_and_wait(event, channel='*') 
-    Wires::Channel.new(channel).fire(event, blocking:true)
-  nil end
-  
-  def Channel(*args) Wires::Channel.new(*args) end
+module Wires
+  module Convenience
     
+    def on(events, channels='*', &codeblock)
+      channels = [channels] unless channels.is_a? Array
+      for channel in channels
+        Wires::Channel.new(channel).register(events, codeblock)
+      end
+    nil end
+    
+    def fire(event, channel='*') 
+      Wires::Channel.new(channel).fire(event, blocking:false)
+    nil end
+    
+    def fire_and_wait(event, channel='*') 
+      Wires::Channel.new(channel).fire(event, blocking:true)
+    nil end
+    
+    def Channel(*args) Wires::Channel.new(*args) end
+    
+  end
 end
 
 
