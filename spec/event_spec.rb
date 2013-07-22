@@ -121,8 +121,12 @@ describe Wires::Event do
     cool.args.must_equal [13, 24, 10, 6]
     
     cool.dogname.must_equal 'Grover'
-    
     cool.fishscales.must_equal 7096
+    
+    checkhash = Hash.new
+    checkhash[:dogname] = 'Grover'
+    checkhash[:fishscales] = 7096
+    cool.kwargs.must_equal checkhash
     
     assert cool.codeblock.is_a? Proc
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
