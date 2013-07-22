@@ -1,10 +1,10 @@
-module A
-  require "wires"
-end
+# module A
+#   require "wires"
+# end
 
-p Channel('dog')
+# p Channel('dog')
 
-p method(:Channel)
+# p method(:Channel)
 
 # class << self
 #   target_owner = A
