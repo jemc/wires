@@ -33,6 +33,7 @@ module Wires
         @please_finish_all = false
         
         reset_neglect_procs
+        reset_handler_exception_proc
         
         at_exit { (sleep 0.05 until dead?) unless $! }
         
@@ -99,6 +100,9 @@ module Wires
       def on_neglect_done(&block)
         @on_neglect_done=block
       nil end
+      def on_handler_exception(&block)
+        @on_handler_exception=block
+      end
       
       def reset_neglect_procs
         @on_neglect = Proc.new do |args|
@@ -108,6 +112,10 @@ module Wires
           $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
         end
       nil end
+      
+      def reset_handler_exception_proc
+        @on_handler_exception = Proc.new { raise }
+      end
       
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking
@@ -119,7 +127,12 @@ module Wires
         
         # If blocking, run the proc in this thread
         if blocking
-          proc.call(event, ch_string)
+          begin
+            proc.call(event, ch_string)
+          rescue Exception => e
+            unhandled_exception(e, event, ch_string)
+          end
+          
           return :done
         end
         
@@ -136,10 +149,17 @@ module Wires
             raise ThreadError if (@max_child_threads) and \
                                  (@max_child_threads <= @child_threads.size)
             # Start the new child thread; follow with chain of neglected tasks
-            new_thread = Thread.new { proc.call(event, ch_string); \
-                                      spawn_neglected_task_chain }
+            new_thread = Thread.new do
+              begin
+                proc.call(event, ch_string)
+                spawn_neglected_task_chain
+              rescue Exception => e
+                unhandled_exception(e, event, ch_string)
+              end
+            end
+            
           # Capture ThreadError from either OS or user-set limitation
-          rescue ThreadError; return neglect(*args); end
+          rescue ThreadError; return neglect(*args) end
           
           @child_threads << new_thread
           return new_thread
@@ -174,11 +194,16 @@ module Wires
       nil end
       
     private
+    
+      # Send relevant data to a custom exception handler
+      def unhandled_exception(*args)
+        @on_handler_exception.call(*args)
+      end
       
       # Temporarily neglect a task until resources are available to run it
       def neglect(*args)
         @neglected_lock.synchronize do
-          @on_neglect.call(args)
+          @on_neglect.call(*args)
           @neglected << args
         end
       false end
@@ -190,7 +215,7 @@ module Wires
           ((@neglected.shift)[0...-1]<<true) # Call with blocking
         end
         spawn(*args)
-        @on_neglect_done.call(args)
+        @on_neglect_done.call(*args)
         spawn_neglected_task_chain
       nil end
       
@@ -203,7 +228,7 @@ module Wires
           end
           break if cease
           spawn(*args)
-          @on_neglect_done.call(args)
+          @on_neglect_done.call(*args)
         end
       nil end
       

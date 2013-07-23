@@ -1,5 +1,5 @@
-require 'wires'
-# require_relative 'wires-devel'
+# require 'wires'
+require_relative 'wires-devel'
 
 require 'minitest/autorun'
 require 'minitest/spec'
@@ -11,6 +11,23 @@ class MyOtherEvent < Wires::Event; end
 describe Wires::Hub do
   
   # it "allows the setting of custom grains"  # TODO
+  
+  it "lets you set a custom exception handler" do
+    
+    on :my, 'Exc' do |e|
+      puts e.doggy
+    end
+    
+    Wires::Hub.on_handler_exception { |*args| puts "Cathy #{args[0].inspect}" }
+    Wires::Hub.run
+    
+    fire_and_wait :my, 'Exc'
+    fire :my, 'Exc'
+    
+    Wires::Hub.kill
+    Wires::Hub.reset_handler_exception_proc
+    
+  end
   
   it "can be run and killed multiple times" do
     
@@ -193,12 +210,12 @@ describe Wires::Hub do
     
     count = 0
     something_happened = false
-    Wires::Hub.on_neglect do |args|
+    Wires::Hub.on_neglect do |*args|
       args.size.must_equal 4
       count += 1
       something_happened = true
     end
-    Wires::Hub.on_neglect_done do |args|
+    Wires::Hub.on_neglect_done do |*args|
       args.size.must_equal 4
       count -= 1
     end
