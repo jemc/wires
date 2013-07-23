@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.3.0' 
+  s.version       = '0.3.0'
   s.date          = '2013-07-14'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
