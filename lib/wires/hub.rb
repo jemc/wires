@@ -118,19 +118,21 @@ module Wires
       end
       
       # Spawn a task
-      def spawn(*args) # :args: event, ch_string, proc, blocking
+      def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
+
         @spawning_count_lock.synchronize { @spawning_count += 1 }
         
         return neglect(*args) if dead?
         
-        event, ch_string, proc, blocking = *args
+        event, ch_string, proc, blocking, fire_bt = *args
+        *exc_args = event, ch_string, fire_bt
         
         # If blocking, run the proc in this thread
         if blocking
           begin
             proc.call(event, ch_string)
-          rescue Exception => e
-            unhandled_exception(e, event, ch_string)
+          rescue Exception => exc
+            unhandled_exception(exc, *exc_args)
           end
           
           return :done
@@ -153,8 +155,8 @@ module Wires
               begin
                 proc.call(event, ch_string)
                 spawn_neglected_task_chain
-              rescue Exception => e
-                unhandled_exception(e, event, ch_string)
+              rescue Exception => exc
+                unhandled_exception(exc, *exc_args)
               end
             end
             
@@ -196,8 +198,13 @@ module Wires
     private
     
       # Send relevant data to a custom exception handler
-      def unhandled_exception(*args)
-        @on_handler_exception.call(*args)
+      def unhandled_exception(exception, event, ch_string, fire_bt)
+        
+        class << exception;  attr_reader :fire_backtrace; end
+        exception.instance_variable_set(:@fire_backtrace, fire_bt.dup)
+        
+        @on_handler_exception.call(exception, event, ch_string)
+        
       end
       
       # Temporarily neglect a task until resources are available to run it

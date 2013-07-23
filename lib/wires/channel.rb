@@ -79,6 +79,7 @@ module Wires
     
     # Fire an event on this channel
     def fire(event, blocking:false)
+      backtrace = caller
       
       # Create an instance object from one of several acceptable input forms
       event = Event.new_from event
@@ -87,7 +88,7 @@ module Wires
       for chan in relevant_channels()
         for target in chan.target_list
           for string in target[0] & event.class.codestrings
-            self.class.hub.spawn(event, string, *target[1], blocking)
+            self.class.hub.spawn(event, string, *target[1], blocking, backtrace)
       end end end
       
     nil end
