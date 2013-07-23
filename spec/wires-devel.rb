@@ -10,4 +10,4 @@ require_relative '../lib/wires/hub'
 require_relative '../lib/wires/channel'
 require_relative '../lib/wires/time'
 
-include WiresConvenience
+include Wires::Convenience # require 'wires/clean' to uninclude Convenience
