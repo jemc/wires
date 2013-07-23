@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.2.9' 
+  s.version       = '0.3.0' 
   s.date          = '2013-07-14'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
@@ -20,4 +20,6 @@ Gem::Specification.new do |s|
   
   s.add_development_dependency('rake')
   s.add_development_dependency('minitest')
+  s.add_development_dependency('turn')
+  s.add_development_dependency('starkfish')
 end

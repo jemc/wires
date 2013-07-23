@@ -3,6 +3,10 @@ require 'wires'
 
 require 'minitest/autorun'
 require 'minitest/spec'
+require 'turn'
+Turn.config.format  = :outline
+Turn.config.natural = true
+Turn.config.trace   = 5
 
 
 # Module to ease testing of Time events
