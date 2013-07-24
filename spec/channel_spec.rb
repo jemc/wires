@@ -43,13 +43,6 @@ describe Wires::Channel do
     Wires::Channel.new('new').must_equal Channel('new')
   end
   
-  # it "registers itself into @@channel_hash" do
-  #   chanlist = Channel.class_variable_get('@@channel_hash').values
-  #   newchan = Channel('new_channel')
-  #   chanlist = Channel.class_variable_get('@@channel_hash').values - chanlist
-  #   chanlist.must_equal [newchan]
-  # end
-  
   it "assigns new unique object IDs in a threadsafe way" do
     for n in 1..5
       threads = []
@@ -99,7 +92,7 @@ describe Wires::Channel do
     otherobj = Object.new; def otherobj.channel_name; 'other'; end
     otherstrobj = Object.new; def otherstrobj.to_s; 'other'; end
     relevant = ['*', "dog", :cat, /d./, dogobj, catobj, catstrobj]
-    irrelevant = ["frog", /unrelated [Rr]egexp/, ]
+    irrelevant = ["frog", /unrelated [Rr]egexp/, otherstrobj]
     (relevant+irrelevant).each { |x| Wires::Channel.new(x) }
     
     r_list = Wires::Channel.new([:dog,'cat',:cat])
