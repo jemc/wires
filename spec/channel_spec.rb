@@ -3,10 +3,10 @@ require 'wires'
 
 require 'minitest/autorun'
 require 'minitest/spec'
-require 'turn'
-Turn.config.format  = :outline
-Turn.config.natural = true
-Turn.config.trace   = 5
+# require 'turn'
+# Turn.config.format  = :outline
+# Turn.config.natural = true
+# Turn.config.trace   = 5
 
 
 describe Wires::Channel do
@@ -91,6 +91,22 @@ describe Wires::Channel do
       chan.relevant_channels.must_include c end
     (chan.relevant_channels&irrelevant).must_be_empty
   end
+  
+  it "can give relevant_channels for a list of channels, too" do
+    dogobj = Object.new; def dogobj.channel_name; :dog; end
+    catobj = Object.new; def catobj.channel_name; /c.t/; end
+    catstrobj = Object.new; def catstrobj.to_s; 'cat'; end
+    relevant = ['*', "dog", :cat, /d./, dogobj, catobj, catstrobj]
+    relevant.each { |x| Wires::Channel.new(x) }
+    
+    r_list = Wires::Channel.new([:dog,'cat',:cat])
+                           .relevant_channels
+                           .map {|c| c.name}
+                           
+    relevant.each{|r| r_list.must_include r}
+    r_list.size.must_equal relevant.size
+  end
+  
   
 end
 

@@ -3,22 +3,23 @@ require 'rdoc/task'
 
 gemname = 'wires'
 
-# Run tests
 task :default => [:test]
-Rake::TestTask.new do |t|
-    t.pattern = "spec/*_spec.rb"
+
+# Run tests
+Rake::TestTask.new :test do |t|
+    t.test_files = Dir['test/*.rb','spec/*.rb']
 end
 
 # Generate documentation.
 RDoc::Task.new :doc do |rd|
   rd.template = 'starkfish'
   rd.rdoc_dir = 'doc'
-  rd.rdoc_files.include 'lib/**/*.rb'
+  rd.rdoc_files.include 'lib/**/*'
 end
 
 # Generate documentation and view.
 task :docv => [:doc] do
-  exec "xdg-open ./doc/Wires/Channel.html"
+  exec "xdg-open ./doc/Wires/Event.html"
 end
 
 # Rebuild gem

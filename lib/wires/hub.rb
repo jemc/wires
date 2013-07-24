@@ -12,7 +12,7 @@ module Wires
     private
     
       # Make subclasses call class_init
-      def inherited(subcls); subcls.class_init end
+      def inherited(subcls); subcls.send(:class_init) end
       
       # Moved to a dedicated method for subclass' sake
       def class_init

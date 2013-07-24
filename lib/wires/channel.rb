@@ -95,23 +95,35 @@ module Wires
     
     def relevant_channels
       return @@channel_hash[hub].values if self==channel_star
-      
-      if self.name.is_a?(Regexp) then raise TypeError,
-        "Cannot fire on Regexp channel: #{self.name}."\
-        "  Regexp channels can only used in event handlers." end
         
       relevant = [channel_star]
-      for c in @@channel_hash[hub].values
-        relevant << c if \
-          if c.name.is_a?(Regexp)
-            self.name =~ c.name
-          elsif (defined?(c.name.channel_name) and
-               defined?(self.name.channel_name))
-            self.name.channel_name == c.name.channel_name
-          else
-            self.name.to_s == c.name.to_s
-          end
+      my_names = (self.name.is_a? Array) ? self.name : [self.name]
+      my_names.map {|o| (o.respond_to? :channel_name) ? o.channel_name : o.to_s}
+              .flatten(1)
+      
+      for my_name in my_names
+        
+        if my_name.is_a?(Regexp) then raise TypeError,
+          "Cannot fire on Regexp channel: #{self.name}."\
+          "  Regexp channels can only used in event handlers." end
+        
+        for other_chan in @@channel_hash[hub].values
+          
+          other_name = other_chan.name
+          other_name = (other_name.respond_to? :channel_name) ? \
+                          other_name.channel_name : other_name
+          
+          relevant << other_chan if \
+            if other_name.is_a?(Regexp)
+              my_name =~ other_name
+            else
+              my_name.to_s == other_name.to_s
+            end
+            
+        end
+        
       end
+      
       return relevant.uniq
     end
     
