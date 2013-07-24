@@ -96,8 +96,11 @@ describe Wires::Channel do
     dogobj = Object.new; def dogobj.channel_name; :dog; end
     catobj = Object.new; def catobj.channel_name; /c.t/; end
     catstrobj = Object.new; def catstrobj.to_s; 'cat'; end
+    otherobj = Object.new; def otherobj.channel_name; 'other'; end
+    otherstrobj = Object.new; def otherstrobj.to_s; 'other'; end
     relevant = ['*', "dog", :cat, /d./, dogobj, catobj, catstrobj]
-    relevant.each { |x| Wires::Channel.new(x) }
+    irrelevant = ["frog", /unrelated [Rr]egexp/, ]
+    (relevant+irrelevant).each { |x| Wires::Channel.new(x) }
     
     r_list = Wires::Channel.new([:dog,'cat',:cat])
                            .relevant_channels
