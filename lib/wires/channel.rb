@@ -1,31 +1,39 @@
 
-module Wires
+WiresBuilder.define do |prefix|
+  
+code = <<CODE
+
   module Convenience
     
-    def on(events, channels='*', &codeblock)
+    def #{prefix}on(events, channels='*', &codeblock)
       channels = [channels] unless channels.is_a? Array
       for channel in channels
-        Wires::Channel.new(channel).register(events, codeblock)
+        parent[0]::Channel.new(channel).register(events, codeblock)
       end
     nil end
     
-    def fire(event, channel='*') 
-      Wires::Channel.new(channel).fire(event, blocking:false)
+    def #{prefix}fire(event, channel='*') 
+      parent[0]::Channel.new(channel).fire(event, blocking:false)
     nil end
     
-    def fire_and_wait(event, channel='*') 
-      Wires::Channel.new(channel).fire(event, blocking:true)
+    def #{prefix}fire_and_wait(event, channel='*') 
+      parent[0]::Channel.new(channel).fire(event, blocking:true)
     nil end
     
-    def Channel(*args) Wires::Channel.new(*args) end
-    
+    def #{prefix ? prefix.to_s.camelcase : nil}Channel(*args) parent[0]::Channel.new(*args) end
+
   end
+
+CODE
+  
+  eval(code)
+  
 end
 
 
-module Wires
+WiresBuilder.define do
   
-  class Channel
+  class self::Channel
     
     attr_reader :name
     attr_reader :target_list

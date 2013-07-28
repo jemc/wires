@@ -1,7 +1,7 @@
 
-module Wires
+WiresBuilder.define do
   # Store a list of all Event classes that get loaded.
-  class EventRegistry
+  class self::EventRegistry
     @@registry = []
     
     def self.<<(cls)
@@ -15,10 +15,11 @@ module Wires
   end
   
   # All Event classes should inherit from this one
-  class Event < Object # explicit for the sake of Event.ancestry
+  class self::Event < Object # explicit for the sake of Event.ancestry
     
     # Register with the EventRegistry and make subclasses do the same
-    EventRegistry << self
+    @registry = self.parents[0]::EventRegistry
+    @registry << self
     
     # Operate on the metaclass as a type of singleton pattern
     class << self
@@ -34,7 +35,7 @@ module Wires
           " must be unique for each Event subclass." end
           
         # Register, then call super
-        EventRegistry << subcls
+        @registry << subcls
         super
       end
       
@@ -60,7 +61,7 @@ module Wires
       # Pull class from registry by codestring 
       # (more reliable than crafting a reverse regexp)
       def _from_codestring(str)
-        return EventRegistry.list
+        return @registry.list
         .select{|e| e.codestring==str}[0]
       end; private :_from_codestring
       
@@ -122,7 +123,7 @@ module Wires
   #
   
   # Reopen Event and add comparison functions
-  class Event
+  class self::Event
     class << self
       def ==(other)
         other.is_a?(Class) ? 

@@ -1,8 +1,8 @@
 
-module Wires
+WiresBuilder.define do
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
-  class Hub
+  class self::Hub
     # Operate on the metaclass as a type of singleton pattern
     class << self
       
