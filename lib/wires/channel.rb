@@ -1,37 +1,33 @@
 
-WiresBuilder.define do |prefix|
-  
-code = <<CODE
+WiresBuilder.module do |prefix|
 
-  module Convenience
+  module self::Convenience
     
-    def #{prefix}on(events, channels='*', &codeblock)
+    def on(events, channels='*', &codeblock)
       channels = [channels] unless channels.is_a? Array
       for channel in channels
         parent[0]::Channel.new(channel).register(events, codeblock)
       end
     nil end
     
-    def #{prefix}fire(event, channel='*') 
+    def fire(event, channel='*') 
       parent[0]::Channel.new(channel).fire(event, blocking:false)
     nil end
     
-    def #{prefix}fire_and_wait(event, channel='*') 
+    def fire_and_wait(event, channel='*') 
       parent[0]::Channel.new(channel).fire(event, blocking:true)
     nil end
     
-    def #{prefix ? prefix.to_s.camelcase : nil}Channel(*args) parent[0]::Channel.new(*args) end
-
+    def Channel(*args) parent[0]::Channel.new(*args) end
+    
+    WiresBuilder.prefix_method :on, :fire, :fire_and_wait
+    
   end
 
-CODE
-  
-  eval(code)
-  
 end
 
 
-WiresBuilder.define do
+WiresBuilder.module do
   
   class self::Channel
     

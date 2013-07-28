@@ -8,16 +8,37 @@ require 'hegemon'    # State machine management
 module WiresBuilder
   @module_procs = []
   
-  def self.define(&block)
+  def self.module(&block)
     @module_procs << block
   end
   
-  def self.build(sym, prefix)
+  def self.prefix_method(*syms, format: :underscore)
+    
+    for sym in syms.map { |sym| sym.to_sym } do
+      
+      newsym = @current_prefix ? 
+                (@current_prefix.to_s+'_'+sym.to_s).send(format) : 
+                sym
+      
+      @module_procs << Proc.new do
+        class_eval("
+          p self
+          alias :#{newsym} :#{sym}
+          remove_method :#{sym}
+        ") unless sym==newsym
+      end
+    end
+    
+  end
+  
+  def self.build(sym, prefix=nil)
     eval("module ::#{sym.to_s}; end", )
     mod = const_get(sym)
+    @current_prefix = prefix
     @module_procs.each { |pr| 
       mod.class_exec(prefix, &pr)
     }
+    @current_prefix 
     mod
   end
   
@@ -41,7 +62,12 @@ require 'wires/time'
 # end
 
 
-WiresBuilder.build :Wires, nil
+WiresBuilder.build :Wires
 p Wires.constants
+p Wires::Convenience.instance_methods
+
+WiresBuilder.build :SysWires, 'sys'
+p SysWires.constants
+p SysWires::Convenience.instance_methods
 
 # include Wires::Convenience # require 'wires/clean' to uninclude Convenience

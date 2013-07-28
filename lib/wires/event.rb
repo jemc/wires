@@ -1,5 +1,5 @@
 
-WiresBuilder.define do
+WiresBuilder.module do
   # Store a list of all Event classes that get loaded.
   class self::EventRegistry
     @@registry = []

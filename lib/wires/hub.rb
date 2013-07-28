@@ -1,5 +1,5 @@
 
-WiresBuilder.define do
+WiresBuilder.module do
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
   class self::Hub

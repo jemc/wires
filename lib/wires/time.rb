@@ -1,5 +1,5 @@
 
-WiresBuilder.define do
+WiresBuilder.module do
   
   class self::TimeSchedulerAnonEvent  < self::Event; end
   
@@ -239,7 +239,7 @@ class ActiveSupport::Duration
   
 end
 
-WiresBuilder.define do
+WiresBuilder.module do
   module Convenience
     
     def fire_every(interval, event, channel='*', **kwargs)
