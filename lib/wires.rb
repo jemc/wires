@@ -19,10 +19,8 @@ module WiresBuilder
       newsym = @current_prefix ? 
                 (@current_prefix.to_s+'_'+sym.to_s).send(format) : 
                 sym
-      
       @module_procs << Proc.new do
         class_eval("
-          p self
           alias :#{newsym} :#{sym}
           remove_method :#{sym}
         ") unless sym==newsym
