@@ -15,10 +15,10 @@ class MyFavoriteEvent < CoolEvent; end
 
 describe Wires::Event do
   
-  it "registers itself and its subclasses in EventRegistry.list" do
-    Wires::EventRegistry.list.must_include Wires::Event
-    Wires::EventRegistry.list.must_include CoolEvent
-    Wires::EventRegistry.list.must_include MyFavoriteEvent
+  it "registers itself and its subclasses in an array" do
+    Wires::Event.class_variable_get(:@@registry).must_include Wires::Event
+    Wires::Event.class_variable_get(:@@registry).must_include CoolEvent
+    Wires::Event.class_variable_get(:@@registry).must_include MyFavoriteEvent
   end
   
   it "generates a corresponding codestring upon subclass definition" do

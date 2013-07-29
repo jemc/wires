@@ -1,35 +1,51 @@
 
-WiresBuilder.module do |prefix|
+module Wires
 
-  module self::Convenience
+  module Convenience
     
     def on(events, channels='*', &codeblock)
       channels = [channels] unless channels.is_a? Array
       for channel in channels
-        parent[0]::Channel.new(channel).register(events, codeblock)
+        Channel.new(channel).register(events, codeblock)
       end
     nil end
     
     def fire(event, channel='*') 
-      parent[0]::Channel.new(channel).fire(event, blocking:false)
+      Channel.new(channel).fire(event, blocking:false)
     nil end
     
     def fire_and_wait(event, channel='*') 
-      parent[0]::Channel.new(channel).fire(event, blocking:true)
+      Channel.new(channel).fire(event, blocking:true)
     nil end
     
-    def Channel(*args) parent[0]::Channel.new(*args) end
+    def Channel(*args) Channel.new(*args) end
     
-    WiresBuilder.prefix_method :on, :fire, :fire_and_wait
+    class << self
+      def prefix_methods(prefix)
+        
+        return unless prefix
+        prefix = prefix.to_s
+        
+        instance_methods.each do |thing|
+          thing = thing.to_s
+          f2 = (prefix+'_'+thing)
+          f2 = (thing[0]=~/[[:lower:]]/) ? f2.underscore : f2.camelcase
+          f2 = f2.to_sym; thing = thing.to_sym
+          alias_method f2, thing
+          remove_method thing
+        end
+        
+      end
+    end
     
   end
 
 end
 
 
-WiresBuilder.module do
+module Wires
   
-  class self::Channel
+  class Channel
     
     attr_reader :name
     attr_reader :target_list
@@ -44,25 +60,20 @@ WiresBuilder.module do
     # Don't redefine this instance method!
     def hub; self.class.hub; end
     
-    # Channel registry hash and star channel reference are values
-    # In this Hash with the key being the reference to the Hub
-    @@channel_hash = Hash.new
-    @@channel_star = Hash.new
-    
     # Give out references to the star channel
-    def self.channel_star; @@channel_star[self.hub]; end
-    def      channel_star; @@channel_star[self.hub]; end
+    def self.channel_star; @@channel_star; end
+    def      channel_star; @@channel_star; end
     
     # Ensure that there is only one instance of Channel per name
     @@new_lock = Mutex.new
     def self.new(*args, &block)
       (args.include? :recursion_guard) ?
         (args.delete :recursion_guard) :
-        (@@channel_star[self.hub] ||= self.new('*', :recursion_guard))
+        (@@channel_star ||= self.new('*', :recursion_guard))
       
       @@new_lock.synchronize do
-        @@channel_hash[self.hub] ||= Hash.new
-        @@channel_hash[self.hub][args[0]] ||= super(*args, &block)
+        @@channel_hash ||= Hash.new
+        @@channel_hash[args[0]] ||= super(*args, &block)
       end
     end
     
@@ -98,7 +109,7 @@ WiresBuilder.module do
     nil end
     
     def relevant_channels
-      return @@channel_hash[hub].values if self==channel_star
+      return @@channel_hash.values if self==channel_star
         
       relevant = [channel_star]
       my_names = (self.name.is_a? Array) ? self.name : [self.name]
@@ -111,7 +122,7 @@ WiresBuilder.module do
           "Cannot fire on Regexp channel: #{self.name}."\
           "  Regexp channels can only used in event handlers." end
         
-        for other_chan in @@channel_hash[hub].values
+        for other_chan in @@channel_hash.values
           
           other_name = other_chan.name
           other_name = (other_name.respond_to? :channel_name) ? \

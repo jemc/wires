@@ -1,5 +1,5 @@
-require 'wires'
-# require_relative 'wires-devel'
+# require 'wires'
+require_relative 'wires-devel'
 
 require 'minitest/autorun'
 require 'minitest/spec'
@@ -8,25 +8,10 @@ require 'minitest/spec'
 # Turn.config.natural = true
 # Turn.config.trace   = 5
 
-
-module Wires
-  def self.build_alt
-    alt = Module.new
-    for cls in self.constants
-      case const_get(cls)
-      when Class
-        # alt.send(:remove_const, cls) if self.const_defined? cls
-        alt.send(:const_set, cls, Class.new(const_get(cls)))
-      when Module
-        # alt.send(:remove_const, cls) if self.const_defined? cls
-        alt.send(:const_set, cls, const_get(cls).clone)
-      end
-    end
-    alt
-  end
-end
-
-SysWires = Wires.build_alt
+require 'wrap_in_module'
+module Sys; end
+WrapInModule::wrap_file(Sys, "../lib/wires.rb")
+SysWires = Sys::Wires
 
 describe 'Wires.build_alt' do
   
@@ -35,17 +20,27 @@ describe 'Wires.build_alt' do
   end
   
   Wires.constants.each do |c|
-code = <<CODE
-    it "builds a distinct inner #{c}" do
-      Wires::#{c}.object_id.wont_equal SysWires::#{c}.object_id
-    end
-CODE
-    eval(code)
+    eval <<-CODE
+      it "builds a distinct inner #{c}" do
+        Wires::#{c}.object_id.wont_equal SysWires::#{c}.object_id
+      end
+    CODE
   end
   
-  it "builds Channels that point to a distinct Hub" #do
-  #   p Wires::Channel.hub.object_id
-  #   p SysWires::Channel.hub.object_id
+  it "builds Channels that point to a distinct Hub" do
+    SysWires::Channel.hub.object_id.must_equal SysWires::Hub.object_id
+       Wires::Channel.hub.object_id.must_equal    Wires::Hub.object_id
+  end
+  
+  # it "builds TimeSchedulerAnonEvents that inherit from a distinct Event" do
+  #   SysWires::Channel.hub.object_id.must_equal SysWires::Hub.object_id
+  #      Wires::Channel.hub.object_id.must_equal    Wires::Hub.object_id
   # end
   
 end
+
+class CoolEvent < Wires::Event; end
+class SomeCoolEvent < CoolEvent; end
+
+p Wires::Event.class_variable_get(:@@registry)
+p SysWires::Event.class_variable_get(:@@registry)

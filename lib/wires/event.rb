@@ -1,31 +1,27 @@
 
-WiresBuilder.module do
-  # Store a list of all Event classes that get loaded.
-  class self::EventRegistry
-    @@registry = []
-    
-    def self.<<(cls)
-      @@registry << cls
-      @@registry.uniq!
+module Wires
+  
+  class Event
+    class << self
+      def event_registry_create
+        @@registry = []
+        event_registry_register
+      end
+      def event_registry_register(cls=self)
+        @@registry << cls
+        @@registry.uniq!
+      end
     end
-    
-    def self.list
-      @@registry
-    end
+    event_registry_create
   end
   
   # All Event classes should inherit from this one
-  class self::Event < Object # explicit for the sake of Event.ancestry
-    
-    # Register with the EventRegistry and make subclasses do the same
-    @registry = self.parents[0]::EventRegistry
-    @registry << self
+  class Event
     
     # Operate on the metaclass as a type of singleton pattern
     class << self
       
       def inherited(subcls)
-        
         # Be sure codestring doesn't conflict
         existing = _from_codestring(subcls.codestring)
         if existing then raise NameError, \
@@ -33,10 +29,9 @@ WiresBuilder.module do
           " existing Event subclass '#{existing}'."\
           " The generated codestring '#{subcls.codestring}'"\
           " must be unique for each Event subclass." end
-          
-        # Register, then call super
-        @registry << subcls
+        
         super
+        event_registry_register(subcls)
       end
       
       # List of class inheritance lineage back to but excluding Object
@@ -61,8 +56,7 @@ WiresBuilder.module do
       # Pull class from registry by codestring 
       # (more reliable than crafting a reverse regexp)
       def _from_codestring(str)
-        return @registry.list
-        .select{|e| e.codestring==str}[0]
+        return @@registry.select{|e| e.codestring==str}[0]
       end; private :_from_codestring
       
       def from_codestring(str)
@@ -115,15 +109,15 @@ WiresBuilder.module do
     
     # Calling super in new with *args will complain if this isn't here
     def initialize(*args, &block) end
+    
   end
-  
   
   #
   # Comparison support for Events and Symbols/Strings
   #
   
   # Reopen Event and add comparison functions
-  class self::Event
+  class Event
     class << self
       def ==(other)
         other.is_a?(Class) ? 

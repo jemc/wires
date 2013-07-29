@@ -1,9 +1,7 @@
 
-WiresBuilder.module do
+module Wires
   
-  class self::TimeSchedulerAnonEvent  < self::Event; end
-  
-  class self::TimeSchedulerItem
+  class TimeSchedulerItem
     
     attr_reader :time, :event, :channel, :interval
     
@@ -28,7 +26,7 @@ WiresBuilder.module do
       end
       
       @time     = time
-      @event    = parents[0]::Event.new_from(event)
+      @event    = Event.new_from(event)
       @channel  = channel
       @interval = interval
       
@@ -54,7 +52,7 @@ WiresBuilder.module do
     
     # Fire the event now, regardless of time or active status
     def fire(*args)
-      parents[0]::Channel.new(@channel).fire(@event, *args)
+      Channel.new(@channel).fire(@event, *args)
       count_dec
       @time += @interval if @active
     nil end
@@ -78,7 +76,7 @@ WiresBuilder.module do
   end
   
   # A singleton class to schedule future firing of events
-  class self::TimeScheduler
+  class TimeScheduler
     @schedule       = Array.new
     @thread         = Thread.new {nil}
     @schedule_lock  = Monitor.new
@@ -177,13 +175,13 @@ WiresBuilder.module do
     end
     
     # Start the main loop upon run of Hub
-    parents[0]::Hub.after_run(retain:true) do 
+    Hub.after_run(retain:true) do 
       @keepgoing = true
       @thread = Thread.new { main_loop }
     end
     
     # Stop the main loop upon death of Hub
-    parents[0]::Hub.before_kill(retain:true) do
+    Hub.before_kill(retain:true) do
       Thread.exclusive do
         @keepgoing=false
         @next_pass=Time.now
@@ -239,7 +237,7 @@ class ActiveSupport::Duration
   
 end
 
-WiresBuilder.module do
+module Wires
   module Convenience
     
     def fire_every(interval, event, channel='*', **kwargs)
