@@ -62,18 +62,20 @@
 #   Rats::Terrier.foo
 # end
 
-# require './spec/wires-devel.rb'
-# require 'wrap_in_module'
+require './spec/wires-devel.rb'
+require 'wrap_in_module'
 
 
-# module Sys; end
-# WrapInModule::wrap_file(Sys, "lib/wires.rb")
+module Sys; end
+WrapInModule::wrap_file(Sys, "lib/wires.rb")
 
-# p      Wires.object_id
-# p Sys::Wires.object_id
+p      Wires.object_id
+p Sys::Wires.object_id
 
-# Wires::Convenience.prefix_methods(:sys)
-# p Wires::Convenience.instance_methods
+Wires::Convenience.prefix_methods(:sys)
+p Wires::Convenience.instance_methods
+Wires::Convenience.prefix_methods(:sys) 
+p Wires::Convenience.instance_methods
 
 # sys_on :event do
 #   nil
@@ -83,17 +85,17 @@
 
 # MyMod = Module.new do
 
-MyMod = Module.new
-MyMod.module_eval do
+# MyMod = Module.new
+# MyMod.module_eval do
 
-  class self::Bear
-    p Module.nesting
-    def self.foo
-      Module.nesting
-    end
-  end
-end
+#   class self::Bear
+#     p Module.nesting
+#     def self.foo
+#       Module.nesting
+#     end
+#   end
+# end
 
-# p MyMod.constants
+# # p MyMod.constants
 
-p MyMod::Bear.foo
+# p MyMod::Bear.foo

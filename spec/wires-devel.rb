@@ -1,7 +1,6 @@
 require 'set'
 require 'thread'
 require 'active_support/core_ext' # Convenience functions from Rails
-require 'namespaces'
 require 'threadlock' # Easily add re-entrant lock to instance methods
 require 'hegemon'    # State machine management
 
