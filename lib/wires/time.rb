@@ -1,6 +1,8 @@
 
 module Wires
   
+  class TimeSchedulerAnonEvent  < Event; end
+  
   class TimeSchedulerItem
     
     attr_reader :time, :event, :channel, :interval
