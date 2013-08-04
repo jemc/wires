@@ -1,6 +1,37 @@
-# # module A
-# #   require "wires"
-# # end
+
+$require_list = []
+
+module Kernel
+  def require_and_print(string)
+    # $:.each do |p|
+    #   if File.exists? File.join(p, string)
+    #     puts File.join(p, string)
+    #     break
+    #   end,
+    # end
+    $require_list << string
+    require_original(string)
+  end
+
+  alias_method :require_original, :require
+  alias_method :require, :require_and_print
+
+end
+
+# require 'active_support/duration'
+# require 'active_support/basic_object'
+# require 'active_support/core_ext/array/conversions'
+# require 'active_support/core_ext/object/acts_like'
+
+
+require "active_support/core_ext"
+1.seconds.from_now
+
+# puts $require_list.uniq.sort
+
+# p Dir[File.expand_path("./", File.dirname(__FILE__))]#.select{|s| s =~ /activesupport/}
+# p $require_list.uniq.select{|s| s =~ /activesupport/}
+# p (Dir[File.expand_path('./lib')] - $require_list.uniq).select{|s| s =~ /activesupport/}
 
 # # p Channel('dog')
 
@@ -100,4 +131,5 @@
 
 # # p MyMod::Bear.foo
 
-p $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
+# p $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
+

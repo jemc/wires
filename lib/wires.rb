@@ -12,5 +12,3 @@ require 'wires/time'
 
 include Wires::Convenience # require 'wires/clean' to uninclude Convenience
 
-
-
