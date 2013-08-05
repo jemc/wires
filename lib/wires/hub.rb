@@ -25,10 +25,12 @@ module Wires
         @spawning_count      = 0
         @spawning_count_lock = Monitor.new
         
-        @before_runs = Queue.new
-        @after_runs  = Queue.new
+        @before_runs  = Queue.new
+        @after_runs   = Queue.new
         @before_kills = Queue.new
         @after_kills  = Queue.new
+        @before_fires = Queue.new
+        @after_fires  = Queue.new
         
         @please_finish_all = false
         
@@ -94,6 +96,16 @@ module Wires
         @after_kills << [block, retain]
       nil end
       
+      # Register hook to execute before fire - can call multiple times
+      def before_fire(retain=false, &block)
+        @before_fires << [block, retain]
+      nil end
+      
+      # Register hook to execute after fire - can call multiple times
+      def after_fire(retain=false, &block)
+        @after_fires << [block, retain]
+      nil end
+      
       def on_neglect(&block)
         @on_neglect=block
       nil end
@@ -119,13 +131,15 @@ module Wires
       
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
-
+        
         @spawning_count_lock.synchronize { @spawning_count += 1 }
         
         return neglect(*args) if dead?
         
         event, ch_string, proc, blocking, fire_bt = *args
         *exc_args = event, ch_string, fire_bt
+        
+        # run_hooks(@before_fires, *exc_args)
         
         # If blocking, run the proc in this thread
         if blocking
@@ -169,6 +183,7 @@ module Wires
         
       ensure
         @spawning_count_lock.synchronize { @spawning_count -= 1 }
+        # run_hooks(@after_fires, *exc_args)
       end
       
       def purge_neglected
@@ -240,13 +255,12 @@ module Wires
       nil end
       
       # Flush/run queue of [proc, retain]s, retaining those with retain==true
-      def run_hooks(hooks)
+      def run_hooks(hooks, *args)
         retained = Queue.new
         while not hooks.empty?
           proc, retain = hooks.shift
           retained << [proc, retain] if retain
-          proc.call
-          # flush_queue if alive?
+          proc.call(*args)
         end
         while not retained.empty?
           hooks << retained.shift
