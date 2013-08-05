@@ -1,8 +1,7 @@
+$LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'wires'
-# require_relative 'wires-devel'
 
 require 'minitest/autorun'
-require 'minitest/spec'
 require 'turn'
 Turn.config.format  = :outline
 Turn.config.natural = true

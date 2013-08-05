@@ -1,7 +1,6 @@
 require 'wires'
 # require_relative 'wires-devel'
 
-require 'minitest/spec'
 require 'minitest/autorun'
 
 _main = self
