@@ -1,11 +1,8 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'wires'
 
-require 'minitest/autorun'
-require 'turn'
-Turn.config.format  = :outline
-Turn.config.natural = true
-Turn.config.trace   = 5
+require 'wires/test'
+# Wires.test_format
 
 
 describe Wires::Channel do
@@ -102,6 +99,47 @@ describe Wires::Channel do
     r_list.size.must_equal relevant.size
   end
   
+  it "can call hooks before and after fire method that aren't retained by default" do
+    
+    class SomeEvent < Wires::Event; end
+    
+    hook_val = 'A'
+    Wires::Channel.before_fire { hook_val.must_equal 'A'; hook_val = 'B' }
+    Wires::Channel.before_fire { hook_val.must_equal 'B'; hook_val = 'C' }
+    Wires::Channel.after_fire  { hook_val.must_equal 'C'; hook_val = 'D' }
+    Wires::Channel.after_fire  { hook_val.must_equal 'D'; hook_val = 'E' }
+    hook_val.must_equal 'A'
+    Wires::Hub.run
+    fire SomeEvent
+    Wires::Hub.kill
+    hook_val.must_equal 'E'
+    
+    hook_val = 'A'
+    hook_val.must_equal 'A'
+    Wires::Hub.run
+    fire SomeEvent
+    Wires::Hub.kill
+    hook_val.must_equal 'A'
+    
+    hook_val = 'A'
+    Wires::Channel.before_fire(true) { hook_val.must_equal 'A'; hook_val = 'B' }
+    Wires::Channel.before_fire(true){ hook_val.must_equal 'B'; hook_val = 'C' }
+    Wires::Channel.after_fire (true){ hook_val.must_equal 'C'; hook_val = 'D' }
+    Wires::Channel.after_fire (true){ hook_val.must_equal 'D'; hook_val = 'E' }
+    hook_val.must_equal 'A'
+    Wires::Hub.run
+    fire SomeEvent
+    Wires::Hub.kill
+    hook_val.must_equal 'E'
+    
+    hook_val = 'A'
+    hook_val.must_equal 'A'
+    Wires::Hub.run
+    fire SomeEvent
+    Wires::Hub.kill
+    hook_val.must_equal 'E'
+    
+  end
   
 end
 

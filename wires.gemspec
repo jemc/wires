@@ -18,8 +18,8 @@ Gem::Specification.new do |s|
   s.add_dependency('activesupport-core-ext', '~> 4.0')
   s.add_dependency('hegemon', '~> 0.0.8')
   
+  s.add_development_dependency('wires-test')
   s.add_development_dependency('rake')
-  s.add_development_dependency('minitest')
   s.add_development_dependency('turn')
   s.add_development_dependency('starkfish')
 end

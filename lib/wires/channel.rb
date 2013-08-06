@@ -92,8 +92,37 @@ module Wires
       @target_list << [events, proc]
     nil end
     
+    # Register hook to execute before fire - can call multiple times
+    def self.before_fire(retain=false, &block)
+      @before_fires ||= []
+      @before_fires << [block, retain]
+    nil end
+    
+    # Register hook to execute after fire - can call multiple times
+    def self.after_fire(retain=false, &block)
+      @after_fires ||= []
+      @after_fires << [block, retain]
+    nil end
+    
+    def self.run_hooks(hooks_sym, *exc_args)
+      hooks = self.instance_variable_get(hooks_sym.to_sym)
+      for hook in hooks
+        proc, retain = hook
+        proc.call(*exc_args)
+      end if hooks
+    nil end
+    
+    def self.clear_hooks(hooks_sym)
+      hooks = self.instance_variable_get(hooks_sym.to_sym)
+      self.instance_variable_set(hooks_sym.to_sym, 
+                                 hooks.select {|h| h[1]}) if hooks
+    nil end
+    
     # Fire an event on this channel
     def fire(event, blocking:false)
+      
+      self.class.run_hooks(:@before_fires)
+      
       backtrace = caller
       
       # Create an instance object from one of several acceptable input forms
@@ -105,6 +134,8 @@ module Wires
           for string in target[0] & event.class.codestrings
             self.class.hub.spawn(event, string, *target[1], blocking, backtrace)
       end end end
+      
+      self.class.run_hooks(:@after_fires)
       
     nil end
     
@@ -140,6 +171,11 @@ module Wires
       end
       
       return relevant.uniq
+    end
+    
+    hub.before_kill do
+      self.clear_hooks(:@before_fires)
+      self.clear_hooks(:@after_fires)
     end
     
   end

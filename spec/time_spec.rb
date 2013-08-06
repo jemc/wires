@@ -1,11 +1,8 @@
 $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'wires'
 
-require 'minitest/autorun'
-require 'turn'
-Turn.config.format  = :outline
-Turn.config.natural = true
-Turn.config.trace   = 5
+require 'wires/test'
+Wires.test_format
 
 
 # Module to ease testing of Time events

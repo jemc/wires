@@ -29,8 +29,8 @@ module Wires
         @after_runs   = Queue.new
         @before_kills = Queue.new
         @after_kills  = Queue.new
-        @before_fires = Queue.new
-        @after_fires  = Queue.new
+        @before_fires = []
+        @after_fires  = []
         
         @please_finish_all = false
         
@@ -96,16 +96,6 @@ module Wires
         @after_kills << [block, retain]
       nil end
       
-      # Register hook to execute before fire - can call multiple times
-      def before_fire(retain=false, &block)
-        @before_fires << [block, retain]
-      nil end
-      
-      # Register hook to execute after fire - can call multiple times
-      def after_fire(retain=false, &block)
-        @after_fires << [block, retain]
-      nil end
-      
       def on_neglect(&block)
         @on_neglect=block
       nil end
@@ -138,8 +128,6 @@ module Wires
         
         event, ch_string, proc, blocking, fire_bt = *args
         *exc_args = event, ch_string, fire_bt
-        
-        # run_hooks(@before_fires, *exc_args)
         
         # If blocking, run the proc in this thread
         if blocking
@@ -183,7 +171,6 @@ module Wires
         
       ensure
         @spawning_count_lock.synchronize { @spawning_count -= 1 }
-        # run_hooks(@after_fires, *exc_args)
       end
       
       def purge_neglected
@@ -267,6 +254,22 @@ module Wires
         end
       nil end
       
+      # Run queue of [proc, retain]s, retaining all
+      def run_fire_hooks(hooks, *args)
+        for hook in hooks
+          proc, retain = hook
+          proc.call(*args)
+        end
+      nil end
+      
+      # Clear queue of [proc, retain]s, retaining those with retain==true
+      def clear_fire_hooks(hooks, *args)
+        hooks.select! do |hook|
+          proc, retain = hook
+          retain
+        end
+      nil end
+      
     end
     
     
@@ -306,6 +309,8 @@ module Wires
             before { join_children if @please_finish_all }
             after  { @please_finish_all = false }
             after  { run_hooks @after_kills }
+            after  { clear_fire_hooks @before_fires }
+            after  { clear_fire_hooks @after_fires  }
           end
         end
         
