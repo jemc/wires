@@ -2,7 +2,7 @@ $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'wires'
 
 require 'wires/test'
-# Wires.test_format
+Wires.test_format
 
 
 describe Wires::Channel do
@@ -110,14 +110,14 @@ describe Wires::Channel do
     Wires::Channel.after_fire  { hook_val.must_equal 'D'; hook_val = 'E' }
     hook_val.must_equal 'A'
     Wires::Hub.run
-    fire SomeEvent
+    fire SomeEvent, 'Wires::Channel_A'
     Wires::Hub.kill
     hook_val.must_equal 'E'
     
     hook_val = 'A'
     hook_val.must_equal 'A'
     Wires::Hub.run
-    fire SomeEvent
+    fire SomeEvent, 'Wires::Channel_A'
     Wires::Hub.kill
     hook_val.must_equal 'A'
     
@@ -128,16 +128,19 @@ describe Wires::Channel do
     Wires::Channel.after_fire (true){ hook_val.must_equal 'D'; hook_val = 'E' }
     hook_val.must_equal 'A'
     Wires::Hub.run
-    fire SomeEvent
+    fire SomeEvent, 'Wires::Channel_A'
     Wires::Hub.kill
     hook_val.must_equal 'E'
     
     hook_val = 'A'
     hook_val.must_equal 'A'
     Wires::Hub.run
-    fire SomeEvent
+    fire SomeEvent, 'Wires::Channel_A'
     Wires::Hub.kill
     hook_val.must_equal 'E'
+    
+    Wires::Channel.clear_hooks(:@before_fires, true)
+    Wires::Channel.clear_hooks(:@after_fires,  true)
     
   end
   

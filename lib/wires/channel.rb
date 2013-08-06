@@ -112,10 +112,10 @@ module Wires
       end if hooks
     nil end
     
-    def self.clear_hooks(hooks_sym)
+    def self.clear_hooks(hooks_sym, force=false)
       hooks = self.instance_variable_get(hooks_sym.to_sym)
-      self.instance_variable_set(hooks_sym.to_sym, 
-                                 hooks.select {|h| h[1]}) if hooks
+      self.instance_variable_set(hooks_sym.to_sym,
+        (force ? [] : hooks.select{|h| h[1]})) if hooks
     nil end
     
     # Fire an event on this channel
@@ -173,7 +173,7 @@ module Wires
       return relevant.uniq
     end
     
-    hub.before_kill do
+    hub.before_kill(true) do
       self.clear_hooks(:@before_fires)
       self.clear_hooks(:@after_fires)
     end

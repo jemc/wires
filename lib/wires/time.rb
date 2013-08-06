@@ -177,13 +177,13 @@ module Wires
     end
     
     # Start the main loop upon run of Hub
-    Hub.after_run(retain:true) do 
+    Hub.after_run(true) do 
       @keepgoing = true
       @thread = Thread.new { main_loop }
     end
     
     # Stop the main loop upon death of Hub
-    Hub.before_kill(retain:true) do
+    Hub.before_kill(true) do
       Thread.exclusive do
         @keepgoing=false
         @next_pass=Time.now
