@@ -121,7 +121,7 @@ module Wires
     # Fire an event on this channel
     def fire(event, blocking:false)
       
-      self.class.run_hooks(:@before_fires)
+      self.class.run_hooks(:@before_fires, event, self)
       
       backtrace = caller
       
@@ -135,7 +135,7 @@ module Wires
             self.class.hub.spawn(event, string, *target[1], blocking, backtrace)
       end end end
       
-      self.class.run_hooks(:@after_fires)
+      self.class.run_hooks(:@after_fires, event, self)
       
     nil end
     

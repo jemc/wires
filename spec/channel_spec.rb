@@ -108,6 +108,10 @@ describe Wires::Channel do
     Wires::Channel.before_fire { hook_val.must_equal 'B'; hook_val = 'C' }
     Wires::Channel.after_fire  { hook_val.must_equal 'C'; hook_val = 'D' }
     Wires::Channel.after_fire  { hook_val.must_equal 'D'; hook_val = 'E' }
+    Wires::Channel.after_fire  do |event,chan|
+      assert event.is_a? Wires::Event
+      assert chan.is_a? Wires::Channel
+    end
     hook_val.must_equal 'A'
     Wires::Hub.run
     fire SomeEvent, 'Wires::Channel_A'
@@ -122,7 +126,7 @@ describe Wires::Channel do
     hook_val.must_equal 'A'
     
     hook_val = 'A'
-    Wires::Channel.before_fire(true) { hook_val.must_equal 'A'; hook_val = 'B' }
+    Wires::Channel.before_fire(true){ hook_val.must_equal 'A'; hook_val = 'B' }
     Wires::Channel.before_fire(true){ hook_val.must_equal 'B'; hook_val = 'C' }
     Wires::Channel.after_fire (true){ hook_val.must_equal 'C'; hook_val = 'D' }
     Wires::Channel.after_fire (true){ hook_val.must_equal 'D'; hook_val = 'E' }
