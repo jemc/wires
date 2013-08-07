@@ -79,7 +79,7 @@ module Wires
           when Event
             input
           when Class
-            input.new(*args) if input < Event
+            input.new(*args) if input <= Event
           else
             Event.from_codestring(input.to_s).new(*args)
         end
