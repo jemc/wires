@@ -173,6 +173,11 @@ module Wires
       return relevant.uniq
     end
     
+    # Compare matching with another Channel
+    def =~(other)
+      (other.is_a? Channel) ? (other.relevant_channels.include? self) : super
+    end
+    
     hub.before_kill(true) do
       self.clear_hooks(:@before_fires)
       self.clear_hooks(:@after_fires)
