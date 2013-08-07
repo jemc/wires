@@ -118,8 +118,7 @@ describe Wires::Event do
     
     cool.args.must_equal [13, 24, 10]
     proc{cool.args = [1,2,3]}.must_raise NoMethodError
-    cool.args << 6
-    cool.args.must_equal [13, 24, 10, 6]
+    proc{cool.args << 6}     .must_raise RuntimeError
     
     cool.dogname.must_equal 'Grover'
     cool.fishscales.must_equal 7096
@@ -128,6 +127,8 @@ describe Wires::Event do
     checkhash[:dogname] = 'Grover'
     checkhash[:fishscales] = 7096
     cool.kwargs.must_equal checkhash
+    proc{cool.kwargs = Hash.new} .must_raise NoMethodError
+    proc{cool.kwargs[:other] = 2}.must_raise RuntimeError
     
     assert cool.codeblock.is_a? Proc
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'

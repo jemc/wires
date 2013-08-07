@@ -91,9 +91,9 @@ module Wires
       def new(*args, &block)
         obj = super
         
-        kwargs = args[-1].is_a?(Hash) ? args.pop : Hash.new
-        kwargs[:kwargs] = kwargs.clone.freeze
-        kwargs[:args] = args
+        kwargs = args[-1].is_a?(Hash) ? args.pop.dup : Hash.new
+        kwargs[:kwargs] = kwargs.dup.freeze
+        kwargs[:args]   =   args.dup.freeze
         kwargs[:codeblock] = block if block
         for key in kwargs.keys
           att = key.to_s
