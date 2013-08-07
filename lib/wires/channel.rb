@@ -121,12 +121,12 @@ module Wires
     # Fire an event on this channel
     def fire(event, blocking:false)
       
-      self.class.run_hooks(:@before_fires, event, self)
-      
       backtrace = caller
       
       # Create an instance object from one of several acceptable input forms
       event = Event.new_from event
+      
+      self.class.run_hooks(:@before_fires, event, self)
       
       # Fire to each relevant target on each channel
       for chan in relevant_channels()
