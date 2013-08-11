@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.3.2'
-  s.date          = '2013-08-04'
+  s.version       = '0.3.3'
+  s.date          = '2013-08-11'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
                     " Patch your objects together with wires."\
@@ -18,8 +18,8 @@ Gem::Specification.new do |s|
   s.add_dependency('activesupport-core-ext', '~> 4.0')
   s.add_dependency('hegemon', '~> 0.0.8')
   
-  s.add_development_dependency('wires-test')
   s.add_development_dependency('rake')
-  s.add_development_dependency('turn')
+  s.add_development_dependency('wires-test')
+  s.add_development_dependency('jemc-reporter')
   s.add_development_dependency('starkfish')
 end
