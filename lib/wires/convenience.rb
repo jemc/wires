@@ -3,6 +3,8 @@ module Wires
 
   module Convenience
     
+    # @original_instance_methods = 
+    
     def on(events, channels='*', &codeblock)
       channels = [channels] unless channels.is_a? Array
       for channel in channels
@@ -25,6 +27,7 @@ module Wires
     
     def Channel(*args) Channel.new(*args) end
     
+    
     class << self
       def prefix_methods(prefix)
         
@@ -39,6 +42,8 @@ module Wires
           alias_method f2, thing
           remove_method thing
         end
+        
+        # remove_method :prefix_methods
         
       end
     end

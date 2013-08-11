@@ -37,7 +37,7 @@ module Wires
         reset_neglect_procs
         reset_handler_exception_proc
         
-        at_exit { (sleep 0.05 until dead?) unless $! }
+        # at_exit { (sleep 0.05 until dead?) unless $! }
         
         state_machine_init
         
