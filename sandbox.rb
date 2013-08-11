@@ -1,57 +1,46 @@
-
-$LOAD_PATH.unshift(File.expand_path("./lib", File.dirname(__FILE__)))
+# $LOAD_PATH.unshift(File.expand_path("./lib", File.dirname(__FILE__)))
 require 'wires'
-# include Wires::Convenience
 
-# tr = TracePoint.new(:call, :return) do |tp| 
-#   p tp
-# end
-# tr.enable
-
+# Pull in another copy of Wires into Sys::Wires
 require 'wrap_in_module'
 module Sys; end
-WrapInModule::wrap_file(Sys, "lib/wires.rb")
+wires_rb = $LOAD_PATH.map{|path| File.join(path, "wires.rb")}
+                     .detect{|x| File.exist? x}
+WrapInModule::wrap_file(Sys, wires_rb)
 
-# class Thread
-#   class << self
-#     alias_method :real_new, :new
-    
-#     def new(*args, &block)
-#       puts 'yoyoy'
-#       real_new(*args, &block)
-#     end
-    
-#   end
-# end
+wires_rb = $LOAD_PATH.map{|path| File.join(path, "wires.rb")}.detect{|x| File.exist? x}
 
-puts 'yo'
-p      Wires.object_id
-# p Sys::Wires.object_id
-puts 'yo'
-
-# Sys::Wires::Convenience.prefix_methods(:sys)
-# p Sys::Wires::Convenience.instance_methods
-# include Sys::Wires::Convenience
-
-# on :event do |e|
-#   puts e
-# end
+# Show that the two have differet object ids
+puts      Wires.object_id
+puts Sys::Wires.object_id
+puts 
 
 
-# sleep 1
+# Prefix convenience functions for use
+Sys::Wires::Convenience.prefix_methods(:sys)
+include Sys::Wires::Convenience
+
+# Show prefixed convenience functions
+p Sys::Wires::Convenience.instance_methods
+
+
+###
+# Show working functionality:
+
+on :event do |e|
+  puts e
+end
+sys_on :event do |e|
+  puts e
+end
+
 
 Wires::Hub.run
-# Sys::Wires::Hub.run
+Sys::Wires::Hub.run
 
-# fire :event
-# sys_fire :event
+fire :event
+sys_fire :event
 
-# Wires::Hub.kill
-# Sys::Wires::Hub.kill
+Wires::Hub.kill
+Sys::Wires::Hub.kill
 
-
-
-
-
-# Wires::Convenience.prefix_methods(:sys) 
-# p Wires::Convenience.instance_methods
