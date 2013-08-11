@@ -222,7 +222,7 @@ describe Wires::Hub do
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
     on :event, 'Wires::Hub_Params' do |event, ch_string|
-      event.must_be_instance_of Event
+      event.must_be_instance_of Wires::Event
       ch_string.must_equal 'Wires::Hub_Params'
       it_happened = true
     end
@@ -242,11 +242,11 @@ describe Wires::Hub do
     
     count = 0
     Wires::Hub.on_handler_exception do |exc, event, ch_string|
-      # exc.backtrace.wont_be_nil
-      # exc.fire_backtrace.wont_be_nil
-      # event.wont_be_nil
-      # ch_string.wont_be_nil
-      # count += 1
+      exc.backtrace.wont_be_nil
+      exc.fire_backtrace.wont_be_nil
+      event.must_be_instance_of MyEvent
+      ch_string.must_equal 'Wires::Hub_Exc'
+      count += 1
     end
     Wires::Hub.run
     
@@ -256,7 +256,7 @@ describe Wires::Hub do
     Wires::Hub.kill
     Wires::Hub.reset_handler_exception_proc
     
-    # count.must_equal 2
+    count.must_equal 2
     
   end
   
