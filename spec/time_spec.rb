@@ -124,102 +124,41 @@ describe Wires::TimeSchedulerItem do
 end
 
 
-# Time objects get extended to call TimeScheduler.fire
-describe Time do
-  include TimeTester
-  
-  it "can now fire events at a specific time" do
-    
-    var = 'before'
-    on :event, 'T_A' do var='after' end
-    0.1.seconds.from_now.fire :event
-    sleep 0.05
-    var.must_equal 'before'
-    sleep 0.15
-    var.must_equal 'after'
-    
-  end
-  
-  it "will immediately fire events aimed at a time in the past" do
-    
-    var = 'before'
-    on :event, 'T_B' do var='after' end
-    0.1.seconds.ago.fire :event
-    sleep 0.05
-    var.must_equal 'after'
-    sleep 0.15
-    var.must_equal 'after'
-    
-  end
-  
-  it "can be told not to fire events aimed at a time in the past" do
-    
-    var = 'before'
-    on :event, 'T_C' do var='after' end
-    0.1.seconds.ago.fire :event, ignore_past:true
-    sleep 0.05
-    var.must_equal 'before'
-    sleep 0.15
-    var.must_equal 'before'
-    
-  end
-  
-end
-
-# Duration objects get extended to fire anonymous event blocks
-describe ActiveSupport::Duration do
-  include TimeTester
-  
-  it "can now fire timed anonymous events, given a code block" do
-    
-    var = 'before'
-    0.1.seconds.from_now do 
-      var = 'after'
-    end
-    sleep 0.05
-    var.must_equal 'before'
-    sleep 0.15
-    var.must_equal 'after'
-    
-  end
-  
-  it "can now fire anonymous events at at time related to another time" do
-    var = 'before'
-    0.1.seconds.until(0.2.seconds.from_now) do 
-      var = 'after'
-    end
-    sleep 0.05
-    var.must_equal 'before'
-    sleep 0.15
-    var.must_equal 'after'
-    
-  end
-  
-  it "can now fire timed anonymous events, which don't match with eachother" do
-    
-    fire_count = 20
-    done_count = 0
-    past_events = []
-    
-    for i in 0...fire_count
-      (i*0.01+0.1).seconds.from_now do |event|
-        done_count += 1
-        past_events.wont_include event
-        past_events << event
-      end
-    end
-    
-    sleep (fire_count*0.01+0.2)
-    
-    done_count.must_equal fire_count
-    
-  end
-  
-end
-
 # TimeScheduler is the main time-handling object
 describe Wires::TimeScheduler do
   include TimeTester
+  
+  it "can accept an existing TimeSchedulerItem with .add" do
+    item = Wires::TimeSchedulerItem.new(5.hours.from_now, :event, 
+                                        interval:3.seconds, count:50)
+    Wires::TimeScheduler.add item
+    Wires::TimeScheduler.list.size.must_equal 1
+    Wires::TimeScheduler.list.must_include item
+  end
+  
+  it "can accept an existing TimeSchedulerItem with .<<" do
+    item = Wires::TimeSchedulerItem.new(5.hours.from_now, :event, 
+                                        interval:3.seconds, count:50)
+    Wires::TimeScheduler << item
+    Wires::TimeScheduler.list.size.must_equal 1
+    Wires::TimeScheduler.list.must_include item
+  end
+  
+  it "can create a new TimeSchedulerItem with .add" do
+    Wires::TimeScheduler.add(5.hours.from_now, :event, 
+                             interval:3.seconds, count:50)
+    Wires::TimeScheduler.list.size.must_equal 1
+    Wires::TimeScheduler.list[0].interval.must_equal 3.seconds
+    Wires::TimeScheduler.list[0].count   .must_equal 50
+  end
+  
+  it "can create a new TimeSchedulerItem with .<<" do
+    Wires::TimeScheduler << [5.hours.from_now, :event, 
+                             interval:3.seconds, count:50]
+    Wires::TimeScheduler.list.size.must_equal 1
+    Wires::TimeScheduler.list[0].interval.must_equal 3.seconds
+    Wires::TimeScheduler.list[0].count   .must_equal 50
+  end
   
   it "can handle a barrage of events without dropping any" do
     
@@ -229,7 +168,9 @@ describe Wires::TimeScheduler do
     
     on :event, 'TS_A' do done_count += 1 end
     
-    fire_count.times {go_time.fire :event, 'TS_A'}
+    fire_count.times do
+      Wires::TimeScheduler.add go_time, :event, 'TS_A'
+    end
     
     sleep 0.2
     
@@ -245,7 +186,9 @@ describe Wires::TimeScheduler do
     
     on :event, 'TS_B' do done_count += 1 end
     
-    fire_count.times {go_time.fire :event, 'TS_B'}
+    fire_count.times do
+      Wires::TimeScheduler.add go_time, :event, 'TS_B'
+    end
     
     sleep 0.05
     
@@ -261,7 +204,9 @@ describe Wires::TimeScheduler do
     
     on :event, 'TS_C' do done_count += 1 end
     
-    fire_count.times {go_time.fire :event, 'TS_C'}
+    fire_count.times do
+      Wires::TimeScheduler.add go_time, :event, 'TS_C'
+    end
     
     sleep 0.05
     
@@ -277,9 +222,9 @@ describe Wires::TimeScheduler do
     e = []
     3.times do |i| e << Wires::Event.new_from([:event, index:i]) end
     
-    3.hours.from_now.fire e[0], 'TS_D'
-    1.hours.from_now.fire e[1], 'TS_D'
-    2.hours.from_now.fire e[2], 'TS_D'
+    Wires::TimeScheduler << [3.hours.from_now, e[0], 'TS_D']
+    Wires::TimeScheduler << [1.hours.from_now, e[1], 'TS_D']
+    Wires::TimeScheduler << [2.hours.from_now, e[2], 'TS_D']
     
     e << e.shift
     e.must_equal Wires::TimeScheduler.list.map { |x| x.event }
@@ -288,23 +233,4 @@ describe Wires::TimeScheduler do
   
 end
 
-describe :fire_every do
-  include TimeTester
-  
-  # Test not yet written - old copied text
-  # it "returns a repeating TimeSchedulerItem "\
-  #    "after enqueueing it in the TimeScheduler" do
-    
-  #   time = Time.now
-  #   count = 25
-  #   interval = 1.seconds
-  #   item = Wires::TimeSchedulerItem.new(time, :event, 
-  #                                       count:count, interval:interval)
-  #   item.active? .must_equal true
-  #   item.count   .must_equal count
-  #   item.interval.must_equal interval
-
-  # end
-  
-end
 

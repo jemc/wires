@@ -90,12 +90,15 @@ module Wires
     class << self
       
       # Add an event to the schedule
-      def add(new_item)
-        expect_type new_item, TimeSchedulerItem
+      def add(*args)
+        new_item = (args.first.is_a? TimeSchedulerItem) ?
+                     (args.first) :
+                     (TimeSchedulerItem.new(*args))
         schedule_add(new_item)
       nil end
+      
       # Add an event to the schedule using << operator
-      alias_method :<<, :add
+      def <<(arg); add(*arg); end
       
       # Get a copy of the event schedule from outside the class
       def list;  @schedule.clone end
