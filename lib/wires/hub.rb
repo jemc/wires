@@ -157,9 +157,10 @@ module Wires
             new_thread = Thread.new do
               begin
                 proc.call(*proc_args)
-                spawn_neglected_task_chain
               rescue Exception => exc
                 unhandled_exception(exc, *exc_args)
+              ensure
+                spawn_neglected_task_chain
               end
             end
             
