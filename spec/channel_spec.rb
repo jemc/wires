@@ -9,7 +9,8 @@ describe Wires::Channel do
   
   # Clean out channel list between each test
   def setup
-    Wires::Channel.class_variable_set('@@channel_list', Set.new([Wires::Channel.new('*')]))
+    Wires::Channel.class_variable_set('@@channel_list', 
+                                      Set.new([Wires::Channel.new('*')]))
   end
   
   it "takes exactly one argument" do
@@ -48,7 +49,7 @@ describe Wires::Channel do
     end
   end
   
-  it "can store [event, proc] pairs in @target_list with Wires::Channel#register" do
+  it "can store [event, proc] pairs in @target_list with Channel#register" do
     pair = [:event, Proc.new{nil}]
     chan = Wires::Channel.new('new')
     list = chan.instance_variable_get('@target_list').to_a
@@ -66,9 +67,15 @@ describe Wires::Channel do
   end
   
   it "correctly routes activity on one channel to relevant channels" do
-    relevant = [(chan=Wires::Channel.new('relevant')), Wires::Channel.new(:relevant), 
-                      Wires::Channel.new(/^rel.van(t|ce)/), Wires::Channel.new('*')]
-    irrelevant = [Wires::Channel.new('irrelevant'), Wires::Channel.new(/mal.vole(t|ce)/)]
+    chan=Wires::Channel.new('relevant')
+    
+    relevant   = [chan, 
+                  Wires::Channel.new(:relevant), 
+                  Wires::Channel.new(/^rel.van(t|ce)/), 
+                  Wires::Channel.new('*')]
+    
+    irrelevant = [Wires::Channel.new('irrelevant'), 
+                  Wires::Channel.new(/mal.vole(t|ce)/)]
     
     for c in chan.relevant_channels
       relevant.must_include c end
