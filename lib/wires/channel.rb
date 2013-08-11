@@ -88,7 +88,11 @@ module Wires
       for chan in relevant_channels()
         for target in chan.target_list
           for string in target[0] & event.class.codestrings
-            self.class.hub.spawn(event, string, *target[1], blocking, backtrace)
+            self.class.hub.spawn(event,     # fired event object event
+                                 self.name, # name of channel fired from
+                                 target[1], # proc to execute
+                                 blocking,  # boolean from blocking kwarg
+                                 backtrace) # captured backtrace
       end end end
       
       self.class.run_hooks(:@after_fires, event, self)

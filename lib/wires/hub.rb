@@ -127,12 +127,13 @@ module Wires
         return neglect(*args) if dead?
         
         event, ch_string, proc, blocking, fire_bt = *args
-        *exc_args = event, ch_string, fire_bt
+        *proc_args = event, ch_string
+        *exc_args  = event, ch_string, fire_bt
         
         # If blocking, run the proc in this thread
         if blocking
           begin
-            proc.call(event, ch_string)
+            proc.call(*proc_args)
           rescue Exception => exc
             unhandled_exception(exc, *exc_args)
           end
@@ -155,7 +156,7 @@ module Wires
             # Start the new child thread; follow with chain of neglected tasks
             new_thread = Thread.new do
               begin
-                proc.call(event, ch_string)
+                proc.call(*proc_args)
                 spawn_neglected_task_chain
               rescue Exception => exc
                 unhandled_exception(exc, *exc_args)

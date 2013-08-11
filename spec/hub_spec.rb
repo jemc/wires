@@ -104,8 +104,6 @@ describe Wires::Hub do
     
   end
   
-  it "passes the correct parameters to each spawned proc"
-  
   it "allows the user to set an arbitrary maximum number of child_threads"\
      " and temporarily neglects to spawn all further threads" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
@@ -218,6 +216,21 @@ describe Wires::Hub do
     
     Wires::Hub.reset_neglect_procs
     $stderr = stderr_save # Restore $stderr
+  end
+  
+  
+  it "passes the correct parameters to each spawned proc" do
+    it_happened = false
+    on :event, 'Wires::Hub_Params' do |event, ch_string|
+      event.must_be_instance_of Event
+      ch_string.must_equal 'Wires::Hub_Params'
+      it_happened = true
+    end
+    
+    Wires::Hub.run
+    fire :event, 'Wires::Hub_Params'
+    Wires::Hub.kill
+    it_happened.must_equal true
   end
   
   

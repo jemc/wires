@@ -44,22 +44,10 @@
 # Wires::Hub.kill
 # Sys::Wires::Hub.kill
 
-class A
+begin
+  44-32
+rescue
+  puts 'whut'
+ensure
+  puts 'always!'
 end
-
-def foo(*args)
-  puts args.size
-end
-
-ary = [1,2,3]
-ary = A.new
-
-# tr = TracePoint.new(:call, :return) do |x|
-#   p x
-# end
-
-# tr.enable
-
-foo(*ary)
-
-# tr.disable
