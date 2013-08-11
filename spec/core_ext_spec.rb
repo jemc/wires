@@ -6,7 +6,7 @@ begin require 'jemc/reporter'; rescue LoadError; end
 
 
 # Time objects get extended to call TimeScheduler.add
-describe Time do
+describe "wires/core_ext::Time" do
   include TimeTester
   
   it "can now fire events at a specific time" do
@@ -48,7 +48,7 @@ describe Time do
 end
 
 # Duration objects get extended to fire anonymous event blocks
-describe ActiveSupport::Duration do
+describe "wires/core_ext::ActiveSupport::Duration" do
   include TimeTester
   
   it "can now fire timed anonymous events, given a code block" do

@@ -9,7 +9,7 @@ describe Wires::Channel do
   
   # Clean out channel list between each test
   def setup
-    Wires::Channel.class_variable_set('@@channel_list', Set.new([Channel('*')]))
+    Wires::Channel.class_variable_set('@@channel_list', Set.new([Wires::Channel.new('*')]))
   end
   
   it "takes exactly one argument" do
@@ -20,7 +20,7 @@ describe Wires::Channel do
     end
   end
   
-  it "copies exactly its one argument into Channel#name" do
+  it "copies exactly its one argument into Wires::Channel#name" do
     for name in ['name', :name, /regex/, Wires::Event, Wires::Event.new, Object]
       Wires::Channel.new(name).name.must_equal name
     end
@@ -29,14 +29,10 @@ describe Wires::Channel do
   it "creates exactly one unique instance for each unique name" do
     past_channels = []
     for name in ['event', :event, /regex/, Wires::Event, Wires::Event.new, Object]
-      past_channels << (c = Channel(name))
-      Channel(name).must_be_same_as c
+      past_channels << (c = Wires::Channel.new(name))
+      Wires::Channel.new(name).must_be_same_as c
     end
     past_channels.must_equal past_channels.uniq
-  end
-  
-  it "can be created with the alias Channel(arg)" do
-    Wires::Channel.new('new').must_equal Channel('new')
   end
   
   it "assigns new unique object IDs in a threadsafe way" do
@@ -52,9 +48,9 @@ describe Wires::Channel do
     end
   end
   
-  it "can store [event, proc] pairs in @target_list with Channel#register" do
+  it "can store [event, proc] pairs in @target_list with Wires::Channel#register" do
     pair = [:event, Proc.new{nil}]
-    chan = Channel('new')
+    chan = Wires::Channel.new('new')
     list = chan.instance_variable_get('@target_list').to_a
     chan.register(*pair)
     list = chan.instance_variable_get('@target_list').to_a - list
@@ -62,7 +58,7 @@ describe Wires::Channel do
   end
   
   it "raises SyntaxError when proc in register(event, proc) isn't a Proc" do
-    chan = Channel('new')
+    chan = Wires::Channel.new('new')
     for not_proc in [nil, :symbol, 'string', Array.new, Hash.new]
       lambda {chan.register(:event, not_proc)}.must_raise SyntaxError
     end
@@ -70,9 +66,9 @@ describe Wires::Channel do
   end
   
   it "correctly routes activity on one channel to relevant channels" do
-    relevant = [(chan=Channel('relevant')), Channel(:relevant), 
-                      Channel(/^rel.van(t|ce)/), Channel('*')]
-    irrelevant = [Channel('irrelevant'), Channel(/mal.vole(t|ce)/)]
+    relevant = [(chan=Wires::Channel.new('relevant')), Wires::Channel.new(:relevant), 
+                      Wires::Channel.new(/^rel.van(t|ce)/), Wires::Channel.new('*')]
+    irrelevant = [Wires::Channel.new('irrelevant'), Wires::Channel.new(/mal.vole(t|ce)/)]
     
     for c in chan.relevant_channels
       relevant.must_include c end
@@ -99,7 +95,8 @@ describe Wires::Channel do
     r_list.size.must_equal relevant.size
   end
   
-  it "can call hooks before and after fire method that aren't retained by default" do
+  it "can call hooks before and after fire method,"\
+     "which aren't retained by default" do
     
     class SomeEvent < Wires::Event; end
     
