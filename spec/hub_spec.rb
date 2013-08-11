@@ -104,6 +104,8 @@ describe Wires::Hub do
     
   end
   
+  it "passes the correct parameters to each spawned proc"
+  
   it "allows the user to set an arbitrary maximum number of child_threads"\
      " and temporarily neglects to spawn all further threads" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr

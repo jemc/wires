@@ -3,12 +3,13 @@ module Wires
 
   module Convenience
     
-    # @original_instance_methods = 
+    def Channel(*args) Channel.new(*args) end
     
     def on(events, channels='*', &codeblock)
       channels = [channels] unless channels.is_a? Array
       for channel in channels
-        Channel.new(channel).register(events, codeblock)
+        channel=Channel.new(channel) unless channel.is_a? Channel
+        channel.register(events, codeblock)
       end
     nil end
     
@@ -20,12 +21,6 @@ module Wires
       Channel.new(channel).fire(event, blocking:true)
     nil end
     
-    # def fire_every(interval, event, channel='*', **kwargs)
-    #   Wires::TimeScheduler << \
-    #     Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
-    # end
-    
-    def Channel(*args) Channel.new(*args) end
     
     
     class << self
