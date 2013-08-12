@@ -66,9 +66,21 @@ describe "wires/convenience" do
       
       Wires::Hub.run
       fire :event, 'convenience_fire_D', count:50, blocking:true
-      
       count.must_equal 50
+      Wires::Hub.kill
+    end
+  end
+  
+  describe "#fire_and_wait" do
+    it "is an alias for fire with blocking kwarg set to true" do
+      count = 0
+      on :event, 'convenience_fire_and_wait_A' do
+        count+=1
+      end
       
+      Wires::Hub.run
+      fire_and_wait :event, 'convenience_fire_and_wait_A', count:50
+      count.must_equal 50
       Wires::Hub.kill
     end
   end
