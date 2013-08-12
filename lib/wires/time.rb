@@ -40,7 +40,7 @@ module Wires
     def active?;        @active                                      end
     def inactive?;      not @active                                  end
     
-    def ready?(at_time=Time.now);  @active and (at_time >= @time)    end
+    def ready?(at_time=Time.now); at_time and @active and (at_time >= @time) end
     
     def time_until;    (@active ? [(Time.now - @time), 0].max : nil) end
     
@@ -91,6 +91,8 @@ module Wires
     
     # Operate on the metaclass as a type of singleton pattern
     class << self
+      
+      attr_accessor :grain
       
       # Add an event to the schedule
       def add(*args)
