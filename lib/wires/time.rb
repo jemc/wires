@@ -40,7 +40,7 @@ module Wires
     def active?;        @active                                      end
     def inactive?;      not @active                                  end
     
-    def ready?(at_time=Time.now); at_time and @active and (at_time >= @time) end
+    def ready?(at_time=Time.now); @active and at_time and (at_time>=@time) end
     
     def time_until;    (@active ? [(Time.now - @time), 0].max : nil) end
     
@@ -123,18 +123,22 @@ module Wires
       
       def schedule_add(new_item)
         
-        if new_item.ready?
-          loop do
-            new_item.fire
-            break unless new_item.ready?
-          end
-        end
-        
-        if new_item.ready?(@next_pass)
-          Thread.new do
+        if @keepgoing
+          if new_item.ready?
             loop do
-              new_item.fire_when_ready(blocking:true)
-              break unless new_item.ready?(@next_pass)
+              puts "ready now"
+              new_item.fire
+              break unless new_item.ready?
+            end
+          end
+          
+          if new_item.ready?(@next_pass)
+            Thread.new do
+              loop do
+                puts "ready then"
+                new_item.fire_when_ready(blocking:true)
+                break unless new_item.ready?(@next_pass)
+              end
             end
           end
         end
