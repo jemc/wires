@@ -44,10 +44,19 @@
 # Wires::Hub.kill
 # Sys::Wires::Hub.kill
 
-begin
-  44-32
-rescue
-  puts 'whut'
-ensure
-  puts 'always!'
+# kwargs = Hash.new
+# kwargs.fetch()
+
+# kwargs
+
+def foo(arg, frog:0, **kwargs)
+  other = Hash.new
+  other[:salamander] = 'sal'
+  other[:horse] = 'neeeeeeigh'
+  p kwargs.merge(other)
+  
+  # p kwargs.reject{|k,v| k==:horse}
+  # p (kwargs[:salamander] and kwargs[:salamander]!=1)
 end
+
+foo(33, horse:55, cow:22, frog:32)

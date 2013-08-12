@@ -221,14 +221,14 @@ describe Wires::Hub do
   
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
-    on :event, 'Wires::Hub_Params' do |event, ch_string|
-      event.must_be_instance_of Wires::Event
+    on MyEvent, 'Wires::Hub_Params' do |event, ch_string|
+      event.must_be_instance_of MyEvent
       ch_string.must_equal 'Wires::Hub_Params'
       it_happened = true
     end
     
     Wires::Hub.run
-    fire :event, 'Wires::Hub_Params'
+    fire MyEvent, 'Wires::Hub_Params'
     Wires::Hub.kill
     it_happened.must_equal true
   end

@@ -9,8 +9,10 @@ module Wires
     
     def initialize(time, event, channel='*', 
                    interval:0.seconds, count:1, 
-                   ignore_past:false, cancel:false)
+                   ignore_past:false, cancel:false,
+                   **kwargs)
       
+      time ||= Time.now
       expect_type time, Time
       
       @active = (not cancel)
@@ -28,10 +30,11 @@ module Wires
       end
       
       @time     = time
-      @event    = Event.new_from(event)
-      @channel  = channel
       @interval = interval
       
+      @event    = Event.new_from(event)
+      @channel  = Channel.new(channel) unless channel.is_a? Channel
+      @kwargs   = kwargs
     end
     
     def active?;        @active                                      end
@@ -53,22 +56,22 @@ module Wires
     def count_dec(x=1); self.count=(@count-x)                        end
     
     # Fire the event now, regardless of time or active status
-    def fire(*args)
-      Channel.new(@channel).fire(@event, *args)
+    def fire(**kwargs) # kwargs merge with and override @kwargs
+      @channel.fire(@event, **(@kwargs.merge(kwargs)))
       count_dec
       @time += @interval if @active
     nil end
     
     # Fire the event only if it is ready
-    def fire_if_ready(*args); self.fire(*args) if ready? end
+    def fire_if_ready(**args); self.fire(**kwargs) if ready? end
     
     # Block until event is ready
     def wait_until_ready; sleep 0 until ready? end
     
     # Block until event is ready, then fire and block until it is done
-    def fire_when_ready(*args);
+    def fire_when_ready(**kwargs);
       wait_until_ready
-      fire(*args)
+      self.fire(**kwargs)
     end
     
     # Lock (almost) all instance methods with common re-entrant lock

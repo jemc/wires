@@ -13,12 +13,73 @@ describe "wires/convenience" do
     end
   end
   
+  describe "#fire" do
+    it "is an alias for Channel.fire under default kwargs" do
+      it_happened = false
+      on :event, 'convenience_fire_A' do
+        it_happened = true
+      end
+      
+      Wires::Hub.run
+      fire :event, 'convenience_fire_A'
+      Wires::Hub.kill
+      
+      it_happened.must_equal true
+    end
+    
+    it "accepts an actual Channel object as its channel argument" do
+      chan = Wires::Channel.new('convenience_fire_B')
+      it_happened = false
+      on :event, chan do
+        it_happened = true
+      end
+      
+      Wires::Hub.run
+      fire :event, chan
+      Wires::Hub.kill
+      
+      it_happened.must_equal true
+    end
+    
+    it "is an alias for TimeScheduler.add if given :time kwarg" do
+      it_happened = false
+      on :event, 'convenience_fire_C' do
+        it_happened = true
+      end
+      
+      Wires::Hub.run
+      fire :event, 'convenience_fire_C', time:0.1.seconds.from_now
+      
+      sleep 0.05
+      it_happened.must_equal false
+      sleep 0.10
+      it_happened.must_equal true
+      
+      Wires::Hub.kill
+    end
+    
+    # it "is an alias for TimeScheduler.add if given :count kwarg" do
+    #   count = 0
+    #   on :event, 'convenience_fire_D' do
+    #     count+=1
+    #   end
+      
+    #   Wires::Hub.run
+    #   fire :event, 'convenience_fire_D', count:50, blocking:true
+      
+    #   sleep 0.2
+    #   count.must_equal 50
+      
+    #   Wires::Hub.kill
+    # end
+  end
+  
   describe "#on" do
     it "is an alias for Channel#register, adding a firable target proc" do
-      chan = Wires::Channel.new('channel')
+      chan = Wires::Channel.new('convenience_on_A')
       
       it_happened = false
-      on :event, 'channel' do
+      on :event, 'convenience_on_A' do
         it_happened = true
       end
       
@@ -30,7 +91,7 @@ describe "wires/convenience" do
     end
     
     it "can accept an actual Channel object as the channel argument" do
-      chan = Wires::Channel.new('some_channel')
+      chan = Wires::Channel.new('convenience_on_B')
       
       it_happened = false
       on :event, chan do

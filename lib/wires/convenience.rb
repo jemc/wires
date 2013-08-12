@@ -13,13 +13,21 @@ module Wires
       end
     nil end
     
-    def fire(event, channel='*')
-      Channel.new(channel).fire(event, blocking:false)
+    def fire(event, channel='*', **kwargs)
+      channel = Channel.new(channel) unless channel.is_a? Channel
+      unless kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
+        channel.fire(event, **kwargs)
+      else
+        time = kwargs[:time] or Time.now
+        kwargs.reject!{|k,v| k==:time}
+        TimeScheduler.add(time, event, channel, **kwargs)
+      end
     nil end
     
-    def fire_and_wait(event, channel='*') 
-      Channel.new(channel).fire(event, blocking:true)
-    nil end
+    def fire_and_wait(*args, **kwargs)
+      kwargs[:blocking]=true
+      fire(*args, **kwargs)
+    end
     
     
     
