@@ -75,9 +75,9 @@ module Wires
     end
     
     # Lock (almost) all instance methods with common re-entrant lock
-    threadlock instance_methods-superclass.instance_methods-[
-                                :block_until_ready,
-                                :fire_when_ready]
+    threadlock instance_methods(false)-[\
+                 :wait_until_ready,
+                 :fire_when_ready]
   end
   
   # A singleton class to schedule future firing of events
@@ -120,12 +120,26 @@ module Wires
       nil end
       
       def schedule_add(new_item)
-        if new_item.ready?(@next_pass)
-          Thread.new{ new_item.fire_when_ready(blocking:true) }
-        else
-          @schedule << new_item
-          schedule_reshuffle
+        
+        if new_item.ready?
+          loop do
+            new_item.fire
+            break unless new_item.ready?
+          end
         end
+        
+        if new_item.ready?(@next_pass)
+          Thread.new do
+            loop do
+              new_item.fire_when_ready(blocking:true)
+              break unless new_item.ready?(@next_pass)
+            end
+          end
+        end
+        
+        @schedule << new_item
+        schedule_reshuffle
+        
       nil end
       
       def schedule_concat(other_list)

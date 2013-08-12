@@ -58,20 +58,19 @@ describe "wires/convenience" do
       Wires::Hub.kill
     end
     
-    # it "is an alias for TimeScheduler.add if given :count kwarg" do
-    #   count = 0
-    #   on :event, 'convenience_fire_D' do
-    #     count+=1
-    #   end
+    it "is an alias for TimeScheduler.add if given :count kwarg" do
+      count = 0
+      on :event, 'convenience_fire_D' do
+        count+=1
+      end
       
-    #   Wires::Hub.run
-    #   fire :event, 'convenience_fire_D', count:50, blocking:true
+      Wires::Hub.run
+      fire :event, 'convenience_fire_D', count:50, blocking:true
       
-    #   sleep 0.2
-    #   count.must_equal 50
+      count.must_equal 50
       
-    #   Wires::Hub.kill
-    # end
+      Wires::Hub.kill
+    end
   end
   
   describe "#on" do
