@@ -82,7 +82,7 @@ module Wires
       # Create an instance object from one of several acceptable input forms
       event = Event.new_from event
       
-      self.class.run_hooks(:@before_fires, event, self)
+      self.class.run_hooks(:@before_fires, event, self) if @before_fires
       
       # Fire to each relevant target on each channel
       for chan in relevant_channels()
@@ -95,7 +95,7 @@ module Wires
                                  backtrace) # captured backtrace
       end end end
       
-      self.class.run_hooks(:@after_fires, event, self)
+      self.class.run_hooks(:@after_fires, event, self) if @after_fires
       
     nil end
     
