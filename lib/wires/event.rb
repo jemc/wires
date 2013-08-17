@@ -42,9 +42,10 @@ module Wires
       
       # Convert class <ClassNameEvent> to string "class_name"
       def codestring(cls=self)
-        File.basename cls.to_s
-        .underscore
-        .gsub(/_event$/, "")
+        @codestring ||= \
+          File.basename cls.to_s
+            .underscore
+            .gsub(/_event$/, "")
       end
       
       # List of codestrings associated with this event and ancestors
