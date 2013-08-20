@@ -126,7 +126,6 @@ module Wires
         if @keepgoing
           if new_item.ready?
             loop do
-              puts "ready now"
               new_item.fire
               break unless new_item.ready?
             end
@@ -135,7 +134,6 @@ module Wires
           if new_item.ready?(@next_pass)
             Thread.new do
               loop do
-                puts "ready then"
                 new_item.fire_when_ready(blocking:true)
                 break unless new_item.ready?(@next_pass)
               end

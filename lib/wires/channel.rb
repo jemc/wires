@@ -5,6 +5,9 @@ module Wires
     
     attr_reader :name
     attr_reader :target_list
+    attr_reader :relevant_channels
+    
+    def inspect; "Channel(#{name.inspect})"; end
     
     # Redefine this class method to use an alternate Hub
     def self.hub; Hub; end
@@ -86,6 +89,8 @@ module Wires
     # Fire an event on this channel
     def fire(event, blocking:false)
       
+      raise *@not_firable if @not_firable
+      
       backtrace = caller
       
       # Create an instance object from one of several acceptable input forms
@@ -113,36 +118,36 @@ module Wires
       @my_names = (self.name.is_a? Array) ? self.name : [self.name]
       @my_names.map {|o| (o.respond_to? :channel_name) ? o.channel_name : o.to_s}
               .flatten(1)
+      _test_relevance self
     end
     
     def _test_relevance(other_chan)
       if self==@@channel_star
         @relevant_channels << other_chan
-        return true
+        return
       end
       
       for my_name in @my_names
         
-        if my_name.is_a?(Regexp) then raise TypeError,
+        if my_name.is_a?(Regexp) then 
+          @not_firable = [TypeError,
           "Cannot fire on Regexp channel: #{self.name}."\
-          "  Regexp channels can only used in event handlers." end
+          "  Regexp channels can only used in event handlers."]
+          return
+        end
         
         other_name = other_chan.name
         other_name = (other_name.respond_to? :channel_name) ? \
                         other_name.channel_name : other_name
         
         @relevant_channels << other_chan if \
+          !@relevant_channels.include?(other_chan) and \
           if other_name.is_a?(Regexp)
             my_name =~ other_name
           else
             my_name.to_s == other_name.to_s
           end
-        
       end
-    end
-    
-    def relevant_channels
-      return @relevant_channels.uniq
     end
     
     # Compare matching with another Channel
