@@ -99,8 +99,8 @@ module Wires
         for key in kwargs.keys
           att = key.to_s
           obj.instance_variable_set("@#{att}", kwargs[key])
-          class_eval("def #{att}; @#{att}; end")
-          # class_eval("def #{att}=(val); @#{att}=val; end")
+          class_eval { attr_reader att }
+          # class_eval { attr_writer att }
         end
         
         obj
