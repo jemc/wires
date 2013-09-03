@@ -130,10 +130,29 @@ describe Wires::Channel do
     Wires::Channel.before_fire { hook_val.must_equal 'B'; hook_val = 'C' }
     Wires::Channel.after_fire  { hook_val.must_equal 'C'; hook_val = 'D' }
     Wires::Channel.after_fire  { hook_val.must_equal 'D'; hook_val = 'E' }
-    Wires::Channel.after_fire  do |event,chan|
+    save_proc = Wires::Channel.after_fire do |event,chan|
       assert event.is_a? Wires::Event
       assert chan.is_a? Wires::Channel
     end
+    
+    Wires::Channel.clear_hooks(:@before_fires)
+    Wires::Channel.clear_hooks(:@after_fires)
+    
+    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
+    
+    hook_val = 'A'
+    Wires::Channel.before_fire { hook_val.must_equal 'A'; hook_val = 'B' }
+    Wires::Channel.before_fire { hook_val.must_equal 'B'; hook_val = 'C' }
+    Wires::Channel.after_fire  { hook_val.must_equal 'C'; hook_val = 'D' }
+    Wires::Channel.after_fire  { hook_val.must_equal 'D'; hook_val = 'E' }
+    save_proc = Wires::Channel.after_fire do |event,chan|
+      assert event.is_a? Wires::Event
+      assert chan.is_a? Wires::Channel
+    end
+    
+    
+    assert_instance_of Proc, save_proc
     hook_val.must_equal 'A'
     Wires::Hub.run
     fire SomeEvent, 'Wires::Channel_A'
@@ -146,12 +165,18 @@ describe Wires::Channel do
     fire SomeEvent, 'Wires::Channel_A'
     Wires::Hub.kill
     hook_val.must_equal 'A'
+    
     
     hook_val = 'A'
     Wires::Channel.before_fire(true){ hook_val.must_equal 'A'; hook_val = 'B' }
     Wires::Channel.before_fire(true){ hook_val.must_equal 'B'; hook_val = 'C' }
     Wires::Channel.after_fire (true){ hook_val.must_equal 'C'; hook_val = 'D' }
     Wires::Channel.after_fire (true){ hook_val.must_equal 'D'; hook_val = 'E' }
+    save_proc = Wires::Channel.before_fire do |event,chan|
+      assert event.is_a? Wires::Event
+      assert chan.is_a? Wires::Channel
+    end
+    assert_instance_of Proc, save_proc
     hook_val.must_equal 'A'
     Wires::Hub.run
     fire SomeEvent, 'Wires::Channel_A'
@@ -165,8 +190,28 @@ describe Wires::Channel do
     Wires::Hub.kill
     hook_val.must_equal 'E'
     
+    list = Wires::Channel.instance_variable_get(:@after_fires)
+    Wires::Channel.remove_hook(:@after_fires, &save_proc)
+    Wires::Channel.instance_variable_get(:@after_fires)
+      .must_equal (list - [save_proc])
+    Wires::Channel.add_hook(:@after_fires, &save_proc)
+    (Wires::Channel.instance_variable_get(:@after_fires) - [save_proc])
+      .must_equal list
+    
+    Wires::Channel.instance_variable_get(:@before_fires).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fires).wont_be_empty
+    
+    Wires::Channel.clear_hooks(:@before_fires)
+    Wires::Channel.clear_hooks(:@after_fires)
+    
+    Wires::Channel.instance_variable_get(:@before_fires).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fires).wont_be_empty
+    
     Wires::Channel.clear_hooks(:@before_fires, true)
     Wires::Channel.clear_hooks(:@after_fires,  true)
+    
+    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
     
   end
   

@@ -64,30 +64,47 @@ module Wires
       end)
     end
     
-    # Register hook to execute before fire - can call multiple times
-    def self.before_fire(retain=false, &block)
-      @before_fires ||= []
-      @before_fires << [block, retain]
-    nil end
+    def self.before_fire(*args, &proc)
+      self.add_hook(:@before_fires, *args, &proc)
+    end
     
-    # Register hook to execute after fire - can call multiple times
-    def self.after_fire(retain=false, &block)
-      @after_fires ||= []
-      @after_fires << [block, retain]
-    nil end
+    def self.after_fire(*args, &proc)
+      self.add_hook(:@after_fires, *args, &proc)
+    end
     
+    # Register a hook - can be called multiple times if retain is true
+    def self.add_hook(hooks_sym, retain=false, &proc)
+      hooks = instance_variable_get(hooks_sym.to_sym)
+      if hooks
+        hooks << [proc, retain]
+      else
+        instance_variable_set(hooks_sym.to_sym, [[proc, retain]])
+      end
+      proc
+    end
+    
+    # Remove a hook by proc reference
+    def self.remove_hook(hooks_sym, &proc)
+      hooks = instance_variable_get(hooks_sym.to_sym)
+      return unless hooks
+      hooks.reject! {|h| h[0]==proc}
+    end
+    
+    # Run all hooks, deleting those not marked for retention
     def self.run_hooks(hooks_sym, *exc_args)
-      hooks = self.instance_variable_get(hooks_sym.to_sym)
+      hooks = instance_variable_get(hooks_sym.to_sym)
+      return unless hooks
       for hook in hooks
         proc, retain = hook
         proc.call(*exc_args)
-      end if hooks
+      end
     nil end
     
+    # Clear hooks marked for retention (or all hooks if force)
     def self.clear_hooks(hooks_sym, force=false)
-      hooks = self.instance_variable_get(hooks_sym.to_sym)
-      self.instance_variable_set(hooks_sym.to_sym,
-        (force ? [] : hooks.select{|h| h[1]})) if hooks
+      hooks = instance_variable_get(hooks_sym.to_sym)
+      return unless hooks
+      (force ? hooks.clear : hooks.select!{|h| h[1]})
     nil end
     
     # Fire an event on this channel
