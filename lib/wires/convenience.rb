@@ -9,7 +9,7 @@ module Wires
       channels = [channels] unless channels.is_a? Array
       for channel in channels
         channel=Channel.new(channel) unless channel.is_a? Channel
-        channel.register(events, codeblock)
+        channel.register(*events, &codeblock)
       end
       codeblock
     end

@@ -46,12 +46,11 @@ module Wires
     end
     
     # Register a proc to be triggered by an event on this channel
-    def register(events, proc)
-      
+    def register(*events, &proc)
       if not proc.is_a?(Proc) then raise SyntaxError, \
         "No Proc given to execute on event: #{events}" end
       
-      # Convert all events to strings
+      # Convert events to array of unique codestrings
       events = [events] unless events.is_a? Array
       events.flatten!
       events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }

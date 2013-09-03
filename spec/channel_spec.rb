@@ -49,12 +49,11 @@ describe Wires::Channel do
     end
   end
   
-  it "can store [event, proc] pairs in @target_list with Channel#register" do
-    pair = [:event, Proc.new{nil}]
+  it "can store event/proc associations in @target_list with #register" do
+    proc = Proc.new{nil}
     chan = Wires::Channel.new('new')
     list = chan.instance_variable_get('@target_list').to_a
-    proc = chan.register(*pair)
-    assert_equal proc, pair.last
+    assert_equal (chan.register :event, &proc), proc
     list = chan.instance_variable_get('@target_list').to_a - list
     list.size.must_equal 1
   end
