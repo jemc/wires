@@ -135,11 +135,11 @@ describe Wires::Channel do
       assert chan.is_a? Wires::Channel
     end
     
-    Wires::Channel.clear_hooks(:@before_fires)
-    Wires::Channel.clear_hooks(:@after_fires)
+    Wires::Channel.clear_hooks(:@before_fire)
+    Wires::Channel.clear_hooks(:@after_fire)
     
-    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
-    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
     
     hook_val = 'A'
     Wires::Channel.before_fire { hook_val.must_equal 'A'; hook_val = 'B' }
@@ -167,8 +167,8 @@ describe Wires::Channel do
     hook_val.must_equal 'A'
     
     
-    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
-    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
     
     hook_val = 'A'
     Wires::Channel.before_fire(true){ hook_val.must_equal 'A'; hook_val = 'B' }
@@ -193,28 +193,28 @@ describe Wires::Channel do
     Wires::Hub.kill
     hook_val.must_equal 'E'
     
-    list = Wires::Channel.instance_variable_get(:@after_fires)
-    Wires::Channel.remove_hook(:@after_fires, &save_proc)
-    Wires::Channel.instance_variable_get(:@after_fires)
+    list = Wires::Channel.instance_variable_get(:@after_fire)
+    Wires::Channel.remove_hook(:@after_fire, &save_proc)
+    Wires::Channel.instance_variable_get(:@after_fire)
       .must_equal (list - [save_proc])
-    Wires::Channel.add_hook(:@after_fires, &save_proc)
-    (Wires::Channel.instance_variable_get(:@after_fires) - [save_proc])
+    Wires::Channel.add_hook(:@after_fire, &save_proc)
+    (Wires::Channel.instance_variable_get(:@after_fire) - [save_proc])
       .must_equal list
     
-    Wires::Channel.instance_variable_get(:@before_fires).wont_be_empty
-    Wires::Channel.instance_variable_get(:@after_fires).wont_be_empty
+    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
     
-    Wires::Channel.clear_hooks(:@before_fires)
-    Wires::Channel.clear_hooks(:@after_fires)
+    Wires::Channel.clear_hooks(:@before_fire)
+    Wires::Channel.clear_hooks(:@after_fire)
     
-    Wires::Channel.instance_variable_get(:@before_fires).wont_be_empty
-    Wires::Channel.instance_variable_get(:@after_fires).wont_be_empty
+    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
     
-    Wires::Channel.clear_hooks(:@before_fires, true)
-    Wires::Channel.clear_hooks(:@after_fires,  true)
+    Wires::Channel.clear_hooks(:@before_fire, true)
+    Wires::Channel.clear_hooks(:@after_fire,  true)
     
-    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
-    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
     
   end
   

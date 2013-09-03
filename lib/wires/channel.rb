@@ -69,11 +69,11 @@ module Wires
       include Hooks
       
       def before_fire(*args, &proc)
-        add_hook(:@before_fires, *args, &proc)
+        add_hook(:@before_fire, *args, &proc)
       end
       
       def after_fire(*args, &proc)
-        add_hook(:@after_fires, *args, &proc)
+        add_hook(:@after_fire, *args, &proc)
       end
     end
     
@@ -87,7 +87,7 @@ module Wires
       # Create an instance object from one of several acceptable input forms
       event = Event.new_from event
       
-      self.class.run_hooks(:@before_fires, event, self)
+      self.class.run_hooks(:@before_fire, event, self)
       
       # Fire to each relevant target on each channel
       for chan in relevant_channels()
@@ -100,7 +100,7 @@ module Wires
                                  backtrace) # captured backtrace
       end end end
       
-      self.class.run_hooks(:@after_fires, event, self)
+      self.class.run_hooks(:@after_fire, event, self)
       
     nil end
     
@@ -155,8 +155,8 @@ module Wires
     end
     
     hub.before_kill(true) do
-      self.clear_hooks(:@before_fires)
-      self.clear_hooks(:@after_fires)
+      self.clear_hooks(:@before_fire)
+      self.clear_hooks(:@after_fire)
     end
     
   end

@@ -80,19 +80,19 @@ module Wires
       include Hooks
       
       def before_run(*args, &proc)
-        add_hook(:@before_runs, *args, &proc)
+        add_hook(:@before_run, *args, &proc)
       end
       
       def after_run(*args, &proc)
-        add_hook(:@after_runs, *args, &proc)
+        add_hook(:@after_run, *args, &proc)
       end
       
       def before_kill(*args, &proc)
-        add_hook(:@before_kills, *args, &proc)
+        add_hook(:@before_kill, *args, &proc)
       end
       
       def after_kill(*args, &proc)
-        add_hook(:@after_kills, *args, &proc)
+        add_hook(:@after_kill, *args, &proc)
       end
       
       
@@ -270,20 +270,18 @@ module Wires
         
         declare_state :dead do
           transition_to :alive do
-            before { flush_hooks :@before_runs }
-            after  { flush_hooks :@after_runs }
+            before { flush_hooks :@before_run }
+            after  { flush_hooks :@after_run }
           end
         end
         
         declare_state :alive do
           transition_to :dead do
-            before { flush_hooks :@before_kills }
+            before { flush_hooks :@before_kill }
             before { purge_neglected }
             before { join_children if @please_finish_all }
             after  { @please_finish_all = false }
-            after  { flush_hooks :@after_kills }
-            after  { clear_hooks :@before_fires }
-            after  { clear_hooks :@after_fires  }
+            after  { flush_hooks :@after_kill }
           end
         end
         
