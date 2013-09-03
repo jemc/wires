@@ -58,6 +58,24 @@ describe Wires::Channel do
     list.size.must_equal 1
   end
   
+  it "can unstore event/proc associations from @target_list with #unregister" do
+    proc = Proc.new{nil}
+    chan = Wires::Channel.new('new')
+    list = chan.instance_variable_get('@target_list').to_a
+    assert_equal (chan.register :event, &proc), proc
+    assert_equal (chan.unregister :event, &proc), true
+    list.must_equal chan.instance_variable_get('@target_list').to_a
+  end
+  
+  it "can unstore all occurrences of a proc in @target_list with #unregister" do
+    proc = Proc.new{nil}
+    chan = Wires::Channel.new('new')
+    list = chan.instance_variable_get('@target_list').to_a
+    assert_equal (chan.register :event, &proc), proc
+    assert_equal (chan.unregister &proc), true
+    list.must_equal chan.instance_variable_get('@target_list').to_a
+  end
+  
   it "raises SyntaxError when proc in register(event, proc) isn't a Proc" do
     chan = Wires::Channel.new('new')
     for not_proc in [nil, :symbol, 'string', Array.new, Hash.new]

@@ -46,18 +46,22 @@ module Wires
     end
     
     # Register a proc to be triggered by an event on this channel
+    # Return the proc that was passed in
     def register(*events, &proc)
       if not proc.is_a?(Proc) then raise SyntaxError, \
         "No Proc given to execute on event: #{events}" end
-      
-      # Convert events to array of unique codestrings
-      events = [events] unless events.is_a? Array
-      events.flatten!
-      events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
-      events.uniq!
-      
+      _normalize_event_list(events)
       @target_list << [events, proc]
       proc
+    end
+    
+    # Unregister a proc from the target list of this channel
+    # Return true if at least one matching target was unregistered, else false
+    def unregister(*events, &proc)
+      _normalize_event_list(events)
+      !!(@target_list.reject! do |e, p|
+        (proc and proc==p) and (events.map{|event| e.include? event}.all?)
+      end)
     end
     
     # Register hook to execute before fire - can call multiple times
@@ -112,6 +116,14 @@ module Wires
       self.class.run_hooks(:@after_fires, event, self)
       
     nil end
+    
+    # Convert events to array of unique codestrings
+    def _normalize_event_list(events)
+      events = [events] unless events.is_a? Array
+      events.flatten!
+      events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
+      events.uniq!
+    end
     
     def _relevant_init
       @relevant_channels = [@@channel_star]
