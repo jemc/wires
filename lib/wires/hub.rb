@@ -76,25 +76,25 @@ module Wires
         sleep 0 until request_state :dead unless (flags.include? :nonblocking)
       nil end
       
-      # Register hook to execute before run - can call multiple times
-      def before_run(retain=false, &block)
-        @before_runs << [block, retain]
-      nil end
+      # Add hook methods
+      include Hooks
       
-      # Register hook to execute after run - can call multiple times
-      def after_run(retain=false, &block)
-        @after_runs << [block, retain]
-      nil end
+      def before_run(*args, &proc)
+        add_hook(:@before_runs, *args, &proc)
+      end
       
-      # Register hook to execute before kill - can call multiple times
-      def before_kill(retain=false, &block)
-        @before_kills << [block, retain]
-      nil end
+      def after_run(*args, &proc)
+        add_hook(:@after_runs, *args, &proc)
+      end
       
-      # Register hook to execute after kill - can call multiple times
-      def after_kill(retain=false, &block)
-        @after_kills << [block, retain]
-      nil end
+      def before_kill(*args, &proc)
+        add_hook(:@before_kills, *args, &proc)
+      end
+      
+      def after_kill(*args, &proc)
+        add_hook(:@after_kills, *args, &proc)
+      end
+      
       
       def on_neglect(&block)
         @on_neglect=block
@@ -243,35 +243,6 @@ module Wires
         end
       nil end
       
-      # Flush/run queue of [proc, retain]s, retaining those with retain==true
-      def run_hooks(hooks, *args)
-        retained = Queue.new
-        while not hooks.empty?
-          proc, retain = hooks.shift
-          retained << [proc, retain] if retain
-          proc.call(*args)
-        end
-        while not retained.empty?
-          hooks << retained.shift
-        end
-      nil end
-      
-      # Run queue of [proc, retain]s, retaining all
-      def run_fire_hooks(hooks, *args)
-        for hook in hooks
-          proc, retain = hook
-          proc.call(*args)
-        end
-      nil end
-      
-      # Clear queue of [proc, retain]s, retaining those with retain==true
-      def clear_fire_hooks(hooks, *args)
-        hooks.select! do |hook|
-          proc, retain = hook
-          retain
-        end
-      nil end
-      
     end
     
     
@@ -299,20 +270,20 @@ module Wires
         
         declare_state :dead do
           transition_to :alive do
-            before { run_hooks @before_runs }
-            after  { run_hooks @after_runs }
+            before { flush_hooks :@before_runs }
+            after  { flush_hooks :@after_runs }
           end
         end
         
         declare_state :alive do
           transition_to :dead do
-            before { run_hooks @before_kills }
+            before { flush_hooks :@before_kills }
             before { purge_neglected }
             before { join_children if @please_finish_all }
             after  { @please_finish_all = false }
-            after  { run_hooks @after_kills }
-            after  { clear_fire_hooks @before_fires }
-            after  { clear_fire_hooks @after_fires  }
+            after  { flush_hooks :@after_kills }
+            after  { clear_hooks :@before_fires }
+            after  { clear_hooks :@after_fires  }
           end
         end
         

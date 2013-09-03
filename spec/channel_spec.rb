@@ -121,7 +121,7 @@ describe Wires::Channel do
   end
   
   it "can call hooks before and after fire method,"\
-     "which aren't retained by default" do
+     "which aren't retained when Hub is killed by default" do
     
     class SomeEvent < Wires::Event; end
     
@@ -166,6 +166,9 @@ describe Wires::Channel do
     Wires::Hub.kill
     hook_val.must_equal 'A'
     
+    
+    Wires::Channel.instance_variable_get(:@before_fires).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fires).must_be_empty
     
     hook_val = 'A'
     Wires::Channel.before_fire(true){ hook_val.must_equal 'A'; hook_val = 'B' }

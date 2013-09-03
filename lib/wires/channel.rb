@@ -64,48 +64,18 @@ module Wires
       end)
     end
     
-    def self.before_fire(*args, &proc)
-      self.add_hook(:@before_fires, *args, &proc)
-    end
-    
-    def self.after_fire(*args, &proc)
-      self.add_hook(:@after_fires, *args, &proc)
-    end
-    
-    # Register a hook - can be called multiple times if retain is true
-    def self.add_hook(hooks_sym, retain=false, &proc)
-      hooks = instance_variable_get(hooks_sym.to_sym)
-      if hooks
-        hooks << [proc, retain]
-      else
-        instance_variable_set(hooks_sym.to_sym, [[proc, retain]])
+    # Add hook methods
+    class << self
+      include Hooks
+      
+      def before_fire(*args, &proc)
+        add_hook(:@before_fires, *args, &proc)
       end
-      proc
-    end
-    
-    # Remove a hook by proc reference
-    def self.remove_hook(hooks_sym, &proc)
-      hooks = instance_variable_get(hooks_sym.to_sym)
-      return unless hooks
-      hooks.reject! {|h| h[0]==proc}
-    end
-    
-    # Run all hooks, deleting those not marked for retention
-    def self.run_hooks(hooks_sym, *exc_args)
-      hooks = instance_variable_get(hooks_sym.to_sym)
-      return unless hooks
-      for hook in hooks
-        proc, retain = hook
-        proc.call(*exc_args)
+      
+      def after_fire(*args, &proc)
+        add_hook(:@after_fires, *args, &proc)
       end
-    nil end
-    
-    # Clear hooks marked for retention (or all hooks if force)
-    def self.clear_hooks(hooks_sym, force=false)
-      hooks = instance_variable_get(hooks_sym.to_sym)
-      return unless hooks
-      (force ? hooks.clear : hooks.select!{|h| h[1]})
-    nil end
+    end
     
     # Fire an event on this channel
     def fire(event, blocking:false)
