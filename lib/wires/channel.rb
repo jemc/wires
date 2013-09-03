@@ -58,7 +58,8 @@ module Wires
       events.uniq!
       
       @target_list << [events, proc]
-    nil end
+      proc
+    end
     
     # Register hook to execute before fire - can call multiple times
     def self.before_fire(retain=false, &block)

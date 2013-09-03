@@ -53,7 +53,8 @@ describe Wires::Channel do
     pair = [:event, Proc.new{nil}]
     chan = Wires::Channel.new('new')
     list = chan.instance_variable_get('@target_list').to_a
-    chan.register(*pair)
+    proc = chan.register(*pair)
+    assert_equal proc, pair.last
     list = chan.instance_variable_get('@target_list').to_a - list
     list.size.must_equal 1
   end

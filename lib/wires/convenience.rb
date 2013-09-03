@@ -11,7 +11,8 @@ module Wires
         channel=Channel.new(channel) unless channel.is_a? Channel
         channel.register(events, codeblock)
       end
-    nil end
+      codeblock
+    end
     
     def fire(event, channel='*', **kwargs)
       channel = Channel.new(channel) unless channel.is_a? Channel

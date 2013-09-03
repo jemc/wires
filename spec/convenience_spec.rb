@@ -138,6 +138,12 @@ describe "wires/convenience" do
       
       count.must_equal chans.size
     end
+    
+    it "returns the &proc passed in" do
+      proc = Proc.new { nil }
+      assert_equal (on :event, 'convenience_on_A', &proc), proc
+    end
+    
   end
   
 end
