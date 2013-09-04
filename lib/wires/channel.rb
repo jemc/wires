@@ -104,6 +104,11 @@ module Wires
       
     nil end
     
+    # Fire a blocking event on this channel
+    def fire_and_wait(event)
+      self.fire(event, blocking:true)
+    end
+    
     # Convert events to array of unique codestrings
     def _normalize_event_list(events)
       events = [events] unless events.is_a? Array
