@@ -134,4 +134,22 @@ describe Wires::Event do
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
   end
   
+  it "uses the specified value for args when :args is a kwarg,"\
+     " with a crucial difference being that the specified object"\
+     " doesn't get duped or frozen (because it could be anything)." do
+    cool = CoolEvent.new(args:[13, 24, 10])
+    
+    cool.args.must_equal [13, 24, 10]
+    proc{cool.args = [1,2,3]}.must_raise NoMethodError
+    cool.args << 6  # wont_raise RuntimeError
+    cool.args.must_equal [13, 24, 10, 6]
+    
+    cool = CoolEvent.new(6, 5, 7, args:[13, 24, 10])
+    
+    cool.args.must_equal [13, 24, 10]
+    proc{cool.args = [1,2,3]}.must_raise NoMethodError
+    cool.args << 6  # wont_raise RuntimeError
+    cool.args.must_equal [13, 24, 10, 6]
+  end
+  
 end
