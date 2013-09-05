@@ -94,7 +94,7 @@ module Wires
         
         kwargs = args[-1].is_a?(Hash) ? args.pop.dup : Hash.new
         kwargs[:kwargs] = kwargs.dup.freeze
-        kwargs[:args]   =   args.dup.freeze
+        kwargs[:args]   =   args.dup.freeze unless kwargs.has_key?(:args)
         kwargs[:codeblock] = block if block
         for key in kwargs.keys
           att = key.to_s
