@@ -6,7 +6,7 @@ module Wires
     class << self
       
       # Allow user to get/set limit to number of child threads
-      attr_accessor :max_child_threads
+      attr_accessor :max_children
       
     private
     
@@ -16,13 +16,14 @@ module Wires
       # Moved to a dedicated method for subclass' sake
       def class_init
         # @queue = Queue.new
-        @max_child_threads   = nil
-        @child_threads       = Array.new
-        @child_threads.extend MonitorMixin
-        @neglected           = Array.new
-        @neglected_lock      = Monitor.new
-        @spawning_count      = 0
-        @spawning_count_lock = Monitor.new
+        @max_children   = nil
+        @children       = Array.new
+        @children .extend MonitorMixin
+        @neglected      = Array.new
+        @neglected.extend MonitorMixin
+        
+        @      = 0
+        @_lock = Monitor.new
         
         @hold_lock = Monitor.new
         
@@ -68,9 +69,7 @@ module Wires
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
         
-        return neglect() if @hold_lock
-        
-        @spawning_count_lock.synchronize { @spawning_count += 1 }
+        return neglect(*args) if @hold_lock
         
         event, ch_string, proc, blocking, fire_bt = *args
         *proc_args = event, ch_string
@@ -88,17 +87,11 @@ module Wires
         end
         
         # If not blocking, clear old threads and spawn a new thread
-        new_thread = nil
-        
-        @child_threads.synchronize do
-          
-          # Clear out dead threads
-          @child_threads.select!{|t| t.status}
-          
+        Thread.exclusive do
           begin
             # Raise ThreadError for user-set thread limit to mimic OS limit
-            raise ThreadError if (@max_child_threads) and \
-                                 (@max_child_threads <= @child_threads.count)
+            raise ThreadError if (@max_children) and \
+                                 (@max_children <= @children.count)
             # Start the new child thread; follow with chain of neglected tasks
             new_thread = Thread.new do
               begin
@@ -107,38 +100,28 @@ module Wires
                 unhandled_exception(exc, *exc_args)
               ensure
                 spawn_neglected_task_chain
+                @children.synchronize { @children.delete Thread.current }
               end
             end
             
           # Capture ThreadError from either OS or user-set limitation
           rescue ThreadError; return neglect(*args) end
           
-          @child_threads << new_thread
+          @children << new_thread
           return new_thread
         end
         
-      ensure
-        @spawning_count_lock.synchronize { @spawning_count -= 1 }
       end
       
-      def purge_neglected
-        @neglected_lock.synchronize do
-          @neglected.clear
-        end
-      nil end
-      
-      def number_neglected
-        @neglected_lock.synchronize do
-          @neglected.count
-        end
-      end
+      def purge_neglected; @neglected.synchronize { @neglected.clear; nil } end
+      def count_neglected; @neglected.synchronize { @neglected.count }      end
       
       # Join child threads, one by one, allowing more children to appear
       def join_children
         a_thread = Thread.new{nil}
         while a_thread
-          @child_threads.synchronize do
-            a_thread = @child_threads.shift
+          @children.synchronize do
+            a_thread = @children.shift
           end
           a_thread.join if ((a_thread) and (a_thread!=Thread.current))
           Thread.pass
@@ -159,7 +142,7 @@ module Wires
       
       # Temporarily neglect a task until resources are available to run it
       def neglect(*args)
-        @neglected_lock.synchronize do
+        @neglected.synchronize do
           @on_neglect.call(*args)
           @neglected << args
         end
@@ -167,7 +150,7 @@ module Wires
       
       # Run a chain of @neglected tasks in place until no more are waiting
       def spawn_neglected_task_chain
-        args = @neglected_lock.synchronize do
+        args = @neglected.synchronize do
           return nil if @neglected.empty?
           ((@neglected.shift)[0...-1]<<true) # Call with blocking
         end
@@ -179,7 +162,7 @@ module Wires
       # Flush @neglected task queue, each in a new thread
       def spawn_neglected_task_threads
         until (cease||=false)
-          args = @neglected_lock.synchronize do
+          args = @neglected.synchronize do
             break if (cease = @neglected.empty?)
             ((@neglected.shift)[0...-1]<<false) # Call without blocking
           end
