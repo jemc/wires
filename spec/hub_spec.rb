@@ -12,65 +12,6 @@ describe Wires::Hub do
   
   # it "allows the setting of custom grains"  # TODO
   
-  it "can be run and killed multiple times" do
-    
-    initial_threads = Thread.list
-    
-    Wires::Hub.dead?.must_equal true
-    Wires::Hub.state.must_equal :dead
-    Wires::Hub.state.must_equal :dead
-    
-    Wires::Hub.run
-    Wires::Hub.kill
-    
-    Thread.list.must_equal initial_threads
-    
-    Wires::Hub.run
-    Wires::Hub.kill
-    
-    Thread.list.must_equal initial_threads
-    
-    Wires::Hub.dead?.must_equal true
-    Wires::Hub.state.must_equal :dead
-    
-    Wires::Hub.run
-    
-    Wires::Hub.alive?.must_equal true
-    Wires::Hub.state.must_equal :alive
-    
-    Wires::Hub.kill
-    Wires::Hub.run
-    Wires::Hub.kill
-    
-    Wires::Hub.dead?.must_equal true
-    Wires::Hub.state.must_equal :dead
-    
-    Thread.list.must_equal initial_threads
-    
-  end
-  
-  it "can call hooks before and after run and kill" do
-    
-    hook_val = 'A'
-    
-    Wires::Hub.before_run  { hook_val.must_equal 'A'; hook_val = 'B' }
-    Wires::Hub.before_run  { hook_val.must_equal 'B'; hook_val = 'C' }
-    Wires::Hub.after_run   { hook_val.must_equal 'C'; hook_val = 'D' }
-    Wires::Hub.after_run   { hook_val.must_equal 'D'; hook_val = 'E' }
-    
-    Wires::Hub.before_kill { hook_val.must_equal 'E'; hook_val = 'F' }
-    Wires::Hub.before_kill { hook_val.must_equal 'F'; hook_val = 'G' }
-    Wires::Hub.after_kill  { hook_val.must_equal 'G'; hook_val = 'H' }
-    Wires::Hub.after_kill  { hook_val.must_equal 'H'; hook_val = 'I' }
-    
-    hook_val.must_equal 'A'
-    Wires::Hub.run
-    hook_val.must_equal 'E'
-    Wires::Hub.kill
-    hook_val.must_equal 'I'
-    
-  end
-  
   it "can handle events called from other events" do
     
     count = 0
@@ -80,9 +21,7 @@ describe Wires::Hub do
       count += 1
     end
     
-    Wires::Hub.run
     fire MyEvent.new(i:0), 'Wires::Hub_A'
-    Wires::Hub.kill
     
   end
   
@@ -97,10 +36,8 @@ describe Wires::Hub do
       count.must_equal 10
     end
     
-    Wires::Hub.run
     fire_and_wait MyEvent.new(i:0), 'Wires::Hub_B'
     count.must_equal 10
-    Wires::Hub.kill
     
   end
   
@@ -112,7 +49,6 @@ describe Wires::Hub do
     
     Wires::Hub.max_child_threads = 3
     Wires::Hub.max_child_threads.must_equal 3
-    Wires::Hub.run
     Wires::Hub.max_child_threads.times do
       Wires::Hub.spawn(*spargs).must_be_instance_of Thread
     end
@@ -130,7 +66,6 @@ describe Wires::Hub do
     Thread.pass
     # Wires::Hub.number_neglected.must_equal 0
     
-    Wires::Hub.kill
     Wires::Hub.max_child_threads = nil
     $stderr = stderr_save # Restore $stderr
   end
@@ -140,7 +75,6 @@ describe Wires::Hub do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     done_flag = false
     spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
-    Wires::Hub.run
     
     count = 0
     while Wires::Hub.spawn(*spargs)
@@ -156,23 +90,26 @@ describe Wires::Hub do
     sleep 0.15
     Wires::Hub.number_neglected.must_equal 0
     
-    Wires::Hub.kill
     $stderr = stderr_save # Restore $stderr
   end
   
-  it "temporarily neglects procs that try to spawn before Wires::Hub is running" do
+  it "temporarily neglects procs that try to spawn during Wires::Hub.hold" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     var = 'before'
     spargs = [nil, nil, proc{var = 'after'}, false]
     
     Wires::Hub.number_neglected.must_equal 0
-    Wires::Hub.spawn(*spargs).must_equal false
-    Wires::Hub.number_neglected.must_equal 1
-    Wires::Hub.run
+    
+    Wires::Hub.hold do
+      Wires::Hub.number_neglected.must_equal 0
+      Wires::Hub.spawn(*spargs).must_equal false
+      Wires::Hub.number_neglected.must_equal 1
+    end
+    Wires::Hub.join_children
+    
     var.must_equal 'after'
     Wires::Hub.number_neglected.must_equal 0
     
-    Wires::Hub.kill
     $stderr = stderr_save # Restore $stderr
   end
   
@@ -186,10 +123,8 @@ describe Wires::Hub do
     $stderr = StringIO.new
     $stderr.size.must_be :==,0
     
-    Wires::Hub.run
     $stderr.size.must_be :>, 0
     $stderr = StringIO.new
-    Wires::Hub.kill
     
     count = 0
     something_happened = false
@@ -208,11 +143,9 @@ describe Wires::Hub do
     something_happened.must_equal true
     count.must_be :>, 0
     
-    Wires::Hub.run
     $stderr.size.must_be :==, 0
     something_happened.must_equal true
     count.must_be :==, 0
-    Wires::Hub.kill
     
     Wires::Hub.reset_neglect_procs
     $stderr = stderr_save # Restore $stderr
@@ -227,9 +160,7 @@ describe Wires::Hub do
       it_happened = true
     end
     
-    Wires::Hub.run
     fire MyEvent, 'Wires::Hub_Params'
-    Wires::Hub.kill
     it_happened.must_equal true
   end
   
@@ -248,12 +179,11 @@ describe Wires::Hub do
       ch_string.must_equal 'Wires::Hub_Exc'
       count += 1
     end
-    Wires::Hub.run
     
     fire_and_wait :my, 'Wires::Hub_Exc'
     fire          :my, 'Wires::Hub_Exc'
     
-    Wires::Hub.kill
+    Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc
     
     count.must_equal 2

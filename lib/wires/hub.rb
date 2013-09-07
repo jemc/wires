@@ -18,11 +18,13 @@ module Wires
         # @queue = Queue.new
         @max_child_threads   = nil
         @child_threads       = Array.new
-        @child_threads_lock  = Monitor.new
+        @child_threads.extend MonitorMixin
         @neglected           = Array.new
         @neglected_lock      = Monitor.new
         @spawning_count      = 0
         @spawning_count_lock = Monitor.new
+        
+        @hold_lock = Monitor.new
         
         @before_runs  = Queue.new
         @after_runs   = Queue.new
@@ -66,9 +68,9 @@ module Wires
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
         
-        @spawning_count_lock.synchronize { @spawning_count += 1 }
+        return neglect() if @hold_lock
         
-        return neglect(*args) if dead?
+        @spawning_count_lock.synchronize { @spawning_count += 1 }
         
         event, ch_string, proc, blocking, fire_bt = *args
         *proc_args = event, ch_string
@@ -88,7 +90,7 @@ module Wires
         # If not blocking, clear old threads and spawn a new thread
         new_thread = nil
         
-        @child_threads_lock.synchronize do
+        @child_threads.synchronize do
           
           # Clear out dead threads
           @child_threads.select!{|t| t.status}
@@ -135,11 +137,11 @@ module Wires
       def join_children
         a_thread = Thread.new{nil}
         while a_thread
-          @child_threads_lock.synchronize do
+          @child_threads.synchronize do
             a_thread = @child_threads.shift
           end
           a_thread.join if ((a_thread) and (a_thread!=Thread.current))
-          sleep 0 # Yield to other threads
+          Thread.pass
         end
       nil end
       
