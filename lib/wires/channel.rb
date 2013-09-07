@@ -159,11 +159,6 @@ module Wires
       (other.is_a? Channel) ? (other.relevant_channels.include? self) : super
     end
     
-    hub.before_kill(true) do
-      self.clear_hooks(:@before_fire)
-      self.clear_hooks(:@after_fire)
-    end
-    
   end
   
 end

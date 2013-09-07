@@ -3,7 +3,6 @@ module Wires
   # An Event Hub. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
   class self::Hub
-    # Operate on the metaclass as a type of singleton pattern
     class << self
       
       # Allow user to get/set limit to number of child threads
@@ -37,64 +36,9 @@ module Wires
         reset_neglect_procs
         reset_handler_exception_proc
         
-        # at_exit { (sleep 0.05 until dead?) unless $! }
-        
-        state_machine_init
-        
       nil end
       
     public
-      
-      def dead?;  state==:dead  end
-      def alive?; state==:alive end
-      
-      ##
-      # Start the Hub to allow task spawning.
-      #
-      def run(*flags)
-        sleep 0 until @spawning_count <= 0
-        @spawning_count_lock.synchronize do
-          sleep 0 until request_state :alive
-        end
-        spawn_neglected_task_threads
-        join_children
-      nil end
-      
-      ##
-      # Kill the Hub event loop (optional flags change thread behavior)
-      #
-      # valid flags:
-      # [+:nonblocking+]
-      #   Without this flag, calling thread will be blocked
-      #   until Hub thread is done
-      # [+:purge_tasks+]
-      #   Without this flag, Hub thread won't be done 
-      #   until all child threads are done
-      def kill(*flags)
-        sleep 0 until @spawning_count <= 0
-        @please_finish_all = (not flags.include? :purge_tasks)
-        sleep 0 until request_state :dead unless (flags.include? :nonblocking)
-      nil end
-      
-      # Add hook methods
-      include Hooks
-      
-      def before_run(*args, &proc)
-        add_hook(:@before_run, *args, &proc)
-      end
-      
-      def after_run(*args, &proc)
-        add_hook(:@after_run, *args, &proc)
-      end
-      
-      def before_kill(*args, &proc)
-        add_hook(:@before_kill, *args, &proc)
-      end
-      
-      def after_kill(*args, &proc)
-        add_hook(:@after_kill, *args, &proc)
-      end
-      
       
       def on_neglect(&block)
         @on_neglect=block
@@ -104,7 +48,7 @@ module Wires
       nil end
       def on_handler_exception(&block)
         @on_handler_exception=block
-      end
+      nil end
       
       def reset_neglect_procs
         @on_neglect = Proc.new do |args|
@@ -117,7 +61,7 @@ module Wires
       
       def reset_handler_exception_proc
         @on_handler_exception = Proc.new { raise }
-      end
+      nil end
       
       # Spawn a task
       def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
@@ -152,7 +96,7 @@ module Wires
           begin
             # Raise ThreadError for user-set thread limit to mimic OS limit
             raise ThreadError if (@max_child_threads) and \
-                                 (@max_child_threads <= @child_threads.size)
+                                 (@max_child_threads <= @child_threads.count)
             # Start the new child thread; follow with chain of neglected tasks
             new_thread = Thread.new do
               begin
@@ -183,7 +127,7 @@ module Wires
       
       def number_neglected
         @neglected_lock.synchronize do
-          @neglected.size
+          @neglected.count
         end
       end
       
@@ -243,49 +187,6 @@ module Wires
         end
       nil end
       
-    end
-    
-    
-    #***
-    # Initialize state machine properties
-    #***
-    class << self
-      include Hegemon
-      
-      # Protect Hub users methods that could cause deadlock
-      # if called from inside an event
-      private :state_obj,
-              :state_objs,
-              :request_state,
-              :update_state,
-              :do_state_tasks,
-              :iter_hegemon_auto_loop,
-              :start_hegemon_auto_thread,
-              :join_hegemon_auto_thread,
-              :end_hegemon_auto_thread
-      
-      def state_machine_init
-        
-        impose_state :dead
-        
-        declare_state :dead do
-          transition_to :alive do
-            before { flush_hooks :@before_run }
-            after  { flush_hooks :@after_run }
-          end
-        end
-        
-        declare_state :alive do
-          transition_to :dead do
-            before { flush_hooks :@before_kill }
-            before { purge_neglected }
-            before { join_children if @please_finish_all }
-            after  { @please_finish_all = false }
-            after  { flush_hooks :@after_kill }
-          end
-        end
-        
-      end
     end
     
     class_init

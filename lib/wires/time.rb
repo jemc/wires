@@ -1,4 +1,6 @@
 
+# TODO: do not start TimeScheduler thread until first TimeSchedulerItem
+
 module Wires
   
   class TimeSchedulerAnonEvent  < Event; end
@@ -200,27 +202,6 @@ module Wires
       
     end
     
-    # Start the main loop upon run of Hub
-    Hub.after_run(true) do 
-      @keepgoing = true
-      @thread = Thread.new { main_loop }
-    end
-    
-    # Stop the main loop upon death of Hub
-    Hub.before_kill(true) do
-      Thread.exclusive do
-        @keepgoing=false
-        @next_pass=Time.now
-        @thread.wakeup
-      end
-      @thread.join
-      schedule_clear
-    end
-    
   end
   
 end
-
-
-# TODO: Repeatable event sugar?
-# TODO: Tests for all new functionality
