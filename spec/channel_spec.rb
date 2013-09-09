@@ -2,7 +2,7 @@ $LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
 require 'wires'
 
 require 'wires/test'
-# begin require 'jemc/reporter'; rescue LoadError; end
+begin require 'jemc/reporter'; rescue LoadError; end
 
 
 describe Wires::Channel do
@@ -120,8 +120,7 @@ describe Wires::Channel do
     r_list.size.must_equal relevant.size
   end
   
-  it "can call hooks before and after fire method,"\
-     "which aren't retained when Hub is killed by default" do
+  it "can call hooks before and after fire method" do
     
     class SomeEvent < Wires::Event; end
     
@@ -135,6 +134,9 @@ describe Wires::Channel do
       assert chan.is_a? Wires::Channel
     end
     
+    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
+    
     Wires::Channel.clear_hooks(:@before_fire)
     Wires::Channel.clear_hooks(:@after_fire)
     
@@ -151,70 +153,10 @@ describe Wires::Channel do
       assert chan.is_a? Wires::Channel
     end
     
-    
     assert_instance_of Proc, save_proc
     hook_val.must_equal 'A'
-    Wires::Hub.run
     fire SomeEvent, 'Wires::Channel_A'
-    Wires::Hub.kill
     hook_val.must_equal 'E'
-    
-    hook_val = 'A'
-    hook_val.must_equal 'A'
-    Wires::Hub.run
-    fire SomeEvent, 'Wires::Channel_A'
-    Wires::Hub.kill
-    hook_val.must_equal 'A'
-    
-    
-    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
-    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
-    
-    hook_val = 'A'
-    Wires::Channel.before_fire(true){ hook_val.must_equal 'A'; hook_val = 'B' }
-    Wires::Channel.before_fire(true){ hook_val.must_equal 'B'; hook_val = 'C' }
-    Wires::Channel.after_fire (true){ hook_val.must_equal 'C'; hook_val = 'D' }
-    Wires::Channel.after_fire (true){ hook_val.must_equal 'D'; hook_val = 'E' }
-    save_proc = Wires::Channel.before_fire do |event,chan|
-      assert event.is_a? Wires::Event
-      assert chan.is_a? Wires::Channel
-    end
-    assert_instance_of Proc, save_proc
-    hook_val.must_equal 'A'
-    Wires::Hub.run
-    fire SomeEvent, 'Wires::Channel_A'
-    Wires::Hub.kill
-    hook_val.must_equal 'E'
-    
-    hook_val = 'A'
-    hook_val.must_equal 'A'
-    Wires::Hub.run
-    fire SomeEvent, 'Wires::Channel_A'
-    Wires::Hub.kill
-    hook_val.must_equal 'E'
-    
-    list = Wires::Channel.instance_variable_get(:@after_fire)
-    Wires::Channel.remove_hook(:@after_fire, &save_proc)
-    Wires::Channel.instance_variable_get(:@after_fire)
-      .must_equal (list - [save_proc])
-    Wires::Channel.add_hook(:@after_fire, &save_proc)
-    (Wires::Channel.instance_variable_get(:@after_fire) - [save_proc])
-      .must_equal list
-    
-    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
-    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
-    
-    Wires::Channel.clear_hooks(:@before_fire)
-    Wires::Channel.clear_hooks(:@after_fire)
-    
-    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
-    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
-    
-    Wires::Channel.clear_hooks(:@before_fire, true)
-    Wires::Channel.clear_hooks(:@after_fire,  true)
-    
-    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
-    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
     
   end
   
