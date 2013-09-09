@@ -1,5 +1,6 @@
 
 # TODO: do not start TimeScheduler thread until first TimeSchedulerItem
+# TODO: stop TimeScheduler thread when there are no future events
 
 module Wires
   

@@ -22,19 +22,7 @@ module Wires
         @neglected      = Array.new
         @neglected.extend MonitorMixin
         
-        @      = 0
-        @_lock = Monitor.new
-        
         @hold_lock = Monitor.new
-        
-        @before_runs  = Queue.new
-        @after_runs   = Queue.new
-        @before_kills = Queue.new
-        @after_kills  = Queue.new
-        @before_fires = []
-        @after_fires  = []
-        
-        @please_finish_all = false
         
         reset_neglect_procs
         reset_handler_exception_proc
@@ -66,14 +54,21 @@ module Wires
         @on_handler_exception = Proc.new { raise }
       nil end
       
+      # Execute a block while neglecting all child threads
+      def hold
+        @hold_lock.synchronize { yield }
+        spawn_neglected_task_threads
+      end
+      
       # Spawn a task
-      def spawn(*args) # :args: event, ch_string, proc, blocking, fire_bt
+      def spawn(*args) # :args: event, chan, proc, blocking, fire_bt
         
-        return neglect(*args) if @hold_lock
+        return neglect(*args) \
+          if @hold_lock.instance_variable_get(:@mon_mutex).locked?
         
-        event, ch_string, proc, blocking, fire_bt = *args
-        *proc_args = event, ch_string
-        *exc_args  = event, ch_string, fire_bt
+        event, chan, proc, blocking, fire_bt = *args
+        *proc_args = event, chan
+        *exc_args  = event, chan, fire_bt
         
         # If blocking, run the proc in this thread
         if blocking
@@ -93,7 +88,7 @@ module Wires
             raise ThreadError if (@max_children) and \
                                  (@max_children <= @children.count)
             # Start the new child thread; follow with chain of neglected tasks
-            new_thread = Thread.new do
+            @children << Thread.new do
               begin
                 proc.call(*proc_args)
               rescue Exception => exc
@@ -107,13 +102,12 @@ module Wires
           # Capture ThreadError from either OS or user-set limitation
           rescue ThreadError; return neglect(*args) end
           
-          @children << new_thread
-          return new_thread
+          return @children.last
         end
         
       end
       
-      def purge_neglected; @neglected.synchronize { @neglected.clear; nil } end
+      def clear_neglected; @neglected.synchronize { @neglected.clear; nil } end
       def count_neglected; @neglected.synchronize { @neglected.count }      end
       
       # Join child threads, one by one, allowing more children to appear
@@ -131,13 +125,11 @@ module Wires
     private
     
       # Send relevant data to a custom exception handler
-      def unhandled_exception(exception, event, ch_string, fire_bt)
-        
+      def unhandled_exception(exception, event, chan, fire_bt)
         class << exception;  attr_reader :fire_backtrace; end
         exception.instance_variable_set(:@fire_backtrace, fire_bt.dup)
         
-        @on_handler_exception.call(exception, event, ch_string)
-        
+        @on_handler_exception.call(exception, event, chan)
       end
       
       # Temporarily neglect a task until resources are available to run it

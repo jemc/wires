@@ -10,8 +10,6 @@ class MyOtherEvent < Wires::Event; end
 
 describe Wires::Hub do
   
-  # it "allows the setting of custom grains"  # TODO
-  
   it "can handle events called from other events" do
     
     count = 0
@@ -41,32 +39,32 @@ describe Wires::Hub do
     
   end
   
-  it "allows the user to set an arbitrary maximum number of child_threads"\
+  it "allows the user to set an arbitrary maximum number of children"\
      " and temporarily neglects to spawn all further threads" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     done_flag = false
     spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
     
-    Wires::Hub.max_child_threads = 3
-    Wires::Hub.max_child_threads.must_equal 3
-    Wires::Hub.max_child_threads.times do
+    Wires::Hub.max_children = 3
+    Wires::Hub.max_children.must_equal 3
+    Wires::Hub.max_children.times do
       Wires::Hub.spawn(*spargs).must_be_instance_of Thread
     end
-    Wires::Hub.number_neglected.must_equal 0
+    Wires::Hub.count_neglected.must_equal 0
     Wires::Hub.spawn(*spargs).must_equal false
-    Wires::Hub.number_neglected.must_equal 1
+    Wires::Hub.count_neglected.must_equal 1
     Wires::Hub.spawn(*spargs).must_equal false
-    Wires::Hub.number_neglected.must_equal 2
-    Wires::Hub.purge_neglected
-    Wires::Hub.number_neglected.must_equal 0
+    Wires::Hub.count_neglected.must_equal 2
+    Wires::Hub.clear_neglected
+    Wires::Hub.count_neglected.must_equal 0
     Wires::Hub.spawn(*spargs).must_equal false
-    Wires::Hub.number_neglected.must_equal 1
+    Wires::Hub.count_neglected.must_equal 1
     
     done_flag = true
     Thread.pass
-    # Wires::Hub.number_neglected.must_equal 0
+    # Wires::Hub.count_neglected.must_equal 0
     
-    Wires::Hub.max_child_threads = nil
+    Wires::Hub.max_children = nil
     $stderr = stderr_save # Restore $stderr
   end
   
@@ -79,36 +77,47 @@ describe Wires::Hub do
     count = 0
     while Wires::Hub.spawn(*spargs)
       count += 1
-      Wires::Hub.number_neglected.must_equal 0
+      Wires::Hub.count_neglected.must_equal 0
     end
     
-    Wires::Hub.number_neglected.must_equal 1
+    Wires::Hub.count_neglected.must_equal 1
     Wires::Hub.spawn(*spargs)
-    Wires::Hub.number_neglected.must_equal 2
+    Wires::Hub.count_neglected.must_equal 2
     
     done_flag = true
     sleep 0.15
-    Wires::Hub.number_neglected.must_equal 0
+    Wires::Hub.count_neglected.must_equal 0
     
     $stderr = stderr_save # Restore $stderr
   end
   
-  it "temporarily neglects procs that try to spawn during Wires::Hub.hold" do
+  it "temporarily neglects procs that try to spawn as threads"\
+     " during Wires::Hub.hold, but allows procs to spawn in place" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     var = 'before'
     spargs = [nil, nil, proc{var = 'after'}, false]
     
-    Wires::Hub.number_neglected.must_equal 0
+    Wires::Hub.count_neglected.must_equal 0
     
     Wires::Hub.hold do
-      Wires::Hub.number_neglected.must_equal 0
+      Wires::Hub.count_neglected.must_equal 0
       Wires::Hub.spawn(*spargs).must_equal false
-      Wires::Hub.number_neglected.must_equal 1
+      Wires::Hub.count_neglected.must_equal 1
+      var.must_equal 'before'
     end
     Wires::Hub.join_children
     
     var.must_equal 'after'
-    Wires::Hub.number_neglected.must_equal 0
+    Wires::Hub.count_neglected.must_equal 0
+    
+    var = 'before'
+    Wires::Hub.hold do
+      Wires::Hub.count_neglected.must_equal 0
+      Wires::Hub.spawn(*spargs) .must_equal false
+      Wires::Hub.count_neglected.must_equal 1
+      var.must_equal 'before'
+    end
+    Wires::Hub.join_children
     
     $stderr = stderr_save # Restore $stderr
   end
@@ -118,10 +127,12 @@ describe Wires::Hub do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     spargs = [nil, nil, proc{nil}, false]
     
-    Wires::Hub.spawn(*spargs).must_equal false
-    $stderr.size.must_be :>, 0
-    $stderr = StringIO.new
-    $stderr.size.must_be :==,0
+    Wires::Hub.hold do
+      Wires::Hub.spawn(*spargs).must_equal false
+      $stderr.size.must_be :>, 0
+      $stderr = StringIO.new
+      $stderr.size.must_be :==,0
+    end
     
     $stderr.size.must_be :>, 0
     $stderr = StringIO.new
@@ -138,10 +149,12 @@ describe Wires::Hub do
       count -= 1
     end
     
-    Wires::Hub.spawn(*spargs).must_equal false
-    $stderr.size.must_be :==, 0
-    something_happened.must_equal true
-    count.must_be :>, 0
+    Wires::Hub.hold do
+      Wires::Hub.spawn(*spargs).must_equal false
+      $stderr.size.must_be :==, 0
+      something_happened.must_equal true
+      count.must_be :>, 0
+    end
     
     $stderr.size.must_be :==, 0
     something_happened.must_equal true
@@ -161,6 +174,7 @@ describe Wires::Hub do
     end
     
     fire MyEvent, 'Wires::Hub_Params'
+    Wires::Hub.join_children
     it_happened.must_equal true
   end
   
