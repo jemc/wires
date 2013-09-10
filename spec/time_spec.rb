@@ -7,11 +7,8 @@ begin require 'jemc/reporter'; rescue LoadError; end
 
 # Module to ease testing of Time events
 module TimeTester
-  def setup
-    Wires::Hub.run
-  end
   def teardown
-    Wires::Hub.kill
+    Wires::Hub.join_children
     Wires::TimeScheduler.clear
   end
 end
@@ -210,6 +207,7 @@ describe Wires::TimeScheduler do
     
     sleep 0.05
     
+    Wires::TimeScheduler.list.wont_be_empty
     Wires::TimeScheduler.clear
     Wires::TimeScheduler.list.must_be_empty
     

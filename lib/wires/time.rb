@@ -182,12 +182,11 @@ module Wires
       
       def main_loop
         
-        # @keepgoing = true
+        @keepgoing = true
         pending = Array.new
         on_deck = nil
         
         while @keepgoing
-          
           schedule_next_pass
           
           # Pull, fire, and requeue relevant events
@@ -202,6 +201,8 @@ module Wires
       nil end
       
     end
+    
+    @thread = Thread.new do main_loop end
     
   end
   
