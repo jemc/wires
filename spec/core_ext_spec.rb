@@ -5,6 +5,15 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 
+# Module to ease testing of Time events
+module TimeTester
+  def teardown
+    Wires::Hub.join_children
+    Wires::TimeScheduler.clear
+  end
+end
+
+
 # Time objects get extended to call TimeScheduler.add
 describe "wires/core_ext::Time" do
   include TimeTester
