@@ -117,10 +117,8 @@ describe "wires/convenience" do
       
       count = 0
       
-      for chan in chans
-        on :event, chan do
-          count+=1
-        end
+      on :event, chans do
+        count+=1
       end
       
       for chan in chans
