@@ -5,69 +5,10 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 # Set up some events for testing
-class CoolEvent       < Wires::Event;     end
-class MyFavoriteEvent < CoolEvent; end
+class CoolEvent       < Wires::Event; end
+class MyFavoriteEvent < CoolEvent;    end
 
 describe Wires::Event do
-  
-  # it "can be compared directly with a codestring or symbol (bidirectional)" do
-  #   Wires::Event.must_equal    'event'
-  #   CoolEvent.must_equal       'cool'
-  #   MyFavoriteEvent.must_equal 'my_favorite'
-  #   Wires::Event.must_equal    :event
-  #   CoolEvent.must_equal       :cool
-  #   MyFavoriteEvent.must_equal :my_favorite
-  #   'event'.must_equal          Wires::Event
-  #   'cool'.must_equal           CoolEvent
-  #   'my_favorite'.must_equal    MyFavoriteEvent
-  #   :event.must_equal           Wires::Event
-  #   :cool.must_equal            CoolEvent
-  #   :my_favorite.must_equal     MyFavoriteEvent
-  # end
-  
-  # it "can check inheritance with a codestring or symbol (bidirectional)" do
-  #   CoolEvent.must_be        :<=, :event
-  #   CoolEvent.must_be        :<,  :event
-  #   CoolEvent.must_be        :>,  :my_favorite
-  #   CoolEvent.must_be        :>=, :my_favorite
-        
-  #   :event.must_be           :<=, Wires::Event
-  #   :event.must_be           :>=, Wires::Event
-  #   :event.wont_be           :<,  Wires::Event
-  #   :event.wont_be           :>,  Wires::Event
-  #   :cool.must_be            :<=, Wires::Event
-  #   :cool.wont_be            :>=, Wires::Event
-  #   :cool.must_be            :<,  Wires::Event
-  #   :cool.wont_be            :>,  Wires::Event
-  #   :my_favorite.must_be     :<=, Wires::Event
-  #   :my_favorite.wont_be     :>=, Wires::Event
-  #   :my_favorite.must_be     :<,  Wires::Event
-  #   :my_favorite.wont_be     :>,  Wires::Event
-  #   :event.wont_be           :<=, CoolEvent
-  #   :event.must_be           :>=, CoolEvent
-  #   :event.wont_be           :<,  CoolEvent
-  #   :event.must_be           :>,  CoolEvent
-  #   :cool.must_be            :<=, CoolEvent
-  #   :cool.must_be            :>=, CoolEvent
-  #   :cool.wont_be            :<,  CoolEvent
-  #   :cool.wont_be            :>,  CoolEvent
-  #   :my_favorite.must_be     :<=, CoolEvent
-  #   :my_favorite.wont_be     :>=, CoolEvent
-  #   :my_favorite.must_be     :<,  CoolEvent
-  #   :my_favorite.wont_be     :>,  CoolEvent
-  #   :event.wont_be           :<=, MyFavoriteEvent
-  #   :event.must_be           :>=, MyFavoriteEvent
-  #   :event.wont_be           :<,  MyFavoriteEvent
-  #   :event.must_be           :>,  MyFavoriteEvent
-  #   :cool.wont_be            :<=, MyFavoriteEvent
-  #   :cool.must_be            :>=, MyFavoriteEvent
-  #   :cool.wont_be            :<,  MyFavoriteEvent
-  #   :cool.must_be            :>,  MyFavoriteEvent
-  #   :my_favorite.must_be     :<=, MyFavoriteEvent
-  #   :my_favorite.must_be     :>=, MyFavoriteEvent
-  #   :my_favorite.wont_be     :<,  MyFavoriteEvent
-  #   :my_favorite.wont_be     :>,  MyFavoriteEvent
-  # end
   
   it "automatically creates attributes, getters, but not setters "\
      "from the initial arguments passed to the constructor" do

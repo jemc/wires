@@ -33,13 +33,13 @@ module Wires
         (sym==:kwargs ? @kwargs.reject{|k| @ignore.include? k}.freeze : super)
     end
     
-    def =~(other)
-      (other.is_a? Event) ? 
-        ((self.class >= other.class) \
-          and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
-          and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
-        super
-    end
+    # def =~(other)
+    #   (other.is_a? Event) ? 
+    #     ((self.class >= other.class) \
+    #       and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
+    #       and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
+    #     super
+    # end
   end
   
 end
