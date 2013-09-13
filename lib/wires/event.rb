@@ -1,115 +1,40 @@
 
 module Wires
   
-  class Event
-    class << self
-      def event_registry_create
-        @@registry = []
-        event_registry_register
-      end
-      def event_registry_register(cls=self)
-        @@registry << cls
-        @@registry.uniq!
-      end
-    end
-    event_registry_create
-  end
-  
   # All Event classes should inherit from this one
   class Event
+      
+    # def self.new_from(input)
+      
+    #   # Standardize to array and pull out arguments if they exist
+    #   input = [input] unless input.is_a? Array
+    #   input, *args = input
+      
+    #   # Create event object from event as an object, class, or symbol/string
+    #   event = case input
+    #     when Event
+    #       input
+    #     when Class
+    #       input.new(*args) if input <= Event
+    #     else
+    #       Event.from_codestring(input.to_s).new(*args)
+    #   end
+    # end
     
-    # Operate on the metaclass as a type of singleton pattern
-    class << self
-      
-      def inherited(subcls)
-        # Be sure codestring doesn't conflict
-        existing = _from_codestring(subcls.codestring)
-        if existing then raise NameError, \
-          "New Event subclass '#{subcls}' conflicts with"\
-          " existing Event subclass '#{existing}'."\
-          " The generated codestring '#{subcls.codestring}'"\
-          " must be unique for each Event subclass." end
-        
-        super
-        event_registry_register(subcls)
-      end
-      
-      # List of class inheritance lineage back to but excluding Object
-      def ancestry(cls=self)
-        _next = cls.superclass
-        [cls==Object ? [] : [cls, ancestry(_next)]].flatten
-      end
-      
-      # Convert class <ClassNameEvent> to string "class_name"
-      def codestring(cls=self)
-        @codestring ||= \
-          File.basename cls.to_s
-            .underscore
-            .gsub(/_event$/, "")
-      end
-      
-      # List of codestrings associated with this event and ancestors
-      def codestrings
-        x = ancestry
-        .map {|cls| cls.codestring}
-      end
-      
-      # Pull class from registry by codestring 
-      # (more reliable than crafting a reverse regexp)
-      def _from_codestring(str)
-        return @@registry.select{|e| e.codestring==str}[0]
-      end; private :_from_codestring
-      
-      def from_codestring(str)
-        cls = _from_codestring(str.to_s)
-        if not cls then raise NameError,
-          "No known Event subclass with codestring: '#{str}'" end
-          cls
-        end
-      
-      # Convert an event from 'array notation' to an Event subclass instance
-      # TODO: List acceptable input forms here for documentation
-      def new_from(input)
-        
-        # Standardize to array and pull out arguments if they exist
-        input = [input] unless input.is_a? Array
-        input, *args = input
-        
-        # Create event object from event as an object, class, or symbol/string
-        event = case input
-          when Event
-            input
-          when Class
-            input.new(*args) if input <= Event
-          else
-            Event.from_codestring(input.to_s).new(*args)
-        end
-      end
-      
-      # Create attributes and accessors for all arguments to the constructor.
-      # This is done here rather than in initialize so that the functionality
-      # will remain if the user developer overrides initialize in the subclass.
-      def new(*args, &block)
-        obj = super
-        
-        kwargs = args[-1].is_a?(Hash) ? args.pop.dup : Hash.new
-        kwargs[:kwargs] = kwargs.dup.freeze
-        kwargs[:args]   =   args.dup.freeze unless kwargs.has_key?(:args)
-        kwargs[:codeblock] = block if block
-        for key in kwargs.keys
-          att = key.to_s
-          obj.instance_variable_set("@#{att}", kwargs[key])
-          class_eval { attr_reader att }
-          # class_eval { attr_writer att }
-        end
-        
-        obj
-      end
-    
+    def initialize(*args, **kwargs, &block)
+      @kwargs = kwargs.dup
+      @kwargs[:args] = args unless @kwargs.key? :args
+      @kwargs[:codeblock] = block if block
+      @kwargs.freeze
     end
     
-    # Calling super in new with *args will complain if this isn't here
-    def initialize(*args, &block) end
+    def [](key); @kwargs[key]; end
+    
+    def method_missing(sym, *args, &block)
+      args.empty? and @kwargs.has_key?(sym) ?
+        @kwargs[sym] :
+        (sym==:kwargs ? @kwargs.dup : super)
+    end
     
   end
   
