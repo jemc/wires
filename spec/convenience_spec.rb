@@ -20,9 +20,8 @@ describe "wires/convenience" do
         it_happened = true
       end
       
-      Wires::Hub.run
       fire :event, 'convenience_fire_A'
-      Wires::Hub.kill
+      Wires::Hub.join_children
       
       it_happened.must_equal true
     end
@@ -34,9 +33,8 @@ describe "wires/convenience" do
         it_happened = true
       end
       
-      Wires::Hub.run
       fire :event, chan
-      Wires::Hub.kill
+      Wires::Hub.join_children
       
       it_happened.must_equal true
     end
@@ -47,7 +45,6 @@ describe "wires/convenience" do
         it_happened = true
       end
       
-      Wires::Hub.run
       fire :event, 'convenience_fire_C', time:0.1.seconds.from_now
       
       sleep 0.05
@@ -55,7 +52,7 @@ describe "wires/convenience" do
       sleep 0.10
       it_happened.must_equal true
       
-      Wires::Hub.kill
+      Wires::Hub.join_children
     end
     
     it "is an alias for TimeScheduler.add if given :count kwarg" do
@@ -64,10 +61,9 @@ describe "wires/convenience" do
         count+=1
       end
       
-      Wires::Hub.run
       fire :event, 'convenience_fire_D', count:50, blocking:true
       count.must_equal 50
-      Wires::Hub.kill
+      Wires::Hub.join_children
     end
   end
   
@@ -78,10 +74,9 @@ describe "wires/convenience" do
         count+=1
       end
       
-      Wires::Hub.run
       fire_and_wait :event, 'convenience_fire_and_wait_A', count:50
       count.must_equal 50
-      Wires::Hub.kill
+      Wires::Hub.join_children
     end
   end
   
@@ -94,9 +89,8 @@ describe "wires/convenience" do
         it_happened = true
       end
       
-      Wires::Hub.run
       chan.fire :event
-      Wires::Hub.kill
+      Wires::Hub.join_children
       
       it_happened.must_equal true
     end
@@ -109,9 +103,8 @@ describe "wires/convenience" do
         it_happened = true
       end
       
-      Wires::Hub.run
       chan.fire :event
-      Wires::Hub.kill
+      Wires::Hub.join_children
       
       it_happened.must_equal true
     end
@@ -130,11 +123,10 @@ describe "wires/convenience" do
         end
       end
       
-      Wires::Hub.run
       for chan in chans
         chan.fire :event
       end
-      Wires::Hub.kill
+      Wires::Hub.join_children
       
       count.must_equal chans.size
     end
