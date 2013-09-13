@@ -78,14 +78,16 @@ module Wires
     end
     
     # Fire an event on this channel
-    def fire(event, blocking:false)
+    def fire(input, blocking:false)
       
       raise *@not_firable if @not_firable
       
       backtrace = caller
       
       # Create an instance object from one of several acceptable input forms
-      event = Event.new_from event
+      event = Event.new_from input
+      raise ArgumentError, "Can't create an event from input #{input.inspect}" \
+        unless event
       
       self.class.run_hooks(:@before_fire, event, self)
       

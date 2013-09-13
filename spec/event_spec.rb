@@ -54,28 +54,28 @@ describe Wires::Event do
     kwargs = e_args[-1]
     
     e = Wires::Event.new_from Wires::Event=>[*e_args]
-    e.must_be_instance_of Wires::Event
+    e.class.must_equal Wires::Event
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal nil
     
     e = Wires::Event.new_from :symbol=>[*e_args]
-    e.must_be_instance_of Wires::Event
+    e.class.must_equal Wires::Event
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal :symbol
     
     e = Wires::Event.new_from CoolEvent=>[*e_args]
-    e.must_be_instance_of CoolEvent
+    e.class.must_equal CoolEvent
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal nil
     
     e = Wires::Event.new_from MyFavoriteEvent=>[*e_args]
-    e.must_be_instance_of MyFavoriteEvent
+    e.class.must_equal MyFavoriteEvent
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
@@ -86,6 +86,36 @@ describe Wires::Event do
     
     e = Wires::Event.new_from Object=>[*e_args]
     e.must_be_nil
+    
+    e = Wires::Event.new_from Wires::Event
+    e.class.must_equal Wires::Event
+    e.args.must_equal Array.new
+    e.kwargs.must_equal Hash.new
+    e.event_type.must_equal nil
+    
+    e = Wires::Event.new_from :symbowl
+    e.class.must_equal Wires::Event
+    e.args.must_equal Array.new
+    e.kwargs.must_equal Hash.new
+    e.event_type.must_equal :symbowl
+    
+    e = Wires::Event.new_from CoolEvent
+    e.class.must_equal CoolEvent
+    e.args.must_equal Array.new
+    e.kwargs.must_equal Hash.new
+    e.event_type.must_equal nil
+    
+    e = CoolEvent.new_from CoolEvent
+    e.class.must_equal CoolEvent
+    e.args.must_equal Array.new
+    e.kwargs.must_equal Hash.new
+    e.event_type.must_equal nil
+    
+    e = CoolEvent.new_from :symbowl
+    e.class.must_equal CoolEvent
+    e.args.must_equal Array.new
+    e.kwargs.must_equal Hash.new
+    e.event_type.must_equal :symbowl
   end
   
 end

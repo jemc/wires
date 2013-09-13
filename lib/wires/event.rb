@@ -5,8 +5,15 @@ module Wires
     attr_accessor :event_type
     
     def self.new_from(input)
-      return nil unless (input.is_a? Hash and input.keys.count==1)
-      type, args = *input.shift
+      
+      case input
+      when Hash 
+        return nil unless input.keys.count==1
+        type, args = *input.shift
+      else
+        type, args = [input, []]
+      end
+      
       case type
       when Event; input
       when Class; (type<=Event) ? type.new(*args) : nil
@@ -15,6 +22,7 @@ module Wires
         obj.event_type = type
         obj
       end
+      
     end
     
     def initialize(*args, **kwargs, &block)
