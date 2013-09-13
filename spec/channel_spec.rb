@@ -158,6 +158,15 @@ describe Wires::Channel do
     fire SomeEvent, 'Wires::Channel_A'
     hook_val.must_equal 'E'
     
+    Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).wont_be_empty
+    
+    Wires::Channel.clear_hooks(:@before_fire)
+    Wires::Channel.clear_hooks(:@after_fire)
+    
+    Wires::Channel.instance_variable_get(:@before_fire).must_be_empty
+    Wires::Channel.instance_variable_get(:@after_fire).must_be_empty
+    
   end
   
 end
