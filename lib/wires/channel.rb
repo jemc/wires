@@ -1,48 +1,106 @@
 
 module Wires
   
+  class ChannelKeeper
+    
+    @table    = Hash.new
+    @new_lock = Mutex.new
+    
+    class << self
+      
+      attr_accessor :channel_star
+      attr_accessor :table
+      attr_accessor :new_lock
+      
+      def new_channel(chan_cls, *args, &block)
+        @table['*'] ||= chan_cls.old_version_of_new('*')
+        
+        channel = @new_lock.synchronize do
+          @table[args[0]] ||= chan_cls.old_version_of_new(*args, &block)
+        end
+        
+        _relevant_init channel
+        @table.values.each do |c|
+          _test_relevance c, channel
+          _test_relevance channel, c
+        end
+        
+        channel
+      end
+      
+      def _relevant_init(channel)
+        channel.relevant_channels = [@table['*']]
+        channel.my_names = (channel.name.is_a? Array) ? channel.name : [channel.name]
+        channel.my_names.map {|o| (o.respond_to? :channel_name) ? o.channel_name : o.to_s}
+                .flatten(1)
+        _test_relevance channel, channel
+      end
+      
+      def _test_relevance(chan, other_chan)
+        if chan==@table['*']
+          chan.relevant_channels << other_chan
+          return
+        end
+        
+        for my_name in chan.my_names
+          
+          if my_name.is_a?(Regexp) then 
+            chan.not_firable = [TypeError,
+            "Cannot fire on Regexp channel: #{chan.name}."\
+            "  Regexp channels can only used in event handlers."]
+            return
+          end
+          
+          other_name = other_chan.name
+          other_name = (other_name.respond_to? :channel_name) ? \
+                          other_name.channel_name : other_name
+          
+          chan.relevant_channels << other_chan if \
+            !chan.relevant_channels.include?(other_chan) and \
+            if other_name.is_a?(Regexp)
+              my_name =~ other_name
+            else
+              my_name.to_s == other_name.to_s
+            end
+        end
+      end
+      
+    end
+  end
+  
   class Channel
     
     attr_reader :name
     attr_reader :target_list
-    attr_reader :relevant_channels
+    attr_accessor :relevant_channels
+    attr_accessor :my_names
+    attr_accessor :not_firable
     
-    def inspect; "Channel(#{name.inspect})"; end
+    def inspect; "#{self.class}(#{name.inspect})"; end
     
     # Redefine this class method to use an alternate Hub
     def self.hub; Hub; end
     # Don't redefine this instance method!
     def hub; self.class.hub; end
     
-    # Give out references to the star channel
-    def self.channel_star; @@channel_star; end
-    def      channel_star; @@channel_star; end
+    def router; self.class.router; end
     
-    # Ensure that there is only one instance of Channel per name
-    @@new_lock = Mutex.new
-    def self.new(*args, &block)
-      (args.include? :recursion_guard) ?
-        (args.delete :recursion_guard) :
-        (@@channel_star ||= self.new('*', :recursion_guard))
+    @router = ChannelKeeper
+    
+    class << self
+      attr_accessor :router
       
-      @@new_lock.synchronize do
-        @@channel_hash ||= Hash.new
-        @@channel_hash[args[0]] ||= super(*args, &block)
+      alias_method :old_version_of_new, :new
+      def new(*args, &block)
+        router.new_channel(self, *args, &block)
       end
+      alias_method :[], :new
     end
     
     def initialize(name)
       @name = name
       @target_list = Set.new
-      unless @@channel_hash.empty?
-        _relevant_init
-        @@channel_hash.values.each do |c| 
-          c.send(:_test_relevance, self)
-          _test_relevance c
-        end
-      else
-        @relevant_channels = []
-      end
+      # router.init_channel(self)
     end
     
     # Register a proc to be triggered by an event on this channel
@@ -117,43 +175,6 @@ module Wires
       events.flatten!
       events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
       events.uniq!
-    end
-    
-    def _relevant_init
-      @relevant_channels = [@@channel_star]
-      @my_names = (self.name.is_a? Array) ? self.name : [self.name]
-      @my_names.map {|o| (o.respond_to? :channel_name) ? o.channel_name : o.to_s}
-              .flatten(1)
-      _test_relevance self
-    end
-    
-    def _test_relevance(other_chan)
-      if self==@@channel_star
-        @relevant_channels << other_chan
-        return
-      end
-      
-      for my_name in @my_names
-        
-        if my_name.is_a?(Regexp) then 
-          @not_firable = [TypeError,
-          "Cannot fire on Regexp channel: #{self.name}."\
-          "  Regexp channels can only used in event handlers."]
-          return
-        end
-        
-        other_name = other_chan.name
-        other_name = (other_name.respond_to? :channel_name) ? \
-                        other_name.channel_name : other_name
-        
-        @relevant_channels << other_chan if \
-          !@relevant_channels.include?(other_chan) and \
-          if other_name.is_a?(Regexp)
-            my_name =~ other_name
-          else
-            my_name.to_s == other_name.to_s
-          end
-      end
     end
     
     # Compare matching with another Channel

@@ -93,7 +93,7 @@ describe Wires::Channel do
                   Wires::Channel.new('*')]
     
     irrelevant = [Wires::Channel.new('irrelevant'), 
-                  Wires::Channel.new(/mal.vole(t|ce)/)]
+                  Wires::Channel.new(/mal.volen(t|ce)/)]
     
     for c in chan.relevant_channels
       relevant.must_include c end
@@ -119,6 +119,8 @@ describe Wires::Channel do
     relevant.each{|r| r_list.must_include r}
     r_list.size.must_equal relevant.size
   end
+  
+  # it "updates relevant_channels when an object evaluates differently"
   
   it "can call hooks before and after fire method" do
     
