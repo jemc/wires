@@ -48,70 +48,70 @@ describe Wires::Event do
     cool.args.must_equal [13, 24, 10, 6]
   end
   
-  it "can create a new event from specially formatted input" do
+  it "can create an array of events from specially formatted input" do
     e_args = [55, 'blah', dog:14, cow:'moo']
     args = e_args[0...-1]
     kwargs = e_args[-1]
     
-    e = Wires::Event.new_from Wires::Event=>[*e_args]
+    e = Wires::Event.new_from(Wires::Event=>[*e_args]).first
     e.class.must_equal Wires::Event
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal nil
     
-    e = Wires::Event.new_from :symbol=>[*e_args]
+    e = Wires::Event.new_from(:symbol=>[*e_args]).first
     e.class.must_equal Wires::Event
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal :symbol
     
-    e = Wires::Event.new_from CoolEvent=>[*e_args]
+    e = Wires::Event.new_from(CoolEvent=>[*e_args]).first
     e.class.must_equal CoolEvent
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal nil
     
-    e = Wires::Event.new_from MyFavoriteEvent=>[*e_args]
+    e = Wires::Event.new_from(MyFavoriteEvent=>[*e_args]).first
     e.class.must_equal MyFavoriteEvent
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal nil
     
-    e = Wires::Event.new_from 'some_string'=>[*e_args]
+    e = Wires::Event.new_from('some_string'=>[*e_args]).first
     e.must_be_nil
     
-    e = Wires::Event.new_from Object=>[*e_args]
+    e = Wires::Event.new_from(Object=>[*e_args]).first
     e.must_be_nil
     
-    e = Wires::Event.new_from Wires::Event
+    e = Wires::Event.new_from(Wires::Event).first
     e.class.must_equal Wires::Event
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal nil
     
-    e = Wires::Event.new_from :symbowl
+    e = Wires::Event.new_from(:symbowl).first
     e.class.must_equal Wires::Event
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal :symbowl
     
-    e = Wires::Event.new_from CoolEvent
+    e = Wires::Event.new_from(CoolEvent).first
     e.class.must_equal CoolEvent
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal nil
     
-    e = CoolEvent.new_from CoolEvent
+    e = CoolEvent.new_from(CoolEvent).first
     e.class.must_equal CoolEvent
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal nil
     
-    e = CoolEvent.new_from :symbowl
+    e = CoolEvent.new_from(:symbowl).first
     e.class.must_equal CoolEvent
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new

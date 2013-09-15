@@ -3,66 +3,37 @@ module Wires
   
   class ChannelKeeper
     
-    @table    = Hash.new
-    @new_lock = Mutex.new
+    @table = Hash.new
     
     class << self
       
-      attr_accessor :channel_star
       attr_accessor :table
-      attr_accessor :new_lock
       
-      def new_channel(chan_cls, *args, &block)
-        @table['*'] ||= chan_cls.old_version_of_new('*')
+      def clear_channels()
+        @initialized = true
+        @table       = {}
+        @fuzzy_table = {}
+        Channel['*']
+      end
+      
+      def get_channel(chan_cls, name)
+        channel = @table[name] ||= (new_one=true; yield name)
         
-        channel = @new_lock.synchronize do
-          @table[args[0]] ||= chan_cls.old_version_of_new(*args, &block)
-        end
-        
-        _relevant_init channel
-        @table.values.each do |c|
-          _test_relevance c, channel
-          _test_relevance channel, c
+        if new_one and name.is_a? Regexp then
+          @fuzzy_table[name] = channel
+          channel.not_firable = [TypeError,
+            "Cannot fire on Regexp channel: #{name.inspect}."\
+            "  Regexp channels can only used in event handlers."]
         end
         
         channel
       end
       
-      def _relevant_init(channel)
-        channel.relevant_channels = [@table['*']]
-        channel.my_names = (channel.name.is_a? Array) ? channel.name : [channel.name]
-        channel.my_names.map {|o| (o.respond_to? :channel_name) ? o.channel_name : o.to_s}
-                .flatten(1)
-        _test_relevance channel, channel
-      end
-      
-      def _test_relevance(chan, other_chan)
-        if chan==@table['*']
-          chan.relevant_channels << other_chan
-          return
-        end
-        
-        for my_name in chan.my_names
-          
-          if my_name.is_a?(Regexp) then 
-            chan.not_firable = [TypeError,
-            "Cannot fire on Regexp channel: #{chan.name}."\
-            "  Regexp channels can only used in event handlers."]
-            return
-          end
-          
-          other_name = other_chan.name
-          other_name = (other_name.respond_to? :channel_name) ? \
-                          other_name.channel_name : other_name
-          
-          chan.relevant_channels << other_chan if \
-            !chan.relevant_channels.include?(other_chan) and \
-            if other_name.is_a?(Regexp)
-              my_name =~ other_name
-            else
-              my_name.to_s == other_name.to_s
-            end
-        end
+      def get_receivers(chan)
+        name = chan.name
+        @fuzzy_table.keys.select do |k|
+          (begin; name =~ k; rescue TypeError; end)
+        end.map { |k| @fuzzy_table[k] } << chan
       end
       
     end
@@ -72,27 +43,24 @@ module Wires
     
     attr_reader :name
     attr_reader :target_list
-    attr_accessor :relevant_channels
-    attr_accessor :my_names
     attr_accessor :not_firable
     
     def inspect; "#{self.class}(#{name.inspect})"; end
     
-    # Redefine this class method to use an alternate Hub
-    def self.hub; Hub; end
-    # Don't redefine this instance method!
-    def hub; self.class.hub; end
-    
-    def router; self.class.router; end
-    
+    @hub    = Hub
     @router = ChannelKeeper
+    @new_lock = Mutex.new
     
     class << self
       attr_accessor :router
       
       alias_method :old_version_of_new, :new
-      def new(*args, &block)
-        router.new_channel(self, *args, &block)
+      def new(*args)
+        channel = @new_lock.synchronize do
+          router.get_channel(self, *args) do |name|
+            super(name)
+          end
+        end
       end
       alias_method :[], :new
     end
@@ -100,7 +68,6 @@ module Wires
     def initialize(name)
       @name = name
       @target_list = Set.new
-      # router.init_channel(self)
     end
     
     # Register a proc to be triggered by an event on this channel
@@ -150,15 +117,16 @@ module Wires
       self.class.run_hooks(:@before_fire, event, self)
       
       # Fire to each relevant target on each channel
-      for chan in relevant_channels()
+      for chan in self.class.router.get_receivers self
         for target in chan.target_list
-          for string in target[0] & event.class.codestrings
-            self.class.hub.spawn(event,     # fired event object event
-                                 self.name, # name of channel fired from
-                                 target[1], # proc to execute
-                                 blocking,  # boolean from blocking kwarg
-                                 backtrace) # captured backtrace
-      end end end
+          for e in target.first
+            if event =~ e
+              self.class.hub.spawn(event,     # fired event object event
+                                   self.name, # name of channel fired from
+                                   target[1], # proc to execute
+                                   blocking,  # boolean from blocking kwarg
+                                   backtrace) # captured backtrace
+      end end end end
       
       self.class.run_hooks(:@after_fire, event, self)
       
@@ -183,5 +151,7 @@ module Wires
     end
     
   end
+  
+  ChannelKeeper.clear_channels
   
 end

@@ -6,7 +6,8 @@ module Wires
     def Channel(*args) Channel.new(*args) end
     
     def on(events, channels='*', &codeblock)
-      channels = [channels] unless channels.is_a? Array
+      events   = [*events]
+      channels = [*channels]
       for channel in channels
         channel=Channel.new(channel) unless channel.is_a? Channel
         channel.register(*events, &codeblock)
