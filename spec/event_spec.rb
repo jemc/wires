@@ -10,10 +10,6 @@ class MyFavoriteEvent < CoolEvent;    end
 
 describe Wires::Event do
   
-  it "gives friendly output when inspected" do
-    
-  end
-  
   it "automatically creates attributes, getters, but not setters "\
      "from the initial arguments passed to the constructor" do
     cool = CoolEvent.new(13, 24, 10, 
@@ -75,14 +71,14 @@ describe Wires::Event do
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
-    e.event_type.must_equal nil
+    e.event_type.must_equal CoolEvent
     
     e = Wires::Event.new_from(MyFavoriteEvent=>[*e_args]).first
     e.class.must_equal MyFavoriteEvent
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
-    e.event_type.must_equal nil
+    e.event_type.must_equal MyFavoriteEvent
     
     e = Wires::Event.new_from('some_string'=>[*e_args]).first
     e.must_be_nil
@@ -106,13 +102,13 @@ describe Wires::Event do
     e.class.must_equal CoolEvent
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
-    e.event_type.must_equal nil
+    e.event_type.must_equal CoolEvent
     
     e = CoolEvent.new_from(CoolEvent).first
     e.class.must_equal CoolEvent
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
-    e.event_type.must_equal nil
+    e.event_type.must_equal CoolEvent
     
     e = CoolEvent.new_from(:symbowl).first
     e.class.must_equal CoolEvent
@@ -123,6 +119,38 @@ describe Wires::Event do
     e2 = Wires::Event.new
     e = Wires::Event.new_from(e2).first
     e.must_equal e2
+  end
+  
+  it "can compare event pattern matching with =~" do
+    
+    table = {
+      true => [
+      # Listening for                       will receive
+        [Wires::Event,                      Wires::Event],
+        [:dog,                              :dog],
+        [Wires::Event,                      :dog],
+        [{Wires::Event=>[55]},              {Wires::Event=>[55]}],
+      ],
+      
+      false => [
+      # Listening for                       wont receive
+        [:dog,                              :cat],
+        [:dog,                              Wires::Event],
+      ]
+    }
+    
+    for k,set in table
+      for pair in set
+        a,b = pair.map { |x| Wires::Event.new_from x }
+        
+        a.count.must_be :>=, 1
+        b.count.must_equal   1
+        a.map do |x|
+          x =~ b.first
+        end.any?.must_equal k, "\nBad pair: #{pair}"
+      end
+    end
+    
   end
   
 end

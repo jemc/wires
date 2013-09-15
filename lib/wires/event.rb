@@ -20,23 +20,28 @@ module Wires
       
       list.map! do |type, args|
         case type
-        when Event; type
-        when Class; (type<=Event) ? type.new(type, *args) : nil
+        when Event; obj = type
+        when Class; 
+          if type<=Event 
+            obj = type.new(*args)
+            obj.event_type = type unless type==Wires::Event
+          end
         when Symbol
-          self.new(type, *args)
+          obj = self.new(*args)
+          obj.event_type = type
         end
+        obj
       end.reject(&:nil?)
     end
     
-    def initialize(type, *args, **kwargs, &block)
-      @event_type = type
-      
+    def initialize(*args, **kwargs, &block)
       @ignore = []
       @kwargs = kwargs.dup
+      
       (@kwargs[:args] = args.freeze; @ignore<<:args) \
-        unless @kwargs.key? :args
+        unless @kwargs.has_key? :args
       (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
-        unless @kwargs.key? :codeblock
+        unless @kwargs.has_key? :codeblock
       @kwargs.freeze
     end
     

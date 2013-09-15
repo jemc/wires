@@ -21,7 +21,18 @@ include Wires
 
 
 
-fire_and_wait Wires::Event, 'abc'
+class MyEvent < Wires::Event; end
+
+
+on [MyEvent=>[:dog]], 'Wires::Hub_B' do |e|
+  p 'whup'
+  # count.must_equal e.i
+  # count += 1
+  # fire_and_wait(MyEvent.new(i:(e.i+1)), 'Wires::Hub_B') if e.i < 9
+  # count.must_equal 10
+end
+
+fire_and_wait [MyEvent=>[:dog]], 'Wires::Hub_B'
 
 
 # require 'benchmark'
