@@ -19,21 +19,20 @@ include Wires
 
 (on [dog:[55]], 'abc' do p 'yo' end)
 
-# p Channel['abc'].target_list
 
-fire_and_wait :dog, 'abc'
+
+fire_and_wait [dog:[55]], 'abc'
 
 
 # require 'benchmark'
 
-p Benchmark.bm { |bm|
-  # bm.report { 1000000.times { :object.hash } }
-  # bm.report { 1000000.times { :object.to_sym.hash } }
-  # bm.report { 1000000.times { 'object'.hash } }
-  # bm.report { 1000000.times { 'object'.to_sym.hash } }
-  # bm.report { 1000000.times { ([3,4,5] + [4,5,6]) } }
-  # bm.report { 1000000.times { ([3,4,5] | [4,5,6]) } }
-  bm.report { 10000.times { fire_and_wait :dog, 'abc' } }
-  bm.report { 10000.times { fire :dog, 'abc' }; Wires::Hub.join_children }
-}
-
+# Benchmark.bm { |bm|
+#   # bm.report { 1000000.times { :object.hash } }
+#   # bm.report { 1000000.times { :object.to_sym.hash } }
+#   # bm.report { 1000000.times { 'object'.hash } }
+#   # bm.report { 1000000.times { 'object'.to_sym.hash } }
+#   # bm.report { 1000000.times { ([3,4,5] + [4,5,6]) } }
+#   # bm.report { 1000000.times { ([3,4,5] | [4,5,6]) } }
+#   bm.report { 10000.times { fire_and_wait :dog, 'abc' } }
+#   bm.report { 10000.times { fire :dog, 'abc' }; Wires::Hub.join_children }
+# }

@@ -57,10 +57,7 @@ module Wires
       
       def new(*args)
         channel = @new_lock.synchronize do
-          router.get_channel(self, *args) do |name|
-            super(name)
-          end
-        end
+          router.get_channel(self, *args) { |name| super(name) }        end
       end
       alias_method :[], :new
     end
@@ -109,13 +106,16 @@ module Wires
       
       backtrace = caller
       
-      event = Event.new_from(input)
-      raise ArgumentError, "Can't create an event from input: #{input.inspect}"\
-        unless event
+      event = Event.new_from(*input)
       
-      raise ArgumentError, "Can't fire on multiple events: #{event.inspect}" \
-        unless event.count == 1
-      event = event.first
+      case event.count
+      when 0
+        raise ArgumentError,"Can't create an event from input: #{input.inspect}"
+      when 1
+        event = event.first
+      else
+        raise ArgumentError,"Can't fire on multiple events: #{event.inspect}"
+      end
       
       self.class.run_hooks(:@before_fire, event, self)
       
@@ -140,13 +140,16 @@ module Wires
       self.fire(event, blocking:true)
     end
     
-    # Compare matching with another Channel
+    # Returns true if listening on 'self' would hear a firing on 'other'
+    # (not commutative)
     def =~(other)
-      (other.is_a? Channel) ? (other.relevant_channels.include? self) : super
+      (other.is_a? Channel) ? 
+        (self.class.router.get_receivers(other).include? self) : 
+        super
     end
     
+    router.clear_channels
+    
   end
-  
-  ChannelKeeper.clear_channels
   
 end

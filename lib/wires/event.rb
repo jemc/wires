@@ -18,14 +18,14 @@ module Wires
         when Event; type
         when Class; (type<=Event) ? type.new(*args) : nil
         when Symbol
-          obj = self.new(*args)
-          obj.event_type = type
-          obj
+          self.new(type, *args)
         end
       end.reject(&:nil?)
     end
     
-    def initialize(*args, **kwargs, &block)
+    def initialize(type, *args, **kwargs, &block)
+      @event_type = type
+      
       @ignore = []
       @kwargs = kwargs.dup
       (@kwargs[:args] = args.freeze; @ignore<<:args) \
@@ -43,6 +43,8 @@ module Wires
         (sym==:kwargs ? @kwargs.reject{|k| @ignore.include? k} : super)
     end
     
+    # Returns true if listening for 'self' would hear a firing of 'other'
+    # (not commutative)
     def =~(other)
       (other.is_a? Event) ? 
         ((self.class >= other.class) \
