@@ -21,7 +21,7 @@ module Wires
       list.map! do |type, args|
         case type
         when Event; type
-        when Class; (type<=Event) ? type.new(*args) : nil
+        when Class; (type<=Event) ? type.new(type, *args) : nil
         when Symbol
           self.new(type, *args)
         end

@@ -10,6 +10,10 @@ class MyFavoriteEvent < CoolEvent;    end
 
 describe Wires::Event do
   
+  it "gives friendly output when inspected" do
+    
+  end
+  
   it "automatically creates attributes, getters, but not setters "\
      "from the initial arguments passed to the constructor" do
     cool = CoolEvent.new(13, 24, 10, 

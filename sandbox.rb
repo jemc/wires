@@ -17,11 +17,11 @@ include Wires
 
 # p ChannelKeeper.table
 
-(on [dog:[55]], 'abc' do |e| p e end)
+# (on [dog:[55]], 'abc' do |e| p e end)
 
 
 
-fire_and_wait [dog:[55]], 'abc'
+fire_and_wait Wires::Event, 'abc'
 
 
 # require 'benchmark'
