@@ -17,21 +17,23 @@ include Wires
 
 # p ChannelKeeper.table
 
-# on :dog, 'abc' do p 'yo' end
+(on [dog:[55]], 'abc' do p 'yo' end)
 
-# fire :dog, 'abc'
+# p Channel['abc'].target_list
+
+fire_and_wait :dog, 'abc'
 
 
 # require 'benchmark'
 
-# p Benchmark.bm { |bm|
-#   bm.report { 1000000.times { :object.hash } }
-#   bm.report { 1000000.times { :object.to_sym.hash } }
-#   bm.report { 1000000.times { 'object'.hash } }
-#   bm.report { 1000000.times { 'object'.to_sym.hash } }
-#   bm.report { 1000000.times { ([3,4,5] + [4,5,6]) } }
-#   bm.report { 1000000.times { ([3,4,5] | [4,5,6]) } }
-# }
+p Benchmark.bm { |bm|
+  # bm.report { 1000000.times { :object.hash } }
+  # bm.report { 1000000.times { :object.to_sym.hash } }
+  # bm.report { 1000000.times { 'object'.hash } }
+  # bm.report { 1000000.times { 'object'.to_sym.hash } }
+  # bm.report { 1000000.times { ([3,4,5] + [4,5,6]) } }
+  # bm.report { 1000000.times { ([3,4,5] | [4,5,6]) } }
+  bm.report { 10000.times { fire_and_wait :dog, 'abc' } }
+  bm.report { 10000.times { fire :dog, 'abc' }; Wires::Hub.join_children }
+}
 
-p Wires::Event.new_from(:my=>[44,22], Wires::Event=>[44,22, args:['cow']])
-  .map{ |e| e.kwargs }

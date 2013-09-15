@@ -6,8 +6,8 @@ module Wires
     def Channel(*args) Channel.new(*args) end
     
     def on(events, channels='*', &codeblock)
-      events   = [*events]
       channels = [*channels]
+      
       for channel in channels
         channel=Channel.new(channel) unless channel.is_a? Channel
         channel.register(*events, &codeblock)
@@ -15,14 +15,19 @@ module Wires
       codeblock
     end
     
-    def fire(event, channel='*', **kwargs)
-      channel = Channel.new(channel) unless channel.is_a? Channel
-      unless kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
-        channel.fire(event, **kwargs)
-      else
-        time = kwargs[:time] or Time.now
-        kwargs.reject!{|k,v| k==:time}
-        TimeScheduler.add(time, event, channel, **kwargs)
+    def fire(event, channels='*', **kwargs)
+      
+      channels = [*channels]
+      
+      for channel in channels
+        channel = Channel.new(channel) unless channel.is_a? Channel
+        unless kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
+          channel.fire(event, **kwargs)
+        else
+          time = kwargs[:time] or Time.now
+          kwargs.reject!{|k,v| k==:time}
+          TimeScheduler.add(time, event, channel, **kwargs)
+        end
       end
     nil end
     

@@ -52,9 +52,9 @@ module Wires
     @new_lock = Mutex.new
     
     class << self
+      attr_accessor :hub
       attr_accessor :router
       
-      alias_method :old_version_of_new, :new
       def new(*args)
         channel = @new_lock.synchronize do
           router.get_channel(self, *args) do |name|
@@ -75,7 +75,7 @@ module Wires
     def register(*events, &proc)
       if not proc.is_a?(Proc) then raise SyntaxError, \
         "No Proc given to execute on event: #{events}" end
-      _normalize_event_list(events)
+      events = [*Event.new_from(*events)]
       @target_list << [events, proc]
       proc
     end
@@ -109,10 +109,13 @@ module Wires
       
       backtrace = caller
       
-      # Create an instance object from one of several acceptable input forms
-      event = Event.new_from input
-      raise ArgumentError, "Can't create an event from input #{input.inspect}" \
+      event = Event.new_from(input)
+      raise ArgumentError, "Can't create an event from input: #{input.inspect}"\
         unless event
+      
+      raise ArgumentError, "Can't fire on multiple events: #{event.inspect}" \
+        unless event.count == 1
+      event = event.first
       
       self.class.run_hooks(:@before_fire, event, self)
       
@@ -120,10 +123,10 @@ module Wires
       for chan in self.class.router.get_receivers self
         for target in chan.target_list
           for e in target.first
-            if event =~ e
+            if e =~ event
               self.class.hub.spawn(event,     # fired event object event
                                    self.name, # name of channel fired from
-                                   target[1], # proc to execute
+                                   target.last, # proc to execute
                                    blocking,  # boolean from blocking kwarg
                                    backtrace) # captured backtrace
       end end end end
@@ -135,14 +138,6 @@ module Wires
     # Fire a blocking event on this channel
     def fire_and_wait(event)
       self.fire(event, blocking:true)
-    end
-    
-    # Convert events to array of unique codestrings
-    def _normalize_event_list(events)
-      events = [events] unless events.is_a? Array
-      events.flatten!
-      events.map! { |e| (e.is_a?(Class) ? e.codestring : e.to_s) }
-      events.uniq!
     end
     
     # Compare matching with another Channel

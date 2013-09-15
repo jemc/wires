@@ -27,7 +27,6 @@ describe Wires::Event do
     checkhash[:dogname] = 'Grover'
     checkhash[:fishscales] = 7096
     cool.kwargs.must_equal checkhash
-    proc{cool.kwargs[:other] = 2}.must_raise RuntimeError
     
     assert cool.codeblock.is_a? Proc
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
@@ -116,6 +115,10 @@ describe Wires::Event do
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal :symbowl
+    
+    e2 = Wires::Event.new
+    e = Wires::Event.new_from(e2).first
+    e.must_equal e2
   end
   
 end
