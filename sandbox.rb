@@ -17,7 +17,7 @@ include Wires
 
 # p ChannelKeeper.table
 
-(on [dog:[55]], 'abc' do p 'yo' end)
+(on [dog:[55]], 'abc' do |e| p e end)
 
 
 

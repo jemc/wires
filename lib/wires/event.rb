@@ -4,6 +4,11 @@ module Wires
   class Event
     attr_accessor :event_type
     
+    def inspect
+      list = [event_type, *args, **kwargs].map(&:inspect).join ', '
+      "#{self.class}(#{list})"
+    end
+    
     def self.new_from(*args)
       list = []
       
