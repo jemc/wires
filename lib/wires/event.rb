@@ -4,18 +4,47 @@ module Wires
   class Event
     attr_accessor :event_type
     
+    # Return a friendly output upon inspection
     def inspect
       list = [event_type, *args, **kwargs].map(&:inspect).join ', '
       "#{self.class}(#{list})"
     end
     
-    def self.inherited(subcls)
-      super
-      class << subcls
-        undef_method :new_from
-      end if self == Wires::Event
+    # Internalize all *args and **kwargs and &block to be accessed later
+    def initialize(*args, **kwargs, &block)
+      @ignore = []
+      @kwargs = kwargs.dup
+      
+      (@kwargs[:args] = args.freeze; @ignore<<:args) \
+        unless @kwargs.has_key? :args
+      (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
+        unless @kwargs.has_key? :codeblock
+      @kwargs.freeze
     end
     
+    # Directly access contents of @kwargs by key
+    def [](key); @kwargs[key]; end
+    
+    # Used to fake a sort of read-only openstruct from contents of @kwargs
+    def method_missing(sym, *args, &block)
+      args.empty? and @kwargs.has_key?(sym) ?
+        @kwargs[sym] :
+        (sym==:kwargs ? @kwargs.reject{|k| @ignore.include? k} : super)
+    end
+    
+    # Returns true if listening for 'self' would hear a firing of 'other'
+    # (not commutative)
+    def =~(other)
+      (other.is_a? Event) ? 
+        ((self.class >= other.class) \
+          and (self.event_type.nil? or self.event_type == other.event_type) \
+          and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
+          and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
+        super
+    end
+    
+    # Return an array of Event instance objects generated from
+    # specially formatted input (see spec/event_spec.rb).
     def self.new_from(*args)
       list = []
       
@@ -42,35 +71,14 @@ module Wires
       end.reject(&:nil?)
     end
     
-    def initialize(*args, **kwargs, &block)
-      @ignore = []
-      @kwargs = kwargs.dup
-      
-      (@kwargs[:args] = args.freeze; @ignore<<:args) \
-        unless @kwargs.has_key? :args
-      (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
-        unless @kwargs.has_key? :codeblock
-      @kwargs.freeze
+    # Ensure that self.new_from is not inherited
+    def self.inherited(subcls)
+      super
+      class << subcls
+        undef_method :new_from
+      end if self == Wires::Event
     end
     
-    def [](key); @kwargs[key]; end
-    
-    def method_missing(sym, *args, &block)
-      args.empty? and @kwargs.has_key?(sym) ?
-        @kwargs[sym] :
-        (sym==:kwargs ? @kwargs.reject{|k| @ignore.include? k} : super)
-    end
-    
-    # Returns true if listening for 'self' would hear a firing of 'other'
-    # (not commutative)
-    def =~(other)
-      (other.is_a? Event) ? 
-        ((self.class >= other.class) \
-          and (self.event_type.nil? or self.event_type == other.event_type) \
-          and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
-          and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
-        super
-    end
   end
   
 end
