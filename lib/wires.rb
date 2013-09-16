@@ -9,6 +9,7 @@ require 'wires/util/hooks'
 
 require 'wires/event'
 require 'wires/hub'
+require 'wires/router'
 require 'wires/channel'
 require 'wires/time'
 
