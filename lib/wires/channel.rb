@@ -26,7 +26,7 @@ module Wires
     
     def initialize(name)
       @name = name
-      @target_list = Set.new
+      @target_list = []
     end
     
     # Register a proc to be triggered by an event on this channel
@@ -34,17 +34,18 @@ module Wires
     def register(*events, &proc)
       if not proc.is_a?(Proc) then raise SyntaxError, \
         "No Proc given to execute on event: #{events}" end
-      events = [*Event.new_from(*events)]
-      @target_list << [events, proc]
+      events = Event.new_from(*events)
+      @target_list << [events, proc] unless @target_list.include? [events, proc]
       proc
     end
     
     # Unregister a proc from the target list of this channel
     # Return true if at least one matching target was unregistered, else false
     def unregister(*events, &proc)
-      _normalize_event_list(events)
-      !!(@target_list.reject! do |e, p|
-        (proc and proc==p) and (events.map{|event| e.include? event}.all?)
+      events = Event.new_from(*events)
+      !!(@target_list.reject! do |es,pr|
+        (proc and proc==pr) and \
+          (events.map{|event| es.map{|e| event=~e}.any?}.all?)
       end)
     end
     
@@ -108,6 +109,10 @@ module Wires
       (other.is_a? Channel) ? 
         (self.class.router.get_receivers(other).include? self) : 
         super
+    end
+    
+    def receivers
+      self.class.router.get_receivers self
     end
     
     router.clear_channels

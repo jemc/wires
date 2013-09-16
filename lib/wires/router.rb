@@ -33,7 +33,7 @@ module Wires
         name = chan.name
         @fuzzy_table.keys.select do |k|
           (begin; name =~ k; rescue TypeError; end)
-        end.map { |k| @fuzzy_table[k] } << chan
+        end.map { |k| @fuzzy_table[k] } + [chan, @table['*']]
       end
       
     end

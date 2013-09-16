@@ -6,8 +6,9 @@ module Wires
     
     # Return a friendly output upon inspection
     def inspect
-      list = [event_type, *args, **kwargs].map(&:inspect).join ', '
-      "#{self.class}(#{list})"
+      list = [*args, **kwargs].map(&:inspect).join ', '
+      type = event_type ? event_type.inspect : ''
+      "#{self.class}#{type}(#{list})"
     end
     
     # Internalize all *args and **kwargs and &block to be accessed later
