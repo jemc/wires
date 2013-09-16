@@ -104,24 +104,11 @@ describe Wires::Event do
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal CoolEvent
     
-    e = CoolEvent.new_from(CoolEvent).first
-    e.class.must_equal CoolEvent
-    e.args.must_equal Array.new
-    e.kwargs.must_equal Hash.new
-    e.event_type.must_equal CoolEvent
+    proc{e = CoolEvent.new_from(CoolEvent).first}.must_raise NoMethodError
     
-    e = CoolEvent.new_from(:symbowl).first
-    e.class.must_equal CoolEvent
-    e.args.must_equal Array.new
-    e.kwargs.must_equal Hash.new
-    e.event_type.must_equal :symbowl
-    
-    e2 = Wires::Event.new
-    e = Wires::Event.new_from(e2).first
-    e.must_equal e2
   end
   
-  it "can compare event pattern matching with =~" do
+  it "can perform event pattern matching with =~" do
     
     table = {
       true => [
@@ -130,12 +117,23 @@ describe Wires::Event do
         [:dog,                              :dog],
         [Wires::Event,                      :dog],
         [{Wires::Event=>[55]},              {Wires::Event=>[55]}],
+        [{Wires::Event=>[55]},              {Wires::Event=>[55,66]}],
+        [{Wires::Event=>[55,66]},           {Wires::Event=>[55,66]}],
+        [{Wires::Event=>[55,66]},           {Wires::Event=>[55,66,77]}],
+        [{Wires::Event=>[arg1:32]},         {Wires::Event=>[arg1:32]}],
+        [{Wires::Event=>[arg1:32]},         {Wires::Event=>[55, arg1:32]}],
       ],
       
       false => [
-      # Listening for                       wont receive
+      # Listening for                       won't receive
         [:dog,                              :cat],
         [:dog,                              Wires::Event],
+        [{Wires::Event=>[55]},              {Wires::Event=>[66,55]}],
+        [{Wires::Event=>[55,66]},           {Wires::Event=>[55]}],
+        [{Wires::Event=>[55,66,77]},        {Wires::Event=>[55,66]}],
+        [{Wires::Event=>[arg1:32]},         {Wires::Event=>[]}],
+        [{Wires::Event=>[arg1:32]},         {Wires::Event=>[32]}],
+        [{Wires::Event=>[arg1:32]},         {Wires::Event=>[arg1:33]}],
       ]
     }
     
@@ -143,8 +141,8 @@ describe Wires::Event do
       for pair in set
         a,b = pair.map { |x| Wires::Event.new_from x }
         
-        a.count.must_be :>=, 1
-        b.count.must_equal   1
+        a.count.must_be :>=, 1, "\nBad listen pattern: #{a}"
+        b.count.must_equal   1, "\nBad fire pattern: #{b}"
         a.map do |x|
           x =~ b.first
         end.any?.must_equal k, "\nBad pair: #{pair}"

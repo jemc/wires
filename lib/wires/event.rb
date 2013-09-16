@@ -9,6 +9,13 @@ module Wires
       "#{self.class}(#{list})"
     end
     
+    def self.inherited(subcls)
+      super
+      class << subcls
+        undef_method :new_from
+      end if self == Wires::Event
+    end
+    
     def self.new_from(*args)
       list = []
       
@@ -29,6 +36,7 @@ module Wires
         when Symbol
           obj = self.new(*args)
           obj.event_type = type
+          obj if self==Wires::Event
         end
         obj
       end.reject(&:nil?)
