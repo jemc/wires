@@ -38,7 +38,9 @@ module Wires
     def =~(other)
       (other.is_a? Event) ? 
         ((self.class >= other.class) \
-          and (self.event_type.nil? or self.event_type == other.event_type) \
+          and (self.event_type.nil? or self.event_type==other.event_type \
+              or (self.event_type.is_a? Class and other.event_type.is_a? Class \
+                  and self.event_type >= other.event_type)) \
           and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
           and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
         super

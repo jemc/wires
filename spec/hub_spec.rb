@@ -168,6 +168,7 @@ describe Wires::Hub do
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
     on MyEvent, 'Wires::Hub_Params' do |event, ch_string|
+      p 'whup'
       event.must_be_instance_of MyEvent
       ch_string.must_equal 'Wires::Hub_Params'
       it_happened = true

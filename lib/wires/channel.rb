@@ -82,17 +82,17 @@ module Wires
       
       self.class.run_hooks(:@before_fire, event, self)
       
+      procs = []
       # Fire to each relevant target on each channel
       for chan in self.class.router.get_receivers self
         for target in chan.target_list
           for e in target.first
             if e =~ event
-              self.class.hub.spawn(event,     # fired event object event
-                                   self.name, # name of channel fired from
-                                   target.last, # proc to execute
-                                   blocking,  # boolean from blocking kwarg
-                                   backtrace) # captured backtrace
+              procs << target.last
       end end end end
+      
+      procs.uniq!
+      
       
       self.class.run_hooks(:@after_fire, event, self)
       
@@ -106,7 +106,7 @@ module Wires
     # Returns true if listening on 'self' would hear a firing on 'other'
     # (not commutative)
     def =~(other)
-      (other.is_a? Channel) ? 
+      (other.is_a? Channel) ?
         (self.class.router.get_receivers(other).include? self) : 
         super
     end
