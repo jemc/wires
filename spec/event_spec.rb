@@ -294,7 +294,7 @@ describe Wires::Event do
         b.count.must_equal   1, "\nBad fire pattern: #{b}"
         a.map do |x|
           x =~ b.first
-        end.any?.must_equal k, "\nBad pair: #{pair} #{[a,b]}"
+        end.any?.must_equal k, "\nBad pair: #{pair} (seen as: #{[a,b]})"
       end
     end
     
