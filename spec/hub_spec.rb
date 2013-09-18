@@ -40,7 +40,7 @@ describe Wires::Hub do
      " and temporarily neglects to spawn all further threads" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     done_flag = false
-    spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
+    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false]
     
     Wires::Hub.max_children = 3
     Wires::Hub.max_children.must_equal 3
@@ -91,7 +91,7 @@ describe Wires::Hub do
      " during Wires::Hub.hold, but allows procs to spawn in place" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     var = 'before'
-    spargs = [nil, nil, proc{var = 'after'}, false]
+    spargs = [nil, nil, Proc.new{var = 'after'}, false]
     
     Wires::Hub.count_neglected.must_equal 0
     
@@ -121,7 +121,7 @@ describe Wires::Hub do
   it "logs neglects to $stderr by default," \
      "but allows you to specify a different action if desired" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
-    spargs = [nil, nil, proc{nil}, false]
+    spargs = [nil, nil, Proc.new{nil}, false]
     
     Wires::Hub.hold do
       Wires::Hub.spawn(*spargs).must_equal false
