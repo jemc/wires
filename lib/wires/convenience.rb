@@ -3,8 +3,6 @@ module Wires
 
   module Convenience
     
-    def Channel(*args) Channel.new(*args) end
-    
     def on(events, channels='*', &codeblock)
       channels = [*channels]
       

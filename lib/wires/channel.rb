@@ -105,7 +105,7 @@ module Wires
       end
       
       # Fire to selected targets
-      procs.each do |pr|
+      procs.uniq.each do |pr|
         self.class.hub.spawn \
           event,     # fired event object event
           self.name, # name of channel fired from

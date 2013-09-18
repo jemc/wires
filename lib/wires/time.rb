@@ -36,7 +36,7 @@ module Wires
       @interval = interval
       
       @event    = Event.new_from(event)
-      @channel  = Channel.new(channel) unless channel.is_a? Channel
+      @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
       @kwargs   = kwargs
     end
     
@@ -202,7 +202,7 @@ module Wires
       
     end
     
-    @thread = Thread.new do main_loop end
+    @thread = Thread.new { main_loop }
     
   end
   

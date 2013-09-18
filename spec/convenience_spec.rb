@@ -7,33 +7,27 @@ begin require 'jemc/reporter'; rescue LoadError; end
 
 describe "wires/convenience" do
   
-  describe "#Channel" do
-    it "is an alias for Channel.new" do
-      Wires::Channel.new('new').must_equal Channel('new')
-    end
-  end
-  
   describe "#fire" do
     it "is an alias for Channel.fire under default kwargs" do
       it_happened = false
-      on :event, 'convenience_fire_A' do
+      on Wires::Event, self do
         it_happened = true
       end
       
-      fire :event, 'convenience_fire_A'
+      fire Wires::Event, self
       Wires::Hub.join_children
       
       it_happened.must_equal true
     end
     
     it "accepts an actual Channel object as its channel argument" do
-      chan = Wires::Channel.new('convenience_fire_B')
+      chan = Wires::Channel.new(self)
       it_happened = false
-      on :event, chan do
+      on Wires::Event, chan do
         it_happened = true
       end
       
-      fire :event, chan
+      fire Wires::Event, chan
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -41,11 +35,11 @@ describe "wires/convenience" do
     
     it "is an alias for TimeScheduler.add if given :time kwarg" do
       it_happened = false
-      on :event, 'convenience_fire_C' do
+      on Wires::Event, self do
         it_happened = true
       end
       
-      fire :event, 'convenience_fire_C', time:0.1.seconds.from_now
+      fire Wires::Event, self, time:0.1.seconds.from_now
       
       sleep 0.05
       it_happened.must_equal false
@@ -57,53 +51,55 @@ describe "wires/convenience" do
     
     it "is an alias for TimeScheduler.add if given :count kwarg" do
       count = 0
-      on :event, 'convenience_fire_D' do
+      on Wires::Event, self do
         count+=1
       end
       
-      fire :event, 'convenience_fire_D', count:50, blocking:true
-      count.must_equal 50
+      sleep 0.2
+      fire Wires::Event, self, count:50
+      sleep 0.2
       Wires::Hub.join_children
+      count.must_equal 50
     end
   end
   
   describe "#fire_and_wait" do
     it "is an alias for fire with blocking kwarg set to true" do
       count = 0
-      on :event, 'convenience_fire_and_wait_A' do
+      on Wires::Event, self do
         count+=1
       end
       
-      fire_and_wait :event, 'convenience_fire_and_wait_A', count:50
-      count.must_equal 50
+      fire_and_wait Wires::Event, self
+      count.must_equal 1
       Wires::Hub.join_children
     end
   end
   
   describe "#on" do
     it "is an alias for Channel#register, adding a firable target proc" do
-      chan = Wires::Channel.new('convenience_on_A')
+      chan = Wires::Channel.new(self)
       
       it_happened = false
-      on :event, 'convenience_on_A' do
+      on Wires::Event, self do
         it_happened = true
       end
       
-      chan.fire :event
+      chan.fire Wires::Event
       Wires::Hub.join_children
       
       it_happened.must_equal true
     end
     
     it "can accept an actual Channel object as the channel argument" do
-      chan = Wires::Channel.new('convenience_on_B')
+      chan = Wires::Channel.new(self)
       
       it_happened = false
-      on :event, chan do
+      on Wires::Event, chan do
         it_happened = true
       end
       
-      chan.fire :event
+      chan.fire Wires::Event
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -117,12 +113,12 @@ describe "wires/convenience" do
       
       count = 0
       
-      on :event, chans do
+      on Wires::Event, chans do
         count+=1
       end
       
       for chan in chans
-        chan.fire :event
+        chan.fire Wires::Event
       end
       Wires::Hub.join_children
       
@@ -131,7 +127,7 @@ describe "wires/convenience" do
     
     it "returns the &proc passed in" do
       proc = Proc.new { nil }
-      assert_equal (on :event, 'convenience_on_A', &proc), proc
+      assert_equal (on Wires::Event, self, &proc), proc
     end
     
   end
