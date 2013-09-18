@@ -5,21 +5,18 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 
-# class MyEvent      < Wires::Event; end
-# class MyOtherEvent < Wires::Event; end
-
 describe Wires::Hub do
   
   it "can handle events called from other events" do
     
     count = 0
     
-    on MyEvent, 'Wires::Hub_A' do |e|
+    on Wires::Event, 'Wires::Hub_A' do |e|
       count.must_equal e.i
       count += 1
     end
     
-    fire MyEvent.new(i:0), 'Wires::Hub_A'
+    fire Wires::Event.new(i:0), 'Wires::Hub_A'
     
   end
   
@@ -27,14 +24,14 @@ describe Wires::Hub do
     
     count = 0
     
-    on MyEvent, 'Wires::Hub_B' do |e|
+    on Wires::Event, 'Wires::Hub_B' do |e|
       count.must_equal e.i
       count += 1
-      fire_and_wait([MyEvent=>[i:(e.i+1)]], 'Wires::Hub_B') if e.i < 9
+      fire_and_wait([Wires::Event=>[i:(e.i+1)]], 'Wires::Hub_B') if e.i < 9
       count.must_equal 10
     end
     
-    fire_and_wait [MyEvent=>[i:0]], 'Wires::Hub_B'
+    fire_and_wait [Wires::Event=>[i:0]], 'Wires::Hub_B'
     count.must_equal 10
     
   end
@@ -132,6 +129,7 @@ describe Wires::Hub do
       $stderr = StringIO.new
       $stderr.size.must_be :==,0
     end
+    Wires::Hub.join_children
     
     $stderr.size.must_be :>, 0
     $stderr = StringIO.new
@@ -154,6 +152,7 @@ describe Wires::Hub do
       something_happened.must_equal true
       count.must_be :>, 0
     end
+    Wires::Hub.join_children
     
     $stderr.size.must_be :==, 0
     something_happened.must_equal true
@@ -166,13 +165,13 @@ describe Wires::Hub do
   
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
-    on MyEvent, 'Wires::Hub_Params' do |event, ch_string|
-      event.must_be_instance_of MyEvent
+    on Wires::Event, 'Wires::Hub_Params' do |event, ch_string|
+      event.must_be_instance_of Wires::Event
       ch_string.must_equal 'Wires::Hub_Params'
       it_happened = true
     end
     
-    fire MyEvent, 'Wires::Hub_Params'
+    fire Wires::Event, 'Wires::Hub_Params'
     Wires::Hub.join_children
     it_happened.must_equal true
   end
@@ -180,7 +179,7 @@ describe Wires::Hub do
   
   it "lets you set a custom event handler exception handler" do
     
-    on MyEvent, 'Wires::Hub_Exc' do |e|
+    on Wires::Event, 'Wires::Hub_Exc' do |e|
       e.method_that_isnt_defined
     end
     
@@ -189,13 +188,13 @@ describe Wires::Hub do
       
       exc.backtrace.wont_be_nil
       exc.fire_backtrace.wont_be_nil
-      event.must_be_instance_of MyEvent
+      event.must_be_instance_of Wires::Event
       ch_string.must_equal 'Wires::Hub_Exc'
       count += 1
     end
     
-    fire_and_wait MyEvent, 'Wires::Hub_Exc'
-    fire          MyEvent, 'Wires::Hub_Exc'
+    fire_and_wait Wires::Event, 'Wires::Hub_Exc'
+    fire          Wires::Event, 'Wires::Hub_Exc'
     
     Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc
