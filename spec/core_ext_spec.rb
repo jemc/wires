@@ -21,8 +21,8 @@ describe "wires/core_ext::Time" do
   it "can now fire events at a specific time" do
     
     var = 'before'
-    on :event, 'T_A' do var='after' end
-    0.1.seconds.from_now.fire :event
+    on :event, self do var='after' end
+    0.1.seconds.from_now.fire :event, self
     sleep 0.05
     var.must_equal 'before'
     sleep 0.15
@@ -33,8 +33,8 @@ describe "wires/core_ext::Time" do
   it "will immediately fire events aimed at a time in the past" do
     
     var = 'before'
-    on :event, 'T_B' do var='after' end
-    0.1.seconds.ago.fire :event
+    on :event, self do var='after' end
+    0.1.seconds.ago.fire :event, self
     sleep 0.05
     var.must_equal 'after'
     sleep 0.15
@@ -45,8 +45,8 @@ describe "wires/core_ext::Time" do
   it "can be told not to fire events aimed at a time in the past" do
     
     var = 'before'
-    on :event, 'T_C' do var='after' end
-    0.1.seconds.ago.fire :event, ignore_past:true
+    on :event, self do var='after' end
+    0.1.seconds.ago.fire :event, self, ignore_past:true
     sleep 0.05
     var.must_equal 'before'
     sleep 0.15
