@@ -48,7 +48,7 @@ module Wires
     # Unregister a proc from the target list of this channel
     # Return true if at least one matching target was unregistered, else false
     def unregister(*events, &proc)
-      events = Event.new_from(*events)
+      events = events.empty? ? [] : Event.new_from(*events)
       
       @@aim_lock.synchronize do
         !!(@target_list.reject! do |es,pr|

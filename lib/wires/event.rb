@@ -72,7 +72,11 @@ module Wires
           obj if self==Wires::Event
         end
         obj
-      end.reject(&:nil?)
+      end.tap do |x|
+        raise ArgumentError, 
+        "Invalid event creation input: #{args} \noutput: #{x}" \
+          if x.empty? or !x.all?
+      end
     end
     
     # Ensure that self.new_from is not inherited

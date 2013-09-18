@@ -80,12 +80,10 @@ describe Wires::Event do
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
     e.event_type.must_equal MyFavoriteEvent
     
-    e = Wires::Event.new_from('some_string'=>[*e_args]).first
-    e.must_be_nil
+    Proc.new{Wires::Event.new_from('some_string'=>[*e_args])}.must_raise ArgumentError
     
-    e = Wires::Event.new_from(Object=>[*e_args]).first
-    e.must_be_nil
-    
+    Proc.new{Wires::Event.new_from(Object=>[*e_args])}.must_raise ArgumentError
+
     e = Wires::Event.new_from(Wires::Event).first
     e.class.must_equal Wires::Event
     e.args.must_equal Array.new
