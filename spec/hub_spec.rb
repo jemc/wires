@@ -5,8 +5,8 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 
-class MyEvent      < Wires::Event; end
-class MyOtherEvent < Wires::Event; end
+# class MyEvent      < Wires::Event; end
+# class MyOtherEvent < Wires::Event; end
 
 describe Wires::Hub do
   

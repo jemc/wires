@@ -228,6 +228,7 @@ describe Wires::Event do
         [[:dog,:wolf,:hound,:mutt],         :dog],
         [[:dog,:wolf,:hound,:mutt],         wolf:[55]],
         [[:dog,:wolf,:hound,:mutt],         hound:[arg1:32]],
+        [[:dog,:wolf,:hound,:mutt],         Wires::Event.new.tap{|x| x.event_type=:mutt}],
       ],
       
       false => [
@@ -320,6 +321,11 @@ describe Wires::Event do
         [{CoolEvent=>[arg1:32,arg2:88]},      {Wires::Event=>[arg1:32,arg2:88]}],
         [{CoolEvent=>[arg1:32,arg2:88]},      {Wires::Event=>[55,arg1:32,arg2:88]}],
         [{CoolEvent=>[arg1:32,arg2:88]},      {Wires::Event=>[55,66,arg1:32,arg2:88]}],
+        [[:dog,:wolf,:hound,:mutt],         :cat],
+        [[:dog,:wolf,:hound,:mutt],         cat:[55]],
+        [[:dog,:wolf,:hound,:mutt],         cat:[arg1:32]],
+        [[:dog,:wolf,:hound,:mutt],         Wires::Event.new.tap{|x| x.event_type=:cat}],
+        [[:dog,:wolf,:hound,:mutt],         Wires::Event.new],
       ]
     }
     
