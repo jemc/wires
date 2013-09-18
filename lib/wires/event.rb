@@ -49,6 +49,7 @@ module Wires
     # Return an array of Event instance objects generated from
     # specially formatted input (see spec/event_spec.rb).
     def self.new_from(*args)
+      args.flatten!
       list = []
       
       args.each do |x|

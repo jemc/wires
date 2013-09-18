@@ -104,7 +104,41 @@ describe Wires::Event do
     e.kwargs.must_equal Hash.new
     e.event_type.must_equal CoolEvent
     
-    proc{e = CoolEvent.new_from(CoolEvent).first}.must_raise NoMethodError
+    Proc.new{e = CoolEvent.new_from(CoolEvent).first}.must_raise NoMethodError
+    
+    ary = [:dog,:wolf,:hound,:mutt]
+    e = Wires::Event.new_from ary
+    ary.each_with_index do |x,i|
+      e[i].class.must_equal Wires::Event
+      e[i].event_type.must_equal x
+    end
+    
+    ary = [CoolEvent, MyFavoriteEvent]
+    e = Wires::Event.new_from ary
+    ary.each_with_index do |x,i|
+      e[i].class.must_equal x
+      e[i].event_type.must_equal x
+    end
+    
+    ary = [dog:[*e_args],wolf:[*e_args],hound:[*e_args],mutt:[*e_args]]
+    events = Wires::Event.new_from ary
+    ary.last.to_h.each_pair do |key,val|
+      e = events.find{|x| x.event_type==key}
+      e.class.must_equal Wires::Event
+      e.args.must_equal args
+      e.kwargs.must_equal kwargs
+      kwargs.each_pair { |k,v| e.send(k).must_equal v }
+    end
+    
+    ary = [CoolEvent:[*e_args],MyFavoriteEvent:[*e_args]]
+    events = Wires::Event.new_from ary
+    ary.last.to_h.each_pair do |key,val|
+      e = events.find{|x| x.event_type==key}
+      e.class.must_equal Wires::Event
+      e.args.must_equal args
+      e.kwargs.must_equal kwargs
+      kwargs.each_pair { |k,v| e.send(k).must_equal v }
+    end
     
   end
   
@@ -191,6 +225,7 @@ describe Wires::Event do
         [{CoolEvent=>[arg1:32,arg2:88]},    {MyFavoriteEvent=>[arg1:32,arg2:88]}],
         [{CoolEvent=>[arg1:32,arg2:88]},    {MyFavoriteEvent=>[55,arg1:32,arg2:88]}],
         [{CoolEvent=>[arg1:32,arg2:88]},    {MyFavoriteEvent=>[55,66,arg1:32,arg2:88]}],
+        [[:dog,:wolf,:hound,:mutt],         :dog],
       ],
       
       false => [
@@ -290,8 +325,8 @@ describe Wires::Event do
       for pair in set
         a,b = pair.map { |x| Wires::Event.new_from x }
         
-        a.count.must_be :>=, 1, "\nBad listen pattern: #{a}"
-        b.count.must_equal   1, "\nBad fire pattern: #{b}"
+        a.count.must_be :>=, 1, "\nBad listen obj: #{a} (comes from #{pair[0]})"
+        b.count.must_equal   1, "\nBad fire obj: #{b} (comes from #{pair[1]})"
         a.map do |x|
           x =~ b.first
         end.any?.must_equal k, "\nBad pair: #{pair} (seen as: #{[a,b]})"
@@ -299,5 +334,9 @@ describe Wires::Event do
     end
     
   end
+  
+  # it "prints a friendly output when inspected" do
+  #   Event.new_from
+  # end
   
 end
