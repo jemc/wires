@@ -12,6 +12,7 @@ module Wires
     @hub    = Hub
     @router = Router
     @new_lock = Mutex.new
+    @@aim_lock = Mutex.new
     
     class << self
       attr_accessor :hub
@@ -35,7 +36,12 @@ module Wires
       if not proc.is_a?(Proc) then raise SyntaxError, \
         "No Proc given to execute on event: #{events}" end
       events = Event.new_from(*events)
-      @target_list << [events, proc] unless @target_list.include? [events, proc]
+      
+      @@aim_lock.synchronize do
+        @target_list << [events, proc] \
+          unless @target_list.include? [events, proc]
+      end
+      
       proc
     end
     
@@ -43,10 +49,13 @@ module Wires
     # Return true if at least one matching target was unregistered, else false
     def unregister(*events, &proc)
       events = Event.new_from(*events)
-      !!(@target_list.reject! do |es,pr|
-        (proc and proc==pr) and \
-          (events.map{|event| es.map{|e| event=~e}.any?}.all?)
-      end)
+      
+      @@aim_lock.synchronize do
+        !!(@target_list.reject! do |es,pr|
+          (proc and proc==pr) and \
+            (events.map{|event| es.map{|e| event=~e}.any?}.all?)
+        end)
+      end
     end
     
     # Add hook methods
@@ -82,15 +91,20 @@ module Wires
       
       self.class.run_hooks(:@before_fire, event, self)
       
+      # Select appropriate targets
       procs = []
-      # Fire to each relevant target on each channel
-      for chan in self.class.router.get_receivers self
-        for target in chan.target_list
-          for e in target.first
-            if e =~ event
-              procs << target.last
-      end end end end
+      @@aim_lock.synchronize do
+        self.class.router
+        .get_receivers(self).each do |chan|
+          chan.target_list.each do |elist, pr|
+            elist.each do |e|
+              procs << pr if e =~ event
+            end
+          end
+        end
+      end
       
+      # Fire to selected targets
       procs.each do |pr|
         self.class.hub.spawn \
           event,     # fired event object event
