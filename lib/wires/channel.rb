@@ -91,8 +91,14 @@ module Wires
               procs << target.last
       end end end end
       
-      procs.uniq!
-      
+      procs.each do |pr|
+        self.class.hub.spawn \
+          event,     # fired event object event
+          self.name, # name of channel fired from
+          pr,        # proc to execute
+          blocking,  # boolean from blocking kwarg
+          backtrace  # captured backtrace
+      end
       
       self.class.run_hooks(:@after_fire, event, self)
       

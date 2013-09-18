@@ -226,6 +226,8 @@ describe Wires::Event do
         [{CoolEvent=>[arg1:32,arg2:88]},    {MyFavoriteEvent=>[55,arg1:32,arg2:88]}],
         [{CoolEvent=>[arg1:32,arg2:88]},    {MyFavoriteEvent=>[55,66,arg1:32,arg2:88]}],
         [[:dog,:wolf,:hound,:mutt],         :dog],
+        [[:dog,:wolf,:hound,:mutt],         wolf:[55]],
+        [[:dog,:wolf,:hound,:mutt],         hound:[arg1:32]],
       ],
       
       false => [

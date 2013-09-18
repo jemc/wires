@@ -30,11 +30,11 @@ describe Wires::Hub do
     on MyEvent, 'Wires::Hub_B' do |e|
       count.must_equal e.i
       count += 1
-      fire_and_wait(MyEvent.new(i:(e.i+1)), 'Wires::Hub_B') if e.i < 9
+      fire_and_wait([MyEvent=>[i:(e.i+1)]], 'Wires::Hub_B') if e.i < 9
       count.must_equal 10
     end
     
-    fire_and_wait MyEvent.new(i:0), 'Wires::Hub_B'
+    fire_and_wait [MyEvent=>[i:0]], 'Wires::Hub_B'
     count.must_equal 10
     
   end
@@ -62,7 +62,6 @@ describe Wires::Hub do
     
     done_flag = true
     Thread.pass
-    # Wires::Hub.count_neglected.must_equal 0
     
     Wires::Hub.max_children = nil
     $stderr = stderr_save # Restore $stderr
@@ -72,7 +71,7 @@ describe Wires::Hub do
      " that is, when there are too many threads for the OS to handle" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     done_flag = false
-    spargs = [nil, nil, proc{sleep 0.1 until done_flag}, false]
+    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false]
     
     count = 0
     while Wires::Hub.spawn(*spargs)
@@ -168,7 +167,6 @@ describe Wires::Hub do
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
     on MyEvent, 'Wires::Hub_Params' do |event, ch_string|
-      p 'whupwhup'
       event.must_be_instance_of MyEvent
       ch_string.must_equal 'Wires::Hub_Params'
       it_happened = true
@@ -188,6 +186,7 @@ describe Wires::Hub do
     
     count = 0
     Wires::Hub.on_handler_exception do |exc, event, ch_string|
+      
       exc.backtrace.wont_be_nil
       exc.fire_backtrace.wont_be_nil
       event.must_be_instance_of MyEvent
@@ -195,8 +194,8 @@ describe Wires::Hub do
       count += 1
     end
     
-    fire_and_wait :my, 'Wires::Hub_Exc'
-    fire          :my, 'Wires::Hub_Exc'
+    fire_and_wait MyEvent, 'Wires::Hub_Exc'
+    fire          MyEvent, 'Wires::Hub_Exc'
     
     Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc
