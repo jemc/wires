@@ -46,7 +46,7 @@ describe Wires::TimeSchedulerItem do
   
   it "knows when it is 'ready' to fire" do
     time = 0.1.seconds.from_now
-    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_A')
+    item = Wires::TimeSchedulerItem.new(time, :event, self)
     
     var = 'before'
     # on :event, 'TSI_A' do var = 'after' end
@@ -67,10 +67,10 @@ describe Wires::TimeSchedulerItem do
   
   it "can manually fire an event that isn't 'ready'" do
     time = 10.years.from_now
-    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_B')
+    item = Wires::TimeSchedulerItem.new(time, :event, self)
     
     var = 'before'
-    on :event, 'TSI_B' do var = 'after' end
+    on :event, self do var = 'after' end
       
     item.active?  .must_equal true
     item.inactive?.must_equal false
@@ -78,28 +78,6 @@ describe Wires::TimeSchedulerItem do
     
     item.fire(blocking:true)
     
-    var           .must_equal 'after'
-    item.active?  .must_equal false
-    item.inactive?.must_equal true
-    item.ready?   .must_equal false
-    
-  end
-  
-  it "can block until an event is 'ready', then fire it" do
-    time = 0.1.seconds.from_now
-    item = Wires::TimeSchedulerItem.new(time, :event, 'TSI_C')
-    
-    var = 'before'
-    on :event, 'TSI_C' do var = 'after' end
-      
-    item.active?  .must_equal true
-    item.inactive?.must_equal false
-    item.ready?   .must_equal false
-    Time.now      .must_be :<=, time
-    
-    item.fire_when_ready(blocking:true)
-    
-    Time.now      .must_be :>=, time
     var           .must_equal 'after'
     item.active?  .must_equal false
     item.inactive?.must_equal true

@@ -4,11 +4,12 @@
 
 module Wires
   
-  class TimeSchedulerAnonEvent  < Event; end
+  class TimeSchedulerAnonEvent < Event; end
   
   class TimeSchedulerItem
     
     attr_reader :time, :event, :channel, :interval
+    attr_accessor :schedulers
     
     def initialize(time, event, channel='*', 
                    interval:0.seconds, count:1, 
@@ -38,12 +39,14 @@ module Wires
       @event    = Event.new_from(event)
       @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
       @kwargs   = kwargs
+      
+      @schedulers = []
     end
     
     def active?;        @active                                      end
     def inactive?;      not @active                                  end
     
-    def ready?(at_time=Time.now); @active and at_time and (at_time>=@time) end
+    def ready?(at_time=Time.now);  @active and (at_time>=@time)      end
     
     def time_until;    (@active ? [(@time - Time.now), 0].max : nil) end
     
@@ -63,24 +66,18 @@ module Wires
       @channel.fire(@event, **(@kwargs.merge(kwargs)))
       count_dec
       @time += @interval if @active
+      notify_schedulers
     nil end
     
     # Fire the event only if it is ready
     def fire_if_ready(**args); self.fire(**kwargs) if ready? end
     
-    # Block until event is ready
-    def wait_until_ready; sleep 0 until ready? end
+  private
     
-    # Block until event is ready, then fire and block until it is done
-    def fire_when_ready(**kwargs);
-      wait_until_ready
-      self.fire(**kwargs)
-    end
+    def notify_schedulers; @schedulers.each &:refresh           ;nil end
     
-    # Lock (almost) all instance methods with common re-entrant lock
-    threadlock instance_methods(false)-[\
-                 :wait_until_ready,
-                 :fire_when_ready]
+    # Lock all instance methods with common re-entrant lock
+    threadlock instance_methods(false)
   end
   
   # A singleton class to schedule future firing of events
@@ -94,11 +91,14 @@ module Wires
       
       # Add an event to the schedule
       def add(*args)
-        new_item = (args.first.is_a? TimeSchedulerItem) ?
-                     (args.first) :
-                     (TimeSchedulerItem.new(*args))
-        schedule_add(new_item)
-      nil end
+        new_item = args.first
+        new_item = (TimeSchedulerItem.new *args) \
+          unless new_item.is_a? TimeSchedulerItem
+        
+        new_item.schedulers << self
+        schedule_add new_item
+        new_item
+      end
       
       # Add an event to the schedule using << operator
       def <<(arg); add(*arg); end
@@ -131,29 +131,21 @@ module Wires
         refresh
       nil end
       
-      def schedule_pull
-        pending  = []
-        while ((not @schedule.empty?) and @schedule.first.ready?)
-          pending << @schedule.shift
-        end
-        pending
-      end
-      
       # Put all functions dealing with @schedule under @schedule_lock
       threadlock :list,
                  :schedule_clear,
                  :schedule_reshuffle,
                  :schedule_refresh,
                  :schedule_add,
-                 :schedule_pull,
            lock: :@schedule_lock
       
       def main_loop
         pending = []
         loop do
           @schedule_lock.synchronize do
-            @cond.wait((@schedule.first.time_until unless @schedule.empty?))
-            pending = schedule_pull
+            timeout = (@schedule.first.time_until unless @schedule.empty?)
+            @cond.wait timeout
+            pending = @schedule.take_while &:ready?
           end
           pending.each &:fire
         end

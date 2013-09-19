@@ -5,6 +5,8 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 
+require 'pry'
+
 describe "wires/convenience" do
   
   describe "#fire" do
@@ -51,14 +53,14 @@ describe "wires/convenience" do
     
     it "is an alias for TimeScheduler.add if given :count kwarg" do
       count = 0
-      on Wires::Event, self do
+      on :wolf, self do
         count+=1
       end
-      
       sleep 0.2
-      fire Wires::Event, self, count:50
+      fire :wolf, self, count:50
       sleep 0.2
       Wires::Hub.join_children
+      fire :thing2, self, count:50
       count.must_equal 50
     end
   end

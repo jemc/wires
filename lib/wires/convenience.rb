@@ -4,27 +4,23 @@ module Wires
   module Convenience
     
     def on(events, channels='*', &codeblock)
-      channels = [*channels]
-      
-      for channel in channels
+      [*channels].each do |channel|
         channel=Channel.new(channel) unless channel.is_a? Channel
+        
         channel.register(*events, &codeblock)
       end
       codeblock
     end
     
     def fire(event, channels='*', **kwargs)
-      
-      channels = [*channels]
-      
-      for channel in channels
+      [*channels].each do |channel|
         channel = Channel.new(channel) unless channel.is_a? Channel
-        unless kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
-          channel.fire(event, **kwargs)
-        else
-          time = kwargs[:time] or Time.now
-          kwargs.reject!{|k,v| k==:time}
+        
+        if kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
+          time = kwargs.delete(:time) or Time.now
           TimeScheduler.add(time, event, channel, **kwargs)
+        else
+          channel.fire(event, **kwargs)
         end
       end
     nil end
@@ -32,28 +28,6 @@ module Wires
     def fire_and_wait(*args, **kwargs)
       kwargs[:blocking]=true
       fire(*args, **kwargs)
-    end
-    
-    
-    
-    class << self
-      def prefix_methods(prefix)
-        
-        return unless prefix
-        prefix = prefix.to_s
-        
-        instance_methods.each do |thing|
-          thing = thing.to_s
-          f2 = (prefix+'_'+thing)
-          f2 = (thing[0]=~/[[:lower:]]/) ? f2.underscore : f2.camelcase
-          f2 = f2.to_sym; thing = thing.to_sym
-          alias_method f2, thing
-          remove_method thing
-        end
-        
-        # remove_method :prefix_methods
-        
-      end
     end
     
   end
