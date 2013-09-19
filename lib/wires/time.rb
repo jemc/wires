@@ -87,10 +87,6 @@ module Wires
     @schedule_lock  = Monitor.new
     @cond           = @schedule_lock.new_cond
     
-    # Sometimes ruby thinks we are deadlocked when we actually aren't...
-    # Capture and silence the exception to force ruby to trust us.
-    FALSE_DEADLOCK_MSG = "No live threads left. Deadlock?"
-    
     class << self
       
       # Add an event to the schedule
@@ -125,25 +121,12 @@ module Wires
         end
       nil end
       
-      # Put all functions dealing with @schedule under @schedule_lock
-      # threadlock :list,
-      #            :clear,
-      #            :schedule_update,
-      #      lock: :@schedule_lock
-      
       def main_loop
         pending = []
         loop do
           @schedule_lock.synchronize do
             timeout = (@schedule.first.time_until unless @schedule.empty?)
-            begin
-              @cond.wait timeout
-            rescue Exception => e
-              # raise unless e.message==FALSE_DEADLOCK_MSG
-              require 'pry'
-              binding.pry
-              p '\n\n\nSILENCED A DEADLOCK MSG!\n\n\n'
-            end
+            @cond.wait timeout
             pending = @schedule.take_while &:ready?
           end
           pending.each &:fire
