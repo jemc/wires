@@ -74,10 +74,11 @@ module Wires
     def notify_schedulers; @schedulers.each &:refresh                end
     
     # Lock some of the methods to try to make them atomic
+    # Must exclude methods that get called from within the TimeScheduler lock
     threadlock :fire,
+               :count=,
                :count_inc,
-               :count_dec,
-               :count=
+               :count_dec
   end
   
   # A singleton class to schedule future firing of events
