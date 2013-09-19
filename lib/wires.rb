@@ -2,13 +2,13 @@
 require 'thread'
 require 'threadlock' # Easily add re-entrant lock to instance methods
 
-require 'wires/util/expect_type'
-require 'wires/util/hooks'
+require_relative 'wires/util/expect_type'
+require_relative 'wires/util/hooks'
 
-require 'wires/event'
-require 'wires/hub'
-require 'wires/router'
-require 'wires/channel'
-require 'wires/time'
-require 'wires/core_ext'
-require 'wires/convenience'
+require_relative 'wires/event'
+require_relative 'wires/hub'
+require_relative 'wires/router'
+require_relative 'wires/channel'
+require_relative 'wires/time'
+require_relative 'wires/core_ext'
+require_relative 'wires/convenience'
