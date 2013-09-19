@@ -45,7 +45,7 @@ module Wires
     
     def ready?(at_time=Time.now); @active and at_time and (at_time>=@time) end
     
-    def time_until;    (@active ? [(Time.now - @time), 0].max : nil) end
+    def time_until;    (@active ? [(@time - Time.now), 0].max : nil) end
     
     def cancel;         @active = false                         ;nil end
     
@@ -88,14 +88,9 @@ module Wires
     @schedule       = Array.new
     @thread         = Thread.new {nil}
     @schedule_lock  = Monitor.new
-    @dont_sleep     = false
+    @cond           = @schedule_lock.new_cond
     
-    @grain = 1.seconds
-    
-    # Operate on the metaclass as a type of singleton pattern
     class << self
-      
-      attr_accessor :grain
       
       # Add an event to the schedule
       def add(*args)
@@ -109,95 +104,59 @@ module Wires
       def <<(arg); add(*arg); end
       
       # Get a copy of the event schedule from outside the class
-      def list;  @schedule.clone end
+      def list;   @schedule.dup end
       # Clear the event schedule from outside the class
-      def clear; schedule_clear end
+      def clear;   schedule_clear end
+      # Make the scheduler wake up and re-evaluate
+      def refresh; schedule_refresh end
       
     private
     
       def schedule_clear
         @schedule.clear
-      end
+      nil end
     
       def schedule_reshuffle
         @schedule.select! {|x| x.active?}
         @schedule.sort! {|a,b| a.time <=> b.time}
       nil end
       
-      def schedule_add(new_item)
-        
-        if @keepgoing
-          if new_item.ready?
-            loop do
-              new_item.fire
-              break unless new_item.ready?
-            end
-          end
-          
-          if new_item.ready?(@next_pass)
-            Thread.new do
-              loop do
-                new_item.fire_when_ready(blocking:true)
-                break unless new_item.ready?(@next_pass)
-              end
-            end
-          end
-        end
-        
-        @schedule << new_item
+      def schedule_refresh
         schedule_reshuffle
-        
+        @cond.signal
       nil end
       
-      def schedule_concat(other_list)
-        @schedule.concat other_list
-        schedule_reshuffle
+      def schedule_add(new_item)
+        @schedule << new_item
+        refresh
       nil end
       
       def schedule_pull
-        pending_now  = Array.new
-        pending_soon = Array.new
-        while ((not @schedule.empty?) and @schedule[0].ready?)
-          pending_now << @schedule.shift
+        pending  = []
+        while ((not @schedule.empty?) and @schedule.first.ready?)
+          pending << @schedule.shift
         end
-        while ((not @schedule.empty?) and @schedule[0].ready?(@next_pass))
-          pending_soon << @schedule.shift
-        end
-        return [pending_now, pending_soon]
-      end
-      
-      def schedule_next_pass
-        @next_pass = Time.now+@grain
+        pending
       end
       
       # Put all functions dealing with @schedule under @schedule_lock
       threadlock :list,
                  :schedule_clear,
                  :schedule_reshuffle,
+                 :schedule_refresh,
                  :schedule_add,
-                 :schedule_concat,
                  :schedule_pull,
-                 :schedule_next_pass,
            lock: :@schedule_lock
       
       def main_loop
-        
-        @keepgoing = true
-        pending = Array.new
-        on_deck = nil
-        
-        while @keepgoing
-          schedule_next_pass
-          
-          # Pull, fire, and requeue relevant events
-          pending_now, pending_soon = schedule_pull
-          pending_now.each { |x| x.fire }
-          pending_soon.each{ |x| Thread.new{ x.fire_when_ready(blocking:true) }}
-          # schedule_concat pending_now
-          
-          sleep [@next_pass-Time.now, 0].max
+        pending = []
+        loop do
+          @schedule_lock.synchronize do
+            @cond.wait((@schedule.first.time_until unless @schedule.empty?))
+            pending = schedule_pull
+          end
+          pending.each &:fire
         end
-        
       nil end
       
     end
