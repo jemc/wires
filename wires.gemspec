@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.homepage      = 'https://github.com/jemc/wires/'
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
   
-  s.add_dependency('hegemon', '~> 0.0.8')
+  s.add_dependency('threadlock', '~> 1.2')
   
   s.add_development_dependency('rake')
   s.add_development_dependency('wires-test')

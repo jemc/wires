@@ -1,7 +1,6 @@
 require 'set'
 require 'thread'
 require 'threadlock' # Easily add re-entrant lock to instance methods
-require 'hegemon'    # State machine management
 
 require 'wires/util/expect_type'
 require 'wires/util/hooks'
