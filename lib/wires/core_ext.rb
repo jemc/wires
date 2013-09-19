@@ -1,17 +1,7 @@
 
-# Reopen the Time class and add the fire method to enable nifty syntax like:
-# 32.minutes.from_now.fire :event
-class ::Time
-  unless instance_methods.include? :fire
-    def fire(event, channel='*', **kwargs)
-      Wires::TimeScheduler.add(self, event, channel, **kwargs)
-    end
-  end
-end
-
-# Reopen the Numeric class and add the fire method to enable nifty syntax like:
-# 32.minutes.from_now.fire :event
-class Numeric
+# Reopen the core Numeric class to add syntax sugar for 
+# generating Wires::Duration objects
+class ::Numeric
   
   {
     [:second,     :seconds]    => '1',
@@ -26,13 +16,26 @@ class Numeric
     [:millennium, :millennia]  => '1000.years',
   }.each_pair do |k,v|
     eval <<-CODE
+  unless instance_methods.include? #{k.last.inspect} \
+      or instance_methods.include? #{k.first.inspect}
     
-  def #{k.last}
-    Wires::Duration.new self * #{v}
+    def #{k.last}
+      Wires::Duration.new self * #{v}
+    end
+    alias #{k.first.inspect} #{k.last.inspect}
+    
   end
-  alias #{k.first.inspect} #{k.last.inspect}
-    
-    CODE
+CODE
   end
   
+end
+
+# Reopen the core Time class and add the fire method enabling nifty syntax like:
+# 32.minutes.from_now.fire :event
+class ::Time
+  unless instance_methods.include? :fire
+    def fire(event, channel='*', **kwargs)
+      Wires::TimeScheduler.add(self, event, channel, **kwargs)
+    end
+  end
 end
