@@ -49,15 +49,15 @@ include Wires
 # }
 
 
-on :dogs do
-  p "whup: #{Time.now}"
-end
+# on :dogs do
+#   p "whup: #{Time.now}"
+# end
 
-# fire :dogs, time:0.01.seconds.from_now, count:55
+# # fire :dogs, time:0.01.seconds.from_now, count:55
 
 
-item = Wires::TimeSchedulerItem.new Time.now, :dogs, self, count:10
-p Wires::TimeScheduler << item
+# item = Wires::TimeSchedulerItem.new Time.now, :dogs, self, count:10
+# p Wires::TimeScheduler << item
 
 
 # item.fire 
@@ -68,7 +68,10 @@ p Wires::TimeScheduler << item
 # p item
 
 
-sleep 0.5
+# sleep 0.5
 
 # require 'pry'
 # binding.pry
+
+p 0.5.seconds.from_now+5
+p (0.5.seconds == 0.5.seconds)

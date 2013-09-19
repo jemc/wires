@@ -4,6 +4,8 @@ require 'wires'
 require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
+require 'stringio'
+
 
 describe Wires::Hub do
   
@@ -38,7 +40,7 @@ describe Wires::Hub do
   
   it "allows the user to set an arbitrary maximum number of children"\
      " and temporarily neglects to spawn all further threads" do
-    stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
+    stderr_save, $stderr = $stderr, ::StringIO.new # temporarily mute $stderr
     done_flag = false
     spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false]
     

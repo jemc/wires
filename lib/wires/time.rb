@@ -123,7 +123,7 @@ module Wires
       
       def schedule_refresh
         schedule_reshuffle
-        @cond.signal
+        @cond.broadcast
       nil end
       
       def schedule_add(new_item)

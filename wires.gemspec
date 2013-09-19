@@ -15,7 +15,6 @@ Gem::Specification.new do |s|
   s.homepage      = 'https://github.com/jemc/wires/'
   s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
   
-  s.add_dependency('activesupport-core-ext', '~> 4.0')
   s.add_dependency('hegemon', '~> 0.0.8')
   
   s.add_development_dependency('rake')

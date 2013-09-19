@@ -5,8 +5,6 @@ require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
 
-require 'pry'
-
 describe "wires/convenience" do
   
   describe "#fire" do

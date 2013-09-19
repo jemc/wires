@@ -1,6 +1,5 @@
 require 'set'
 require 'thread'
-require 'active_support/core_ext' # Convenience functions from Rails
 require 'threadlock' # Easily add re-entrant lock to instance methods
 require 'hegemon'    # State machine management
 
@@ -16,4 +15,3 @@ require 'wires/time'
 require 'wires/core_ext'
 require 'wires/convenience'
 include Wires::Convenience # require 'wires/clean' to uninclude Convenience
-

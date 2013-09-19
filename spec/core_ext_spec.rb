@@ -57,7 +57,7 @@ describe "wires/core_ext::Time" do
 end
 
 # Duration objects get extended to fire anonymous event blocks
-describe "wires/core_ext::ActiveSupport::Duration" do
+describe "wires/core_ext::Duration" do
   include TimeTester
   
   it "can now fire timed anonymous events, given a code block" do
