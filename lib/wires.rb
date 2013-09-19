@@ -1,4 +1,4 @@
-require 'set'
+
 require 'thread'
 require 'threadlock' # Easily add re-entrant lock to instance methods
 
