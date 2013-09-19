@@ -1,7 +1,4 @@
 
-# TODO: do not start TimeScheduler thread until first TimeSchedulerItem
-# TODO: stop TimeScheduler thread when there are no future events
-
 module Wires
   
   class TimeSchedulerAnonEvent < Event; end
@@ -44,13 +41,13 @@ module Wires
     end
     
     def active?;        @active                                      end
-    def inactive?;      not @active                                  end
+    def inactive?;     !@active                                      end
     
     def ready?(at_time=Time.now);  @active and (at_time>=@time)      end
     
     def time_until;    (@active ? [(@time - Time.now), 0].max : nil) end
     
-    def cancel;         @active = false                         ;nil end
+    def cancel;         self.count=0                            ;nil end
     
     # Get/set @count (and apply constraints on set)
     def count;          @count                                       end
@@ -74,10 +71,13 @@ module Wires
     
   private
     
-    def notify_schedulers; @schedulers.each &:refresh           ;nil end
+    def notify_schedulers; @schedulers.each &:refresh                end
     
-    # Lock all instance methods with common re-entrant lock
-    threadlock instance_methods(false)
+    # Lock some of the methods to try to make them atomic
+    threadlock :fire,
+               :count_inc,
+               :count_dec,
+               :count=
   end
   
   # A singleton class to schedule future firing of events
@@ -86,6 +86,10 @@ module Wires
     @thread         = Thread.new {nil}
     @schedule_lock  = Monitor.new
     @cond           = @schedule_lock.new_cond
+    
+    # Sometimes ruby thinks we are deadlocked when we actually aren't...
+    # Capture and silence the exception to force ruby to trust us.
+    FALSE_DEADLOCK_MSG = "No live threads left. Deadlock?"
     
     class << self
       
@@ -96,7 +100,7 @@ module Wires
           unless new_item.is_a? TimeSchedulerItem
         
         new_item.schedulers << self
-        schedule_add new_item
+        schedule_update new_item
         new_item
       end
       
@@ -104,47 +108,42 @@ module Wires
       def <<(arg); add(*arg); end
       
       # Get a copy of the event schedule from outside the class
-      def list;   @schedule.dup end
+      def list; @schedule_lock.synchronize { @schedule.dup } end
       # Clear the event schedule from outside the class
-      def clear;   schedule_clear end
+      def clear; @schedule_lock.synchronize { @schedule.clear } end
       # Make the scheduler wake up and re-evaluate
-      def refresh; schedule_refresh end
+      def refresh; schedule_update end
       
     private
-    
-      def schedule_clear
-        @schedule.clear
-      nil end
-    
-      def schedule_reshuffle
-        @schedule.select! {|x| x.active?}
-        @schedule.sort! {|a,b| a.time <=> b.time}
-      nil end
       
-      def schedule_refresh
-        schedule_reshuffle
-        @cond.broadcast
-      nil end
-      
-      def schedule_add(new_item)
-        @schedule << new_item
-        refresh
+      def schedule_update(item_to_add=nil)
+        @schedule_lock.synchronize do
+          @schedule << item_to_add if item_to_add
+          @schedule.select! {|x| x.active?}
+          @schedule.sort! {|a,b| a.time <=> b.time}
+          @cond.broadcast
+        end
       nil end
       
       # Put all functions dealing with @schedule under @schedule_lock
-      threadlock :list,
-                 :schedule_clear,
-                 :schedule_reshuffle,
-                 :schedule_refresh,
-                 :schedule_add,
-           lock: :@schedule_lock
+      # threadlock :list,
+      #            :clear,
+      #            :schedule_update,
+      #      lock: :@schedule_lock
       
       def main_loop
         pending = []
         loop do
           @schedule_lock.synchronize do
             timeout = (@schedule.first.time_until unless @schedule.empty?)
-            @cond.wait timeout
+            begin
+              @cond.wait timeout
+            rescue Exception => e
+              # raise unless e.message==FALSE_DEADLOCK_MSG
+              require 'pry'
+              binding.pry
+              p '\n\n\nSILENCED A DEADLOCK MSG!\n\n\n'
+            end
             pending = @schedule.take_while &:ready?
           end
           pending.each &:fire

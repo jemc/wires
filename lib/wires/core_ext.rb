@@ -5,8 +5,7 @@
 class ::Time
   unless instance_methods.include? :fire
     def fire(event, channel='*', **kwargs)
-      Wires::TimeScheduler << \
-        Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+      Wires::TimeScheduler.add(self, event, channel, **kwargs)
     end
   end
 end

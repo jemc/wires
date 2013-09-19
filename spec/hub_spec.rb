@@ -13,12 +13,12 @@ describe Wires::Hub do
     
     count = 0
     
-    on Wires::Event, 'Wires::Hub_A' do |e|
+    on Wires::Event, self do |e|
       count.must_equal e.i
       count += 1
     end
     
-    fire Wires::Event.new(i:0), 'Wires::Hub_A'
+    fire Wires::Event.new(i:0), self
     
   end
   
@@ -26,14 +26,14 @@ describe Wires::Hub do
     
     count = 0
     
-    on Wires::Event, 'Wires::Hub_B' do |e|
+    on Wires::Event, self do |e|
       count.must_equal e.i
       count += 1
-      fire_and_wait([Wires::Event=>[i:(e.i+1)]], 'Wires::Hub_B') if e.i < 9
+      fire_and_wait([Wires::Event=>[i:(e.i+1)]], self) if e.i < 9
       count.must_equal 10
     end
     
-    fire_and_wait [Wires::Event=>[i:0]], 'Wires::Hub_B'
+    fire_and_wait [Wires::Event=>[i:0]], self
     count.must_equal 10
     
   end
@@ -167,13 +167,13 @@ describe Wires::Hub do
   
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
-    on Wires::Event, 'Wires::Hub_Params' do |event, ch_string|
+    on Wires::Event, self do |event, ch_string|
       event.must_be_instance_of Wires::Event
-      ch_string.must_equal 'Wires::Hub_Params'
+      ch_string.must_equal self
       it_happened = true
     end
     
-    fire Wires::Event, 'Wires::Hub_Params'
+    fire Wires::Event, self
     Wires::Hub.join_children
     it_happened.must_equal true
   end
@@ -181,7 +181,7 @@ describe Wires::Hub do
   
   it "lets you set a custom event handler exception handler" do
     
-    on Wires::Event, 'Wires::Hub_Exc' do |e|
+    on Wires::Event, self do |e|
       e.method_that_isnt_defined
     end
     
@@ -191,12 +191,12 @@ describe Wires::Hub do
       exc.backtrace.wont_be_nil
       exc.fire_backtrace.wont_be_nil
       event.must_be_instance_of Wires::Event
-      ch_string.must_equal 'Wires::Hub_Exc'
+      ch_string.must_equal self
       count += 1
     end
     
-    fire_and_wait Wires::Event, 'Wires::Hub_Exc'
-    fire          Wires::Event, 'Wires::Hub_Exc'
+    fire_and_wait Wires::Event, self
+    fire          Wires::Event, self
     
     Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc

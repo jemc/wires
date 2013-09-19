@@ -1,6 +1,6 @@
-$LOAD_PATH.unshift(File.expand_path("./lib", File.dirname(__FILE__)))
-require 'wires'
-include Wires
+# $LOAD_PATH.unshift(File.expand_path("./lib", File.dirname(__FILE__)))
+# require 'wires'
+# include Wires
 
 # require 'wires/test'
 # begin require 'jemc/reporter'; rescue LoadError; end
@@ -73,5 +73,14 @@ include Wires
 # require 'pry'
 # binding.pry
 
-p 0.5.seconds.from_now+5
-p (0.5.seconds == 0.5.seconds)
+# p 0.5.seconds.from_now+5
+# p (0.5.seconds == 0.5.seconds)
+
+# Thread.new {sleep}
+# sleep
+
+begin
+  raise NameError
+rescue Exception => e
+  raise unless e.is_a? ArgumentError
+end
