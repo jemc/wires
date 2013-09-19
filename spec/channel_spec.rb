@@ -88,29 +88,7 @@ describe Wires::Channel do
     (chan.receivers&irrelevant).must_be_empty
   end
   
-  # it "can give receivers for a list of channels, too" do
-  #   dogobj = Object.new; def dogobj.channel_name; :dog; end
-  #   catobj = Object.new; def catobj.channel_name; /c.t/; end
-  #   catstrobj = Object.new; def catstrobj.to_s; 'cat'; end
-  #   otherobj = Object.new; def otherobj.channel_name; 'other'; end
-  #   otherstrobj = Object.new; def otherstrobj.to_s; 'other'; end
-  #   relevant = ['*', "dog", :cat, /d./, dogobj, catobj, catstrobj]
-  #   irrelevant = ["frog", /unrelated [Rr]egexp/, otherstrobj]
-  #   (relevant+irrelevant).each { |x| Wires::Channel.new(x) }
-    
-  #   r_list = Wires::Channel.new([:dog,'cat',:cat])
-  #                          .receivers
-  #                          .map {|c| c.name}
-                           
-  #   relevant.each{|r| r_list.must_include r}
-  #   r_list.size.must_equal relevant.size
-  # end
-  
-  # it "updates relevant_channels when an object evaluates differently"
-  
   it "can call hooks before and after fire method" do
-    
-    class SomeEvent < Wires::Event; end
     
     hook_val = 'A'
     Wires::Channel.before_fire { hook_val.must_equal 'A'; hook_val = 'B' }
@@ -143,7 +121,7 @@ describe Wires::Channel do
     
     assert_instance_of Proc, save_proc
     hook_val.must_equal 'A'
-    fire SomeEvent, 'Wires::Channel_A'
+    fire Wires::Event, self
     hook_val.must_equal 'E'
     
     Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty
