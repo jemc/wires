@@ -1,56 +1,42 @@
 
+
+# Reopen the Time class and add the fire method to enable nifty syntax like:
+# 32.minutes.from_now.fire :event
+class ::Time
+  unless instance_methods.include? :fire
+    def fire(event, channel='*', **kwargs)
+      Wires::TimeScheduler << \
+        Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
+    end
+  end
+end
+
+# Reopen the Numeric class and add the fire method to enable nifty syntax like:
+# 32.minutes.from_now.fire :event
 class Numeric
   
-  def seconds
-    Wires::Duration.new self
+  {
+    [:second,     :seconds]    => '1',
+    [:minute,     :minutes]    => '60',
+    [:hour,       :hours]      => '3600',
+    [:day,        :days]       => '24.hours',
+    [:week,       :weeks]      => '7.days',
+    [:fortnight,  :fortnights] => '2.weeks',
+    [:year,       :years]      => '365.242.days',
+    [:decade,     :decades]    => '10.years',
+    [:century,    :centuries]  => '100.years',
+    [:millennium, :millennia]  => '1000.years',
+  }.each_pair do |k,v|
+    eval <<-CODE
+    
+  def #{k.last}
+    Wires::Duration.new self * #{v}
   end
-  alias :second :seconds
-
-  def minutes
-    Wires::Duration.new self * 60
+  alias #{k.first.inspect} #{k.last.inspect}
+    
+    CODE
   end
-  alias :minute :minutes
-
-  def hours
-    Wires::Duration.new self * 3600
-  end
-  alias :hour :hours
-
-  def days
-    Wires::Duration.new self * 24.hours
-  end
-  alias :day :days
-
-  def weeks
-    Wires::Duration.new self * 7.days
-  end
-  alias :week :weeks
-
-  def fortnights
-    Wires::Duration.new self * 2.weeks
-  end
-  alias :fortnight :fortnights
-
-  def years
-    Wires::Duration.new self * 365.242.days
-  end
-  alias :year :years
-
-  def decades
-    Wires::Duration.new self * 10.years
-  end
-  alias :decade :decades
-
-  def centuries
-    Wires::Duration.new self * 100.years
-  end
-  alias :century :centuries
-
-  def millennia
-    Wires::Duration.new self * 1000.years
-  end
-  alias :millennium :millennia
-
+  
 end
 
 
@@ -99,17 +85,4 @@ module Wires
 end
 
 
-
-
-
-# Reopen the Time class and add the fire method to enable nifty syntax like:
-# 32.minutes.from_now.fire :event
-class ::Time
-  unless instance_methods.include? :fire
-    def fire(event, channel='*', **kwargs)
-      Wires::TimeScheduler << \
-        Wires::TimeSchedulerItem.new(self, event, channel, **kwargs)
-    end
-  end
-end
 
