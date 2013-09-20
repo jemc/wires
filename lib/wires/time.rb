@@ -14,7 +14,9 @@ module Wires
                    **kwargs)
       
       time ||= Time.now
-      expect_type time, Time
+      
+      raise TypeError,"Expected #{time.inspect} to be an instance of #{::Time}"\
+        unless time.is_a? ::Time
       
       @active = (not cancel)
       tempcount = count

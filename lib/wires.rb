@@ -1,8 +1,7 @@
 
 require 'thread'
-require 'threadlock' # Easily add re-entrant lock to instance methods
+require 'threadlock'
 
-require_relative 'wires/util/expect_type'
 require_relative 'wires/util/hooks'
 
 require_relative 'wires/event'
