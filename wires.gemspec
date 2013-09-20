@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.3.8'
-  s.date          = '2013-09-03'
+  s.version       = '0.4.0'
+  s.date          = '2013-09-19'
   s.summary       = "wires"
   s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
                     " Patch your objects together with wires."\
@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/jemc/wires/'
-  s.licenses      = "Copyright (c) Joe McIlvain. All rights reserved "
+  s.licenses      = "Copyright 2013 Joe McIlvain. All rights reserved."
   
   s.add_dependency('threadlock', '~> 1.2')
   
