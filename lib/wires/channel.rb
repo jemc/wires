@@ -60,7 +60,7 @@ module Wires
     
     # Add hook methods
     class << self
-      include Hooks
+      include Util::Hooks
       
       def before_fire(*args, &proc)
         add_hook(:@before_fire, *args, &proc)
