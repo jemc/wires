@@ -34,6 +34,19 @@ describe "wires/convenience" do
       it_happened.must_equal true
     end
     
+    it "uses self as the default channel name" do
+      obj = Object.new
+      it_happened = false
+      on Wires::Event, obj do
+        it_happened = true
+      end
+      
+      obj.fire Wires::Event
+      Wires::Hub.join_children
+      
+      it_happened.must_equal true
+    end
+    
     it "is an alias for TimeScheduler.add if given :time kwarg" do
       it_happened = false
       on Wires::Event, self do
@@ -129,6 +142,20 @@ describe "wires/convenience" do
     it "returns the &proc passed in" do
       proc = Proc.new { nil }
       assert_equal (on Wires::Event, self, &proc), proc
+    end
+    
+    
+    it "uses self as the default channel name" do
+      obj = Object.new
+      it_happened = false
+      obj.on Wires::Event do
+        it_happened = true
+      end
+      
+      fire Wires::Event, obj
+      Wires::Hub.join_children
+      
+      it_happened.must_equal true
     end
     
   end

@@ -3,7 +3,7 @@ module Wires
 
   module Convenience
     
-    def on(events, channels='*', &codeblock)
+    def on(events, channels=self, &codeblock)
       [*channels].each do |channel|
         channel=Channel.new(channel) unless channel.is_a? Channel
         
@@ -12,7 +12,7 @@ module Wires
       codeblock
     end
     
-    def fire(event, channels='*', **kwargs)
+    def fire(event, channels=self, **kwargs)
       [*channels].each do |channel|
         channel = Channel.new(channel) unless channel.is_a? Channel
         
