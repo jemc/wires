@@ -22,13 +22,10 @@ class ::Numeric
     [:fortnight,  :fortnights] => '2.weeks',
   }.each_pair do |k,v|
     eval <<-CODE
-      unless instance_methods.include? #{k.last.inspect} \
-          or instance_methods.include? #{k.first.inspect}
-        def #{k.last}
-          self * #{v}
-        end
-        alias #{k.first.inspect} #{k.last.inspect}
+      def #{k.last}
+        self * #{v}
       end
+      alias #{k.first.inspect} #{k.last.inspect}
     CODE
   end
   
