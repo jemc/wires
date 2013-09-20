@@ -49,7 +49,7 @@ module Wires
           ::Numeric.class_eval <<-CODE
             def #{k.last}(time = ::Time.now, &block)
               if block
-                on :time_scheduler_anon, block.object_id do |e| block.call(e) end
+                Channel[block.object_id].register :time_scheduler_anon, &block
                 self.#{k.last}(time).fire(:time_scheduler_anon, block.object_id)
               end
               time #{v} self
