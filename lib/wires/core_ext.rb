@@ -18,11 +18,11 @@ module Wires
       # Add methods to ::Time and ::Numeric
       def extend_core
         # Add Time#fire for timed firing of events
-        ::Time.class_eval do
+        ::Time.class_eval <<-CODE
           def fire(event, channel='*', **kwargs)
-            Wires::TimeScheduler.add(self, event, channel, **kwargs)
+            #{TimeScheduler}.add(self, event, channel, **kwargs)
           end
-        end
+        CODE
           
         # Add Numeric => Numeric time-factor converters
         {
