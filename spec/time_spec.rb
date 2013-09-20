@@ -67,7 +67,7 @@ describe Wires::TimeSchedulerItem do
   end
   
   it "can manually fire an event that isn't 'ready'" do
-    time = 10.years.from_now
+    time = 10.weeks.from_now
     item = Wires::TimeSchedulerItem.new(time, :event, self)
     
     var = 'before'
