@@ -3,6 +3,7 @@ require 'thread'
 require 'threadlock'
 
 require_relative 'wires/util/hooks'
+require_relative 'wires/util/build_alt'
 
 require_relative 'wires/event'
 require_relative 'wires/hub'
