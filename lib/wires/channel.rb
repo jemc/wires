@@ -72,7 +72,7 @@ module Wires
     end
     
     # Fire an event on this channel
-    def fire(input, blocking:false, parallel:!blocking) #TODO: handle executing handlers in parallel
+    def fire(input, blocking:false, parallel:!blocking)
       
       raise *@not_firable if @not_firable
       
