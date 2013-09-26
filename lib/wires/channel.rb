@@ -143,8 +143,6 @@ module Wires
       self.class.router.get_receivers self
     end
     
-    router.clear_channels
-    
   end
   
 end

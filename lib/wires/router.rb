@@ -3,21 +3,15 @@ module Wires
   module Router
     
     class Default
-      
-      @table = Hash.new
-      
       class << self
         
-        attr_accessor :table
-        
         def clear_channels()
-          @initialized = true
           @table       = {}
           @fuzzy_table = {}
-          Channel['*']
         end
         
         def get_channel(chan_cls, name)
+          @chan_cls ||= chan_cls
           channel = @table[name] ||= (new_one=true; yield name)
           
           if new_one and name.is_a? Regexp then
@@ -32,12 +26,13 @@ module Wires
         
         def get_receivers(chan)
           name = chan.name
-          @fuzzy_table.keys.select do |k|
+          @fuzzy_table.each_pair.select do |k,v|
             (begin; name =~ k; rescue TypeError; end)
-          end.map { |k| @fuzzy_table[k] } + [chan, @table['*']]
+          end.map { |k,v| v } + [chan, @chan_cls['*']]
         end
         
       end
+      clear_channels
     end
     
   end
