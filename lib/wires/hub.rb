@@ -81,7 +81,7 @@ module Wires
           return nil
         end
         
-        # If not blocking, clear old threads and spawn a new thread
+        # If not parallel, clear old threads and spawn a new thread
         Thread.exclusive do
           begin
             # Raise ThreadError for user-set thread limit to mimic OS limit
@@ -94,7 +94,7 @@ module Wires
               rescue Exception => exc
                 unhandled_exception(exc, *exc_args)
               ensure
-                spawn_neglected_task_chain
+                spawn_neglected_task_chain unless blocking
                 @children.synchronize { @children.delete Thread.current }
               end
             end
