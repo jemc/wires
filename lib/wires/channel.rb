@@ -10,7 +10,7 @@ module Wires
     def inspect; "#{self.class}(#{name.inspect})"; end
     
     @hub    = Hub
-    @router = Router
+    @router = Router::Default
     @new_lock = Mutex.new
     @@aim_lock = Mutex.new
     
