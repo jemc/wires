@@ -126,8 +126,9 @@ module Wires
     end
     
     # Fire a blocking event on this channel
-    def fire_and_wait(event)
-      self.fire(event, blocking:true)
+    def fire!(event)
+      kwargs[:blocking] ||= true
+      fire(*args, **kwargs)
     end
     
     # Returns true if listening on 'self' would hear a firing on 'other'

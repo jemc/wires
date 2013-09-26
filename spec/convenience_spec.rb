@@ -77,14 +77,14 @@ describe "wires/convenience" do
     end
   end
   
-  describe "#fire_and_wait" do
+  describe "#fire!" do
     it "is an alias for fire with blocking kwarg set to true" do
       count = 0
       on Wires::Event, self do
         count+=1
       end
       
-      fire_and_wait Wires::Event, self
+      fire! Wires::Event, self
       count.must_equal 1
       Wires::Hub.join_children
     end

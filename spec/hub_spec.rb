@@ -23,18 +23,18 @@ describe Wires::Hub do
     
   end
   
-  it "can block until the events are fired with fire_and_wait" do
+  it "can block until the events are fired with fire!" do
     
     count = 0
     
     on Wires::Event, self do |e|
       count.must_equal e.i
       count += 1
-      fire_and_wait([Wires::Event=>[i:(e.i+1)]], self) if e.i < 9
+      fire!([Wires::Event=>[i:(e.i+1)]], self) if e.i < 9
       count.must_equal 10
     end
     
-    fire_and_wait [Wires::Event=>[i:0]], self
+    fire! [Wires::Event=>[i:0]], self
     count.must_equal 10
     
   end
@@ -196,8 +196,8 @@ describe Wires::Hub do
       count += 1
     end
     
-    fire_and_wait Wires::Event, self
-    fire          Wires::Event, self
+    fire! Wires::Event, self
+    fire  Wires::Event, self
     
     Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc

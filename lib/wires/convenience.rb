@@ -25,8 +25,8 @@ module Wires
       end
     nil end
     
-    def fire_and_wait(*args, **kwargs)
-      kwargs[:blocking]=true
+    def fire!(*args, **kwargs)
+      kwargs[:blocking] ||= true
       fire(*args, **kwargs)
     end
     
