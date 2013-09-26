@@ -72,9 +72,12 @@ module Wires
     end
     
     # Fire an event on this channel
-    def fire(input, blocking:false)
+    def fire(input, blocking:false, parallel:!blocking) #TODO: handle executing handlers in parallel
       
       raise *@not_firable if @not_firable
+      
+      return [] << Thread.new { fire(input, blocking:true, parallel:false) } \
+        if !blocking and !parallel
       
       backtrace = caller
       
@@ -105,18 +108,22 @@ module Wires
       end
       
       # Fire to selected targets
-      procs.uniq.each do |pr|
+      threads = procs.uniq.map do |pr|
         self.class.hub.spawn \
           event,     # fired event object event
           self.name, # name of channel fired from
           pr,        # proc to execute
           blocking,  # boolean from blocking kwarg
+          parallel,  # boolean from parallel kwarg
           backtrace  # captured backtrace
-      end
+      end.reject &:nil?
+      
+      threads.each &:join if blocking and parallel
       
       self.class.run_hooks(:@after_fire, event, self)
       
-    nil end
+      threads
+    end
     
     # Fire a blocking event on this channel
     def fire_and_wait(event)

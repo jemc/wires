@@ -66,19 +66,19 @@ module Wires
         return neglect(*args) \
           if @hold_lock.instance_variable_get(:@mon_mutex).locked?
         
-        event, chan, proc, blocking, fire_bt = *args
+        event, chan, proc, blocking, parallel, fire_bt = *args
         *proc_args = event, chan
         *exc_args  = event, chan, fire_bt
         
-        # If blocking, run the proc in this thread
-        if blocking
+        # If not parallel, run the proc in this thread
+        if !parallel
           begin
             proc.call(*proc_args)
           rescue Exception => exc
             unhandled_exception(exc, *exc_args)
           end
           
-          return :done
+          return nil
         end
         
         # If not blocking, clear old threads and spawn a new thread
@@ -112,11 +112,12 @@ module Wires
       
       # Join child threads, one by one, allowing more children to appear
       def join_children
-        a_thread = Thread.new{nil}
-        while a_thread
+        a_thread = nil
+        loop do
           @children.synchronize do
             a_thread = @children.shift
           end
+          break unless a_thread
           a_thread.join if ((a_thread) and (a_thread!=Thread.current))
           Thread.pass
         end

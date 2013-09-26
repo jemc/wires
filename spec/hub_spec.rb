@@ -43,7 +43,7 @@ describe Wires::Hub do
      " and temporarily neglects to spawn all further threads" do
     stderr_save, $stderr = $stderr, ::StringIO.new # temporarily mute $stderr
     done_flag = false
-    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false]
+    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false, true]
     
     Wires::Hub.max_children = 3
     Wires::Hub.max_children.must_equal 3
@@ -61,7 +61,7 @@ describe Wires::Hub do
     Wires::Hub.count_neglected.must_equal 1
     
     done_flag = true
-    Thread.pass
+    Wires::Hub.join_children
     
     Wires::Hub.max_children = nil
     $stderr = stderr_save # Restore $stderr
@@ -71,7 +71,7 @@ describe Wires::Hub do
      " that is, when there are too many threads for the OS to handle" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     done_flag = false
-    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false]
+    spargs = [nil, nil, Proc.new{sleep 0.1 until done_flag}, false, true]
     
     count = 0
     while Wires::Hub.spawn(*spargs)
@@ -84,7 +84,7 @@ describe Wires::Hub do
     Wires::Hub.count_neglected.must_equal 2
     
     done_flag = true
-    sleep 0.15
+    Wires::Hub.join_children
     Wires::Hub.count_neglected.must_equal 0
     
     $stderr = stderr_save # Restore $stderr
@@ -94,7 +94,7 @@ describe Wires::Hub do
      " during Wires::Hub.hold, but allows procs to spawn in place" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
     var = 'before'
-    spargs = [nil, nil, Proc.new{var = 'after'}, false]
+    spargs = [nil, nil, Proc.new{var = 'after'}, false, true]
     
     Wires::Hub.count_neglected.must_equal 0
     
@@ -124,7 +124,7 @@ describe Wires::Hub do
   it "logs neglects to $stderr by default," \
      "but allows you to specify a different action if desired" do
     stderr_save, $stderr = $stderr, StringIO.new # temporarily mute $stderr
-    spargs = [nil, nil, Proc.new{nil}, false]
+    spargs = [nil, nil, Proc.new{nil}, false, true]
     
     Wires::Hub.hold do
       Wires::Hub.spawn(*spargs).must_equal false
@@ -140,12 +140,12 @@ describe Wires::Hub do
     count = 0
     something_happened = false
     Wires::Hub.on_neglect do |*args|
-      args.size.must_equal 4
+      args.size.must_equal 5
       count += 1
       something_happened = true
     end
     Wires::Hub.on_neglect_done do |*args|
-      args.size.must_equal 4
+      args.size.must_equal 5
       count -= 1
     end
     
