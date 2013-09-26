@@ -35,5 +35,24 @@ module Wires
       clear_channels
     end
     
+    class Simple
+      class << self
+        
+        def clear_channels()
+          @table = {}
+        end
+        
+        def get_channel(chan_cls, name)
+          @table[name] ||= yield name
+        end
+        
+        def get_receivers(chan)
+          chan
+        end
+        
+      end
+      clear_channels
+    end
+    
   end
 end
