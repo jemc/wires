@@ -33,6 +33,21 @@ describe Wires::Event do
     cool.codeblock.call.must_equal 'even a passed codeblock gets internalized!'
   end
   
+  it "clears out old instance methods when given overwriting kwargs" do
+    kwargs = Hash[[:clone, :method, :taint, :class, :hash]
+                    .map { |k| [k, k.to_s] }]
+    
+    # The existing methods get wiped out when kwargs overwrite them
+    e = Wires::Event.new(**kwargs)
+    kwargs.each_pair { |k,v| e.send(k).must_equal v }
+    
+    # The original methods are still in place on other objects
+    e = Wires::Event.new
+    e.clone.must_be_instance_of Wires::Event
+    e.method(:clone).wont_be_nil
+    e.class.must_equal Wires::Event
+  end
+  
   it "uses the specified value for args when :args is a kwarg,"\
      " with a crucial difference being that the specified object"\
      " doesn't get duped or frozen (because it could be anything)." do

@@ -16,6 +16,14 @@ module Wires
       @ignore = []
       @kwargs = kwargs.dup
       
+      @kwargs.keys.each do |m|
+        if respond_to? m
+          (class << self; self; end).class_eval do
+            undef_method m
+          end
+        end
+      end
+      
       (@kwargs[:args] = args.freeze; @ignore<<:args) \
         unless @kwargs.has_key? :args
       (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
