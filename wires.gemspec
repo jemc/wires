@@ -1,9 +1,10 @@
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.4.0'
-  s.date          = '2013-09-19'
+  s.version       = '0.4.1'
+  s.date          = '2013-09-26'
   s.summary       = "wires"
-  s.description   = "An asynchronous (threaded) event routing framework in Ruby."\
+  s.description   = "A lightweight, extensible asynchronous"\
+                    " event routing framework in Ruby."\
                     " Patch your objects together with wires."\
                     " Inspired by the python 'circuits' framework."
   s.authors       = ["Joe McIlvain"]
