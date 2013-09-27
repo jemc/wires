@@ -62,12 +62,13 @@ describe Wires::Channel do
     list.must_equal chan.instance_variable_get('@target_list').to_a
   end
   
-  it "raises SyntaxError when proc in register(event, proc) isn't a Proc" do
+  it "raises ArgumentError when proc in register(event, proc) isn't callable" do
     chan = Wires::Channel.new('new')
     for not_proc in [nil, :symbol, 'string', Array.new, Hash.new]
-      lambda {chan.register(:event, not_proc)}.must_raise SyntaxError
+      lambda {chan.register(:event, not_proc)}.must_raise ArgumentError
     end
-    lambda {chan.register(:event, Proc.new{nil})}
+    chan.register(:event, &Proc.new{nil})
+    chan.register(:event, &method(:puts))
   end
   
   it "correctly routes activity on one channel to relevant receivers" do

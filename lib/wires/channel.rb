@@ -20,7 +20,8 @@ module Wires
       
       def new(*args)
         channel = @new_lock.synchronize do
-          router.get_channel(self, *args) { |name| super(name) }        end
+          router.get_channel(self, *args) { |name| super(name) }
+        end
       end
       alias_method :[], :new
     end
@@ -33,8 +34,8 @@ module Wires
     # Register a proc to be triggered by an event on this channel
     # Return the proc that was passed in
     def register(*events, &proc)
-      if not proc.is_a?(Proc) then raise SyntaxError, \
-        "No Proc given to execute on event: #{events}" end
+      raise ArgumentError, "No callable given to execute on event: #{events}" \
+        unless proc.respond_to? :call
       events = Event.new_from(*events)
       
       @@aim_lock.synchronize do
