@@ -9,5 +9,5 @@ Inspired by [the python 'circuits' framework](http://circuitsframework.com/).
 
 Wires is a work in progress.
 
-Copyright 2013 \: Joe McIlvain
+Copyright 2013 \: Joe McIlvain.
 All rights reserved.
