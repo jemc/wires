@@ -71,24 +71,6 @@ describe Wires::Channel do
     chan.register(:event, &method(:puts))
   end
   
-  it "correctly routes activity on one channel to relevant receivers" do
-    chan=Wires::Channel.new('relevant')
-    
-    relevant   = [chan, 
-                  Wires::Channel.new(/^rel.van(t|ce)/), 
-                  Wires::Channel.new('*')]
-    
-    irrelevant = [Wires::Channel.new('irrelevant'), 
-                  Wires::Channel.new(:relevant), 
-                  Wires::Channel.new(/mal.volen(t|ce)/)]
-    
-    for c in chan.receivers
-      relevant.must_include c end
-    for c in relevant
-      chan.receivers.must_include c end
-    (chan.receivers&irrelevant).must_be_empty
-  end
-  
   it "can call hooks before and after fire method" do
     
     hook_val = 'A'

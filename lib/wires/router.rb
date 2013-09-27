@@ -9,6 +9,7 @@ module Wires
         def clear_channels()
           @table       = {}
           @fuzzy_table = {}
+          @star        = nil
         end
         
         def get_channel(chan_cls, name)
@@ -27,9 +28,11 @@ module Wires
         
         def get_receivers(chan)
           name = chan.name
+          return @table.values if name == '*'
+          
           @fuzzy_table.each_pair.select do |k,v|
             (begin; name =~ k; rescue TypeError; end)
-          end.map { |k,v| v } + [chan, @chan_cls['*']]
+          end.map { |k,v| v } + [chan, (@star||=@chan_cls['*'])]
         end
         
       end
