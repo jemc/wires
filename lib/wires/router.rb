@@ -2,6 +2,7 @@
 module Wires
   module Router
     
+    
     class Default
       class << self
         
@@ -35,6 +36,7 @@ module Wires
       clear_channels
     end
     
+    
     class Simple
       class << self
         
@@ -47,12 +49,13 @@ module Wires
         end
         
         def get_receivers(chan)
-          chan
+          [chan]
         end
         
       end
       clear_channels
     end
+    
     
   end
 end
