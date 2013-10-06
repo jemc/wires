@@ -13,6 +13,9 @@ module Wires
     
     # Internalize all *args and **kwargs and &block to be accessed later
     def initialize(*args, **kwargs, &block)
+      cls = self.class
+      self.event_type = cls unless cls==Wires::Event
+      
       @ignore = []
       @kwargs = kwargs.dup
       
@@ -72,7 +75,6 @@ module Wires
         when Class; 
           if type<=Event 
             obj = type.new(*args)
-            obj.event_type = type unless type==Wires::Event
           end
         when Symbol
           obj = self.new(*args)
