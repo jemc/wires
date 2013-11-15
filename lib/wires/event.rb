@@ -19,30 +19,22 @@ module Wires
       @ignore = []
       @kwargs = kwargs.dup
       
-      @kwargs.keys.each do |m|
-        if respond_to? m
-          (class << self; self; end).class_eval do
-            undef_method m
-          end
-        end
-      end
-      
       (@kwargs[:args] = args.freeze; @ignore<<:args) \
         unless @kwargs.has_key? :args
       (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
         unless @kwargs.has_key? :codeblock
       @kwargs.freeze
+      
+      @kwargs.keys.each do |m|
+        singleton_class.send(:define_method, m) { @kwargs[m] }
+      end
+      singleton_class.send(:define_method, :kwargs) { 
+        @kwargs.reject{|k| @ignore.include? k}
+      }
     end
     
     # Directly access contents of @kwargs by key
     def [](key); @kwargs[key]; end
-    
-    # Used to fake a sort of read-only openstruct from contents of @kwargs
-    def method_missing(sym, *args, &block)
-      args.empty? and @kwargs.has_key?(sym) ?
-        @kwargs[sym] :
-        (sym==:kwargs ? @kwargs.reject{|k| @ignore.include? k} : super)
-    end
     
     # Returns true if listening for 'self' would hear a firing of 'other'
     # (not commutative)

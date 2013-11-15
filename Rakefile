@@ -12,7 +12,7 @@ gemname = 'wires'
 
 # Run tests
 Rake::TestTask.new :test do |t|
-    t.test_files = Dir['test/*.rb','spec/*.rb']
+    t.test_files = Dir['old-spec/*.rb']
 end
 
 # Generate documentation.
