@@ -36,4 +36,29 @@ describe Wires::Event do
     its(:b)      { should eq 5 }
   end
   
+  context ".new_from" do
+    let(:m) { Wires::Event.method(:new_from) }
+    let(:event_a) { Wires::Event.new }
+    let(:event_b) { Wires::Event.new }
+    
+    context "when given an existing Event instance or two" do
+      # let(:evt_a) { Wires::Event.new }
+      # let(:evt_b) { Wires::Event.new }
+      
+      # # subject { Wires::Event.method(:new_from) }
+      
+      # specify { expect(subject.call evt_a)      .to eq [evt_a] }
+      # specify { expect(subject.call evt_a,evt_b).to eq [evt_a,evt_b] }
+      
+      its(:new_from, Wires::Event.new) { should be }
+      
+    end
+  end
+  
 end
+
+
+  
+  describe Wires::Event.method(:new_from) do
+    
+  end
