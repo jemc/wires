@@ -3,6 +3,9 @@ module Wires
   
   class Event
     attr_accessor :type
+    attr_accessor :kwargs
+    attr_accessor :args
+    attr_accessor :codeblock
     
     # Return a friendly output upon inspection
     def inspect
@@ -16,23 +19,13 @@ module Wires
       @type = kwargs[:type]
       kwargs.delete :type if @type
       
-      @ignore = []
-      @kwargs = kwargs
+      @args      = args
+      @kwargs    = kwargs
+      @codeblock = block
       
-      (@kwargs[:args] = args; @ignore<<:args) \
-        unless @kwargs.has_key? :args
-      (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
-        unless @kwargs.has_key? :codeblock
-      
-      @kwargs.keys.each do |m|
-        singleton_class.send(:define_method, m) { @kwargs[m] }
-      end
-    end
-    
-    # Accessor for @kwargs, including either full contents or 
-    # only those that were specified as explicit keyword args
-    def kwargs(all=false)
-      all ? @kwargs : @kwargs.reject{|k| @ignore.include? k}
+      @kwargs.keys
+        .reject{ |m| [:kwargs, :args, :codeblock].include? m }
+        .each  { |m| singleton_class.send(:define_method, m) { @kwargs[m] } }
     end
     
     # Directly access contents of @kwargs by key
