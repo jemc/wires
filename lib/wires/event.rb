@@ -67,14 +67,6 @@ module Wires
       end
     end
     
-    # Ensure that self.new_from is not inherited
-    def self.inherited(subcls)
-      super
-      class << subcls
-        undef_method :new_from
-      end if self == Wires::Event
-    end
-    
   end
   
 end
