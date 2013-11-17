@@ -15,7 +15,7 @@ describe Wires::Channel do
   
   it "creates exactly one unique instance for each unique name" do
     past_channels = []
-    for name in ['event', :event, /regex/, Wires::Event, Wires::Event.new, Object]
+    for name in ['chan', :chan, /chan/, Object.new]
       past_channels << (c = Wires::Channel.new(name))
       Wires::Channel.new(name).must_be_same_as c
     end
@@ -104,7 +104,7 @@ describe Wires::Channel do
     
     assert_instance_of Proc, save_proc
     hook_val.must_equal 'A'
-    fire Wires::Event, self
+    fire :event, self
     hook_val.must_equal 'E'
     
     Wires::Channel.instance_variable_get(:@before_fire).wont_be_empty

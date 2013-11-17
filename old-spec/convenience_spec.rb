@@ -11,11 +11,11 @@ describe "wires/convenience" do
   describe "#fire" do
     it "is an alias for Channel.fire under default kwargs" do
       it_happened = false
-      on Wires::Event, self do
+      on :event, self do
         it_happened = true
       end
       
-      fire Wires::Event, self
+      fire :event, self
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -24,11 +24,11 @@ describe "wires/convenience" do
     it "accepts an actual Channel object as its channel argument" do
       chan = Wires::Channel.new(self)
       it_happened = false
-      on Wires::Event, chan do
+      on :event, chan do
         it_happened = true
       end
       
-      fire Wires::Event, chan
+      fire :event, chan
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -37,11 +37,11 @@ describe "wires/convenience" do
     it "uses self as the default channel name" do
       obj = Object.new
       it_happened = false
-      on Wires::Event, obj do
+      on :event, obj do
         it_happened = true
       end
       
-      obj.fire Wires::Event
+      obj.fire :event
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -49,11 +49,11 @@ describe "wires/convenience" do
     
     it "is an alias for TimeScheduler.add if given :time kwarg" do
       it_happened = false
-      on Wires::Event, self do
+      on :event, self do
         it_happened = true
       end
       
-      fire Wires::Event, self, time:0.1.seconds.from_now
+      fire :event, self, time:0.1.seconds.from_now
       
       sleep 0.05
       it_happened.must_equal false
@@ -80,11 +80,11 @@ describe "wires/convenience" do
   describe "#fire!" do
     it "is an alias for fire with blocking kwarg set to true" do
       count = 0
-      on Wires::Event, self do
+      on :event, self do
         count+=1
       end
       
-      fire! Wires::Event, self
+      fire! :event, self
       count.must_equal 1
       Wires::Hub.join_children
     end
@@ -95,11 +95,11 @@ describe "wires/convenience" do
       chan = Wires::Channel.new(self)
       
       it_happened = false
-      on Wires::Event, self do
+      on :event, self do
         it_happened = true
       end
       
-      chan.fire Wires::Event
+      chan.fire :event
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -109,11 +109,11 @@ describe "wires/convenience" do
       chan = Wires::Channel.new(self)
       
       it_happened = false
-      on Wires::Event, chan do
+      on :event, chan do
         it_happened = true
       end
       
-      chan.fire Wires::Event
+      chan.fire :event
       Wires::Hub.join_children
       
       it_happened.must_equal true
@@ -127,12 +127,12 @@ describe "wires/convenience" do
       
       count = 0
       
-      on Wires::Event, chans do
+      on :event, chans do
         count+=1
       end
       
       for chan in chans
-        chan.fire Wires::Event
+        chan.fire :event
       end
       Wires::Hub.join_children
       
@@ -141,18 +141,18 @@ describe "wires/convenience" do
     
     it "returns the &proc passed in" do
       proc = Proc.new { nil }
-      assert_equal (on Wires::Event, self, &proc), proc
+      assert_equal (on :event, self, &proc), proc
     end
     
     
     it "uses self as the default channel name" do
       obj = Object.new
       it_happened = false
-      obj.on Wires::Event do
+      obj.on :event do
         it_happened = true
       end
       
-      fire Wires::Event, obj
+      fire :event, obj
       Wires::Hub.join_children
       
       it_happened.must_equal true

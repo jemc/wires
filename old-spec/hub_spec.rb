@@ -5,6 +5,7 @@ include Wires::Convenience
 require 'wires/test'
 begin require 'jemc/reporter'; rescue LoadError; end
 
+require 'pry-rescue/minitest'
 require 'stringio'
 
 
@@ -14,7 +15,7 @@ describe Wires::Hub do
     
     count = 0
     
-    on Wires::Event, self do |e|
+    on :event, self do |e|
       count.must_equal e.i
       count += 1
     end
@@ -27,14 +28,14 @@ describe Wires::Hub do
     
     count = 0
     
-    on Wires::Event, self do |e|
+    on :event, self do |e|
       count.must_equal e.i
       count += 1
-      fire!([Wires::Event=>[i:(e.i+1)]], self) if e.i < 9
+      fire!([:event=>[i:(e.i+1)]], self) if e.i < 9
       count.must_equal 10
     end
     
-    fire! [Wires::Event=>[i:0]], self
+    fire! [:event=>[i:0]], self
     count.must_equal 10
     
   end
@@ -168,13 +169,13 @@ describe Wires::Hub do
   
   it "passes the correct parameters to each spawned proc" do
     it_happened = false
-    on Wires::Event, self do |event, ch_string|
+    on :event, self do |event, ch_string|
       event.must_be_instance_of Wires::Event
       ch_string.must_equal self
       it_happened = true
     end
     
-    fire Wires::Event, self
+    fire :event, self
     Wires::Hub.join_children
     it_happened.must_equal true
   end
@@ -182,7 +183,7 @@ describe Wires::Hub do
   
   it "lets you set a custom event handler exception handler" do
     
-    on Wires::Event, self do |e|
+    on :event, self do |e|
       e.method_that_isnt_defined
     end
     
@@ -196,8 +197,8 @@ describe Wires::Hub do
       count += 1
     end
     
-    fire! Wires::Event, self
-    fire  Wires::Event, self
+    fire! :event, self
+    fire  :event, self
     
     Wires::Hub.join_children
     Wires::Hub.reset_handler_exception_proc
