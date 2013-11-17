@@ -2,19 +2,19 @@
 module Wires
   
   class Event
-    attr_accessor :event_type
+    attr_accessor :type
     
     # Return a friendly output upon inspection
     def inspect
       list = [*args, **kwargs].map(&:inspect).join ', '
-      type = event_type ? event_type.inspect : ''
-      "#{self.class}#{type}(#{list})"
+      the_type = type ? type.inspect : ''
+      "#{self.class}#{the_type}(#{list})"
     end
     
     # Internalize all *args and **kwargs and &block to be accessed later
     def initialize(*args, **kwargs, &block)
-      @event_type = kwargs[:event_type]
-      kwargs.delete :event_type if @event_type
+      @type = kwargs[:type]
+      kwargs.delete :type if @type
       
       @ignore = []
       @kwargs = kwargs
@@ -42,7 +42,7 @@ module Wires
     # (not commutative)
     def =~(other)
       (other.is_a? Event) ? 
-        ((self.event_type.nil? or self.event_type==other.event_type) \
+        ((self.type.nil? or self.type==other.type) \
           and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
           and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
         super
@@ -55,10 +55,10 @@ module Wires
         (x.is_a? Hash) ? 
           (x.each_pair { |x,y| list << [x,y] }) :
           (list << [x,[]])
-      end.map do |type, obj_args|
-        case type
-        when Event;  type
-        when Symbol; self.new(*obj_args).tap{|e| e.event_type=type}
+      end.map do |the_type, obj_args|
+        case the_type
+        when Event;  the_type
+        when Symbol; self.new(*obj_args).tap{|e| e.type=the_type}
         end
       end.tap do |x|
         raise ArgumentError, 

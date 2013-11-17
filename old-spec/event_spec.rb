@@ -72,7 +72,7 @@ describe Wires::Event do
     e.args.must_equal args
     e.kwargs.must_equal kwargs
     kwargs.each_pair { |k,v| e.send(k).must_equal v }
-    e.event_type.must_equal :symbol
+    e.type.must_equal :symbol
     
     Proc.new{Wires::Event.new_from('some_string'=>[*e_args])}.must_raise ArgumentError
     
@@ -82,19 +82,19 @@ describe Wires::Event do
     e.class.must_equal Wires::Event
     e.args.must_equal Array.new
     e.kwargs.must_equal Hash.new
-    e.event_type.must_equal :symbowl
+    e.type.must_equal :symbowl
     
     ary = [:dog,:wolf,:hound,:mutt]
     e = Wires::Event.new_from ary
     ary.each_with_index do |x,i|
       e[i].class.must_equal Wires::Event
-      e[i].event_type.must_equal x
+      e[i].type.must_equal x
     end
     
     ary = [dog:[*e_args],wolf:[*e_args],hound:[*e_args],mutt:[*e_args]]
     events = Wires::Event.new_from ary
     ary.last.to_h.each_pair do |key,val|
-      e = events.find{|x| x.event_type==key}
+      e = events.find{|x| x.type==key}
       e.class.must_equal Wires::Event
       e.args.must_equal args
       e.kwargs.must_equal kwargs
@@ -124,7 +124,7 @@ describe Wires::Event do
         [[:dog,:wolf,:hound,:mutt],         :dog],
         [[:dog,:wolf,:hound,:mutt],         wolf:[55]],
         [[:dog,:wolf,:hound,:mutt],         hound:[arg1:32]],
-        [[:dog,:wolf,:hound,:mutt],         Wires::Event.new(event_type: :mutt)],
+        [[:dog,:wolf,:hound,:mutt],         Wires::Event.new(type: :mutt)],
       ],
       
       false => [
@@ -154,7 +154,7 @@ describe Wires::Event do
         [[:dog,:wolf,:hound,:mutt],           :cat],
         [[:dog,:wolf,:hound,:mutt],           cat:[55]],
         [[:dog,:wolf,:hound,:mutt],           cat:[arg1:32]],
-        [[:dog,:wolf,:hound,:mutt],           Wires::Event.new(event_type: :cat)],
+        [[:dog,:wolf,:hound,:mutt],           Wires::Event.new(type: :cat)],
         [[:dog,:wolf,:hound,:mutt],           Wires::Event.new],
       ]
     }
@@ -172,9 +172,5 @@ describe Wires::Event do
     end
     
   end
-  
-  # it "prints a friendly output when inspected" do
-  #   Event.new_from
-  # end
   
 end
