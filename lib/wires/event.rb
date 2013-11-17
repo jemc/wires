@@ -13,8 +13,8 @@ module Wires
     
     # Internalize all *args and **kwargs and &block to be accessed later
     def initialize(*args, **kwargs, &block)
-      cls = self.class
-      self.event_type = cls unless cls==Wires::Event
+      @event_type = kwargs[:event_type]
+      kwargs.delete :event_type if @event_type
       
       @ignore = []
       @kwargs = kwargs
@@ -42,10 +42,7 @@ module Wires
     # (not commutative)
     def =~(other)
       (other.is_a? Event) ? 
-        ((self.class >= other.class) \
-          and (self.event_type.nil? or self.event_type==other.event_type \
-              or (self.event_type.is_a? Class and other.event_type.is_a? Class \
-                  and self.event_type >= other.event_type)) \
+        ((self.event_type.nil? or self.event_type==other.event_type) \
           and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
           and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
         super
@@ -58,19 +55,11 @@ module Wires
         (x.is_a? Hash) ? 
           (x.each_pair { |x,y| list << [x,y] }) :
           (list << [x,[]])
-      end.map do |type, args|
+      end.map do |type, obj_args|
         case type
-        when Event; obj = type
-        when Class; 
-          if type<=Event 
-            obj = type.new(*args)
-          end
-        when Symbol
-          obj = self.new(*args)
-          obj.event_type = type
-          obj if self==Wires::Event
+        when Event;  type
+        when Symbol; self.new(*obj_args).tap{|e| e.event_type=type}
         end
-        obj
       end.tap do |x|
         raise ArgumentError, 
         "Invalid event creation input: #{args} \noutput: #{x}" \
