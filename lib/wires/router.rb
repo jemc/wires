@@ -2,7 +2,6 @@
 module Wires
   module Router
     
-    
     class Default
       class << self
         

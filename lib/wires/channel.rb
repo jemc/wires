@@ -4,7 +4,7 @@ module Wires
   class Channel
     
     attr_reader :name
-    attr_reader :target_list
+    attr_reader :handlers
     attr_accessor :not_firable
     
     def inspect; "#{self.class}(#{name.inspect})"; end
@@ -28,7 +28,7 @@ module Wires
     
     def initialize(name)
       @name = name
-      @target_list = []
+      @handlers = []
     end
     
     # Register a proc to be triggered by an event on this channel
@@ -39,8 +39,8 @@ module Wires
       events = Event.new_from(*events)
       
       @@aim_lock.synchronize do
-        @target_list << [events, proc] \
-          unless @target_list.include? [events, proc]
+        @handlers << [events, proc] \
+          unless @handlers.include? [events, proc]
       end
       
       proc
@@ -48,13 +48,10 @@ module Wires
     
     # Unregister a proc from the target list of this channel
     # Return true if at least one matching target was unregistered, else false
-    def unregister(*events, &proc)
-      events = events.empty? ? [] : Event.new_from(*events)
-      
+    def unregister(proc)
       @@aim_lock.synchronize do
-        !!(@target_list.reject! do |es,pr|
-          (proc and proc==pr) and \
-            (events.map{|event| es.map{|e| event=~e}.any?}.all?)
+        !!(@handlers.reject! do |stored_events, stored_proc|
+          proc==stored_proc
         end)
       end
     end
@@ -100,7 +97,7 @@ module Wires
       @@aim_lock.synchronize do
         self.class.router
         .get_receivers(self).each do |chan|
-          chan.target_list.each do |elist, pr|
+          chan.handlers.each do |elist, pr|
             elist.each do |e|
               procs << pr if e =~ event
             end
