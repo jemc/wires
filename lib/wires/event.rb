@@ -19,7 +19,7 @@ module Wires
       @ignore = []
       @kwargs = kwargs
       
-      (@kwargs[:args] = args.freeze; @ignore<<:args) \
+      (@kwargs[:args] = args; @ignore<<:args) \
         unless @kwargs.has_key? :args
       (@kwargs[:codeblock] = block; @ignore<<:codeblock) \
         unless @kwargs.has_key? :codeblock

@@ -21,4 +21,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency('rake')
   s.add_development_dependency('wires-test')
   s.add_development_dependency('jemc-reporter')
+  s.add_development_dependency('fivemat')
 end
