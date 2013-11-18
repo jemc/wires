@@ -119,7 +119,6 @@ describe Wires::Event do
   
   
   describe "#=~" do
-    
     # Convenience method for confirming a #=~ truth table
     def check_truth table
       for k,set in table
@@ -139,54 +138,66 @@ describe Wires::Event do
     it "performs event pattern matching" do
       check_truth table = {
         true => [
-        # Listening for                       will receive
-          [:dog,                              :dog],
-          [{dog:[55]},                        {dog:[55]}],
-          [{dog:[55]},                        {dog:[55,66]}],
-          [{dog:[55,66]},                     {dog:[55,66]}],
-          [{dog:[55,66]},                     {dog:[55,66,77]}],
-          [{dog:[arg1:32]},                   {dog:[arg1:32]}],
-          [{dog:[arg1:32]},                   {dog:[55,arg1:32]}],
-          [{dog:[55,arg1:32]},                {dog:[55,arg1:32]}],
-          [{dog:[55,arg1:32]},                {dog:[55,66,arg1:32]}],
-          [{dog:[55,arg1:32]},                {dog:[55,arg1:32,arg2:33]}],
-          [{dog:[arg1:32,arg2:88]},           {dog:[arg1:32,arg2:88]}],
-          [{dog:[arg1:32,arg2:88]},           {dog:[55,arg1:32,arg2:88]}],
-          [{dog:[arg1:32,arg2:88]},           {dog:[55,66,arg1:32,arg2:88]}],
-          [[:dog,:wolf,:hound,:mutt],         :dog],
-          [[:dog,:wolf,:hound,:mutt],         wolf:[55]],
-          [[:dog,:wolf,:hound,:mutt],         hound:[arg1:32]],
-          [[:dog,:wolf,:hound,:mutt],         Wires::Event.new(type: :mutt)],
+        # Listening for              will receive
+          [:dog,                     :dog],
+          [{dog:[55]},               {dog:[55]}],
+          [{dog:[55]},               {dog:[55,66]}],
+          [{dog:[55,66]},            {dog:[55,66]}],
+          [{dog:[55,66]},            {dog:[55,66,77]}],
+          [{dog:[arg1:32]},          {dog:[arg1:32]}],
+          [{dog:[arg1:32]},          {dog:[55,arg1:32]}],
+          [{dog:[55,arg1:32]},       {dog:[55,arg1:32]}],
+          [{dog:[55,arg1:32]},       {dog:[55,66,arg1:32]}],
+          [{dog:[55,arg1:32]},       {dog:[55,arg1:32,arg2:33]}],
+          [{dog:[arg1:32,arg2:88]},  {dog:[arg1:32,arg2:88]}],
+          [{dog:[arg1:32,arg2:88]},  {dog:[55,arg1:32,arg2:88]}],
+          [{dog:[arg1:32,arg2:88]},  {dog:[55,66,arg1:32,arg2:88]}],
         ],
         false => [
-        # Listening for                         won't receive
-          [:dog,                                :cat],
-          [{dog:[55]},                          {dog:[66,55]}],
-          [{dog:[55,66]},                       {dog:[55]}],
-          [{dog:[55,66,77]},                    {dog:[55,66]}],
-          [{dog:[arg1:32]},                     {dog:[]}],
-          [{dog:[arg1:32]},                     {dog:[32]}],
-          [{dog:[arg1:32]},                     {dog:[arg1:33]}],
-          [{dog:[55,66,arg1:32]},               {dog:[55,arg1:32]}],
-          [{dog:[arg1:32,arg2:88]},             {dog:[arg2:88]}],
-          [{dog:[arg1:32,arg2:88]},             {dog:[arg1:32]}],
-          [{dog:[55]},                          {cat:[55]}],
-          [{dog:[55]},                          {cat:[55,66]}],
-          [{dog:[55,66]},                       {cat:[55,66]}],
-          [{dog:[55,66]},                       {cat:[55,66,77]}],
-          [{dog:[arg1:32]},                     {cat:[arg1:32]}],
-          [{dog:[arg1:32]},                     {cat:[55,arg1:32]}],
-          [{dog:[55,arg1:32]},                  {cat:[55,arg1:32]}],
-          [{dog:[55,arg1:32]},                  {cat:[55,66,arg1:32]}],
-          [{dog:[55,arg1:32]},                  {cat:[55,arg1:32,arg2:33]}],
-          [{dog:[arg1:32,arg2:88]},             {cat:[arg1:32,arg2:88]}],
-          [{dog:[arg1:32,arg2:88]},             {cat:[55,arg1:32,arg2:88]}],
-          [{dog:[arg1:32,arg2:88]},             {cat:[55,66,arg1:32,arg2:88]}],
-          [[:dog,:wolf,:hound,:mutt],           :cat],
-          [[:dog,:wolf,:hound,:mutt],           cat:[55]],
-          [[:dog,:wolf,:hound,:mutt],           cat:[arg1:32]],
-          [[:dog,:wolf,:hound,:mutt],           Wires::Event.new(type: :cat)],
-          [[:dog,:wolf,:hound,:mutt],           Wires::Event.new],
+        # Listening for              won't receive
+          [:dog,                     :cat],
+          [{dog:[55]},               {dog:[66,55]}],
+          [{dog:[55,66]},            {dog:[55]}],
+          [{dog:[55,66,77]},         {dog:[55,66]}],
+          [{dog:[arg1:32]},          {dog:[]}],
+          [{dog:[arg1:32]},          {dog:[32]}],
+          [{dog:[arg1:32]},          {dog:[arg1:33]}],
+          [{dog:[55,66,arg1:32]},    {dog:[55,arg1:32]}],
+          [{dog:[arg1:32,arg2:88]},  {dog:[arg2:88]}],
+          [{dog:[arg1:32,arg2:88]},  {dog:[arg1:32]}],
+          [{dog:[55]},               {cat:[55]}],
+          [{dog:[55]},               {cat:[55,66]}],
+          [{dog:[55,66]},            {cat:[55,66]}],
+          [{dog:[55,66]},            {cat:[55,66,77]}],
+          [{dog:[arg1:32]},          {cat:[arg1:32]}],
+          [{dog:[arg1:32]},          {cat:[55,arg1:32]}],
+          [{dog:[55,arg1:32]},       {cat:[55,arg1:32]}],
+          [{dog:[55,arg1:32]},       {cat:[55,66,arg1:32]}],
+          [{dog:[55,arg1:32]},       {cat:[55,arg1:32,arg2:33]}],
+          [{dog:[arg1:32,arg2:88]},  {cat:[arg1:32,arg2:88]}],
+          [{dog:[arg1:32,arg2:88]},  {cat:[55,arg1:32,arg2:88]}],
+          [{dog:[arg1:32,arg2:88]},  {cat:[55,66,arg1:32,arg2:88]}],
+        ]
+      }
+    end
+    
+    it "matches an incoming event to a list of events"\
+       "if it matches at least one in the list" do
+      check_truth table = {
+        true => [
+        # Listening for                 will receive
+          [[:dog,:wolf,:hound,:mutt],   :dog],
+          [[:dog,:wolf,:hound,:mutt],   wolf:[55]],
+          [[:dog,:wolf,:hound,:mutt],   hound:[arg1:32]],
+          [[:dog,:wolf,:hound,:mutt],   Wires::Event.new(type: :mutt)],
+        ],
+        false => [
+        # Listening for                 won't receive
+          [[:dog,:wolf,:hound,:mutt],   :cat],
+          [[:dog,:wolf,:hound,:mutt],   cat:[55]],
+          [[:dog,:wolf,:hound,:mutt],   cat:[arg1:32]],
+          [[:dog,:wolf,:hound,:mutt],   Wires::Event.new(type: :cat)],
+          [[:dog,:wolf,:hound,:mutt],   Wires::Event.new],
         ]
       }
     end
