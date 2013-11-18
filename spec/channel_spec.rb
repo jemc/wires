@@ -1,7 +1,7 @@
 
 require 'wires'
 
-# require 'pry-rescue/rspec'
+require 'pry-rescue/rspec'
 
 
 describe Wires::Channel do
@@ -181,6 +181,12 @@ describe Wires::Channel do
       #  handlers when blocking is set to true
       subject.fire event, blocking:true; expect(flop).to be true
       subject.fire event, blocking:true; expect(flop).to be false
+      
+      # Repeal all four hooks
+      Wires::Channel.remove_hook(:@after_fire,  &a1_hook)
+      Wires::Channel.remove_hook(:@after_fire,  &a2_hook)
+      Wires::Channel.remove_hook(:@before_fire, &b1_hook)
+      Wires::Channel.remove_hook(:@before_fire, &b2_hook)
     end
   end
   
