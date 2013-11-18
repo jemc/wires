@@ -14,6 +14,9 @@ module Wires
     @new_lock = Mutex.new
     @@aim_lock = Mutex.new
     
+    # Add hook methods
+    extend Util::Hooks
+    
     class << self
       attr_accessor :hub
       attr_accessor :router
@@ -53,19 +56,6 @@ module Wires
         !!(@handlers.reject! do |stored_events, stored_proc|
           proc==stored_proc
         end)
-      end
-    end
-    
-    # Add hook methods
-    class << self
-      include Util::Hooks
-      
-      def before_fire(*args, &proc)
-        add_hook(:@before_fire, *args, &proc)
-      end
-      
-      def after_fire(*args, &proc)
-        add_hook(:@after_fire, *args, &proc)
       end
     end
     
@@ -124,7 +114,7 @@ module Wires
     end
     
     # Fire a blocking event on this channel
-    def fire!(event)
+    def fire!(event, **kwargs)
       kwargs[:blocking] ||= true
       fire(*args, **kwargs)
     end

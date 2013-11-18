@@ -60,7 +60,7 @@ module Wires
         spawn_neglected_task_threads
       end
       
-      # Spawn a task
+      # Spawn a task - user code should never call this directly
       def spawn(*args) # :args: event, chan, proc, blocking, fire_bt
         
         return neglect(*args) \
