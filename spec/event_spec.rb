@@ -1,7 +1,7 @@
 
 require 'wires'
 
-require 'pry-rescue/rspec'
+# require 'pry-rescue/rspec'
 
 
 describe Wires::Event do
@@ -119,8 +119,25 @@ describe Wires::Event do
   
   
   describe "#=~" do
+    
+    # Convenience method for confirming a #=~ truth table
+    def check_truth table
+      for k,set in table
+        for pair in set
+          a,b = pair.map { |x| Wires::Event.new_from x }
+          
+          expect(a.count).to be >= 1, 
+            "\nBad listen object: #{a} (comes from #{pair[0]})"
+          expect(b.count).to be == 1, 
+            "\nBad fire object:   #{b} (comes from #{pair[1]})"
+          expect(a.map{|x| x=~b.first}.any?).to be == k, 
+            "\nBad pair: #{pair} (seen as: #{[a,b]})"
+        end
+      end
+    end
+    
     it "performs event pattern matching" do
-      table = {
+      check_truth table = {
         true => [
         # Listening for                       will receive
           [:dog,                              :dog],
@@ -172,19 +189,22 @@ describe Wires::Event do
           [[:dog,:wolf,:hound,:mutt],           Wires::Event.new],
         ]
       }
-      
-      for k,set in table
-        for pair in set
-          a,b = pair.map { |x| Wires::Event.new_from x }
-          
-          expect(a.count).to be >= 1, 
-            "\nBad listen object: #{a} (comes from #{pair[0]})"
-          expect(b.count).to be == 1, 
-            "\nBad fire object:   #{b} (comes from #{pair[1]})"
-          expect(a.map{|x| x=~b.first}.any?).to be == k, 
-            "\nBad pair: #{pair} (seen as: #{[a,b]})"
-        end
-      end
+    end
+    
+    it "matches the special event type values :* or nil"\
+       " to receive any other event type" do
+      check_truth table = {
+        true => [
+        # Listening for       will receive
+          [:*,                :dog],
+          [Wires::Event.new,  :dog],
+        ],
+        false => [
+        # Listening for       won't receive
+          [:dog,              :*],
+          [:dog,              Wires::Event.new],
+        ]
+      }
     end
   end
   

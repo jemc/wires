@@ -35,7 +35,7 @@ module Wires
     # (not commutative)
     def =~(other)
       (other.is_a? Event) ? 
-        ((self.type.nil? or self.type==other.type) \
+        (([nil, :*, other.type].include? self.type) \
           and (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) \
           and (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
         super
