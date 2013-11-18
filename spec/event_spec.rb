@@ -1,7 +1,7 @@
 
 require 'wires'
 
-# require 'pry-rescue/rspec'
+require 'pry-rescue/rspec'
 
 
 describe Wires::Event do
