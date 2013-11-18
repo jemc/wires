@@ -11,7 +11,7 @@ module Wires
     
     @hub    = Hub
     @router = Router::Default
-    @new_lock = Mutex.new
+    @new_lock = Monitor.new
     @@aim_lock = Mutex.new
     
     # Add hook methods
@@ -61,7 +61,6 @@ module Wires
     
     # Fire an event on this channel
     def fire(input, blocking:false, parallel:!blocking)
-      
       raise *@not_firable if @not_firable
       
       return [] << Thread.new { fire(input, blocking:true, parallel:false) } \
@@ -69,7 +68,7 @@ module Wires
       
       backtrace = caller
       
-      event = Event.new_from(*input)
+      event = Event.new_from(input)
       
       case event.count
       when 0
@@ -80,7 +79,7 @@ module Wires
         raise ArgumentError,"Can't fire on multiple events: #{event.inspect}"
       end
       
-      self.class.run_hooks(:@before_fire, event, self)
+      self.class.run_hooks(:@before_fire, event, self.name)
       
       # Select appropriate targets
       procs = []
@@ -108,15 +107,15 @@ module Wires
       
       threads.each &:join if blocking and parallel
       
-      self.class.run_hooks(:@after_fire, event, self)
+      self.class.run_hooks(:@after_fire, event, self.name)
       
       threads
     end
     
     # Fire a blocking event on this channel
-    def fire!(event, **kwargs)
-      kwargs[:blocking] ||= true
-      fire(*args, **kwargs)
+    def fire!(event, *args, **kwargs)
+      kwargs[:blocking] = true unless kwargs.has_key? :blocking
+      fire(event, *args, **kwargs)
     end
     
     # Returns true if listening on 'self' would hear a firing on 'other'

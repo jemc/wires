@@ -209,6 +209,8 @@ describe Wires::Event do
         # Listening for       will receive
           [:*,                :dog],
           [Wires::Event.new,  :dog],
+          [:*,                Wires::Event.new],
+          [Wires::Event.new,  :*],
         ],
         false => [
         # Listening for       won't receive
