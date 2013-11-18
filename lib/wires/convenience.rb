@@ -26,7 +26,7 @@ module Wires
     nil end
     
     def fire!(*args, **kwargs)
-      kwargs[:blocking] ||= true
+      kwargs[:blocking] = true unless kwargs.has_key? :blocking
       fire(*args, **kwargs)
     end
     

@@ -113,9 +113,9 @@ module Wires
     end
     
     # Fire a blocking event on this channel
-    def fire!(event, *args, **kwargs)
+    def fire!(*args, **kwargs)
       kwargs[:blocking] = true unless kwargs.has_key? :blocking
-      fire(event, *args, **kwargs)
+      fire(*args, **kwargs)
     end
     
     # Returns true if listening on 'self' would hear a firing on 'other'

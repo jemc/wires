@@ -227,8 +227,6 @@ describe Wires::Channel do
   end
   
   
-  
-  
   describe "#fire" do
     it_behaves_like "a non-blocking fire method" do
       let(:on_method) { Proc.new { |&block| subject.register :event, &block } }
