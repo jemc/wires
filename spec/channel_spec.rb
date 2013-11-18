@@ -1,94 +1,9 @@
 
 require 'wires'
 
-# require 'pry-rescue/rspec'
+require_relative 'shared'
 
-module FireTestHelper
-  # Convenience method to test concurrency properties of a firing block
-  def fire_test on_method, blocking:false, parallel:!blocking
-    count = 0
-    running_count = 0
-    10.times do
-      on_method.call(:event) do
-        if parallel
-          expect(count).to eq 0
-          sleep 0.1
-        else
-          expect(count).to eq running_count
-          running_count += 1
-          sleep 0.01
-        end
-        count += 1
-      end
-    end
-    
-    yield # to block that fires
-    
-    if not blocking
-      expect(count).to eq 0
-      sleep 0.15
-    end
-    expect(count).to eq 10
-  end
-end
-
-
-shared_examples "a non-blocking fire method" do
-  include FireTestHelper
-  
-  it "fires non-blocking and in parallel by default" do
-    fire_test on_method, blocking:false, parallel:true do
-      fire_method.call
-    end
-  end
-  
-  it "can fire non-blocking and in sequence with parallel:false" do
-    fire_test on_method, blocking:false, parallel:false do
-      fire_method.call   parallel:false
-    end
-  end
-  
-  it "can fire blocking and in sequence with blocking:true" do
-    fire_test on_method, blocking:true, parallel:false do
-      fire_method.call   blocking:true
-    end
-  end
-  
-  it "can fire blocking and in parallel with blocking:true, parallel:true" do
-    fire_test on_method, blocking:true, parallel:true do
-      fire_method.call   blocking:true, parallel:true
-    end
-  end
-end
-
-
-shared_examples "a blocking fire method" do
-  include FireTestHelper
-  
-  it "fires blocking and in sequence by default" do
-    fire_test on_method, blocking:true, parallel:false do
-      fire_method.call
-    end
-  end
-  
-  it "can fire blocking and in parallel with parallel:true" do
-    fire_test on_method, blocking:true, parallel:true do
-      fire_method.call   parallel:true
-    end
-  end
-  
-  it "can fire non-blocking and in parallel with blocking:false" do
-    fire_test on_method, blocking:false, parallel:true do
-      fire_method.call   blocking:false
-    end
-  end
-  
-  it "can fire non-blocking and in sequence with blocking:false, parallel:false" do
-    fire_test on_method, blocking:false, parallel:false do
-      fire_method.call   blocking:false, parallel:false
-    end
-  end
-end
+require 'pry-rescue/rspec'
 
 
 describe Wires::Channel do
@@ -98,7 +13,7 @@ describe Wires::Channel do
   
   # Some common objects to operate with
   let(:event) { Wires::Event.new }
-  let(:proc)  { Proc.new { nil } }
+  let(:a_proc)  { Proc.new { nil } }
   let(:names) {['channel',   'Channel',  'CHANNEL',
                 :channel,    :Channel,   :CHANNEL,
                 /channel/,   /Channel/,  /CHANNEL/,
@@ -147,47 +62,47 @@ describe Wires::Channel do
   describe "#handlers" do
     its(:handlers) { should be_an Array }
     its(:handlers) { should be_empty }
-    its(:handlers) { subject.register event, &proc
+    its(:handlers) { subject.register event, &a_proc
                      should_not be_empty }
   end
   
   
   describe "#register" do
-    its(:handlers) { subject.register event, &proc
-                     should include [[event], proc] }
+    its(:handlers) { subject.register event, &a_proc
+                     should include [[event], a_proc] }
     
-    its(:handlers) { subject.register event, event, &proc
-                     should include [[event, event], proc] }
+    its(:handlers) { subject.register event, event, &a_proc
+                     should include [[event, event], a_proc] }
     
     it "returns the registered proc" do
-      expect(subject.register(event, &proc)).to eq proc
+      expect(subject.register(event, &a_proc)).to eq a_proc
     end
   end
   
   
   describe "#unregister" do
     its(:handlers) { "with a matching proc, unregisters the registration of it"
-                     subject.register event, &proc
-                     subject.unregister proc
+                     subject.register event, &a_proc
+                     subject.unregister a_proc
                      should be_empty }
     
     its(:handlers) { "with a matching proc, unregisters all registrations of it"
-                     subject.register event, &proc
-                     subject.register :other_event, &proc
-                     subject.register :yet_another_event, &proc
-                     subject.unregister proc
+                     subject.register event, &a_proc
+                     subject.register :other_event, &a_proc
+                     subject.register :yet_another_event, &a_proc
+                     subject.unregister a_proc
                      should be_empty }
     
     its(:handlers) { "with a non-matching proc, does nothing"
-                     subject.register event, &proc
+                     subject.register event, &a_proc
                      subject.unregister Proc.new{nil}
                      should_not be_empty }
     
     it "returns true/false to indicate if an unregistration occurred" do
-      expect(subject.unregister(proc)).to eq false
-      subject.register event, &proc
-      expect(subject.unregister(proc)).to eq true
-      expect(subject.unregister(proc)).to eq false
+      expect(subject.unregister(a_proc)).to eq false
+      subject.register event, &a_proc
+      expect(subject.unregister(a_proc)).to eq true
+      expect(subject.unregister(a_proc)).to eq false
     end
   end
   
