@@ -228,18 +228,18 @@ describe Wires::Channel do
   
   
   describe "#fire" do
-    it_behaves_like "a non-blocking fire method" do
-      let(:on_method) { Proc.new { |&block| subject.register :event, &block } }
-      let(:fire_method) { Proc.new { |**kwargs| subject.fire :event, **kwargs } }
-    end
+    let(:on_method)   { Proc.new { |e,c,&blk| c.register e,&blk } }
+    let(:fire_method) { Proc.new { |e,c,**kw| c.fire     e,**kw } }
+    
+    it_behaves_like "a non-blocking fire method"
   end
   
   
   describe "#fire!" do
-    it_behaves_like "a blocking fire method" do
-      let(:on_method) { Proc.new { |&block|  subject.register :event, &block } }
-      let(:fire_method) { Proc.new { |**kwargs| subject.fire! :event, **kwargs } }
-    end
+    let(:on_method)   { Proc.new { |e,c,&blk| c.register e,&blk } }
+    let(:fire_method) { Proc.new { |e,c,**kw| c.fire!    e,**kw } }
+    
+    it_behaves_like "a blocking fire method"
   end
   
 end
