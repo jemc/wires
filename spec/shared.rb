@@ -93,12 +93,13 @@ shared_examples "a variable-channel fire method" do
   
   it "accepts a channel object as a channel" do
     received = []
-    chan  = Wires::Channel['name']
-    on_method.call event, chan do |e,c|
+    chan = Wires::Channel['name']
+    block = Proc.new do |e,c|
       expect(e).to eq event
       expect(c).to eq chan.name
       received << chan
     end
+    expect(on_method.call event, chan, &block).to eq block
     fire_method.call event, chan, blocking:true
     expect(received).to eq [chan]
   end
@@ -106,13 +107,27 @@ shared_examples "a variable-channel fire method" do
   it "accepts any other object as a channel name" do
     received = []
     chan = Object.new
-    on_method.call   event, chan do |e,c|
+    block = Proc.new do |e,c|
       expect(e).to eq event
       expect(c).to eq chan
       received << chan
     end
+    expect(on_method.call event, chan, &block).to eq block
     fire_method.call event, chan, blocking:true
     expect(received).to eq [chan]
+  end
+  
+  it "can fire to a handler on a list of channels" do
+    received = []
+    chans = 10.times.map { Wires::Channel[Object.new] }
+    block = Proc.new do |e,c|
+      expect(e).to eq event
+      expect(chans.map(&:name)).to include c
+      received << c
+    end
+    expect(on_method.call event, chans, &block).to eq block
+    chans.each { |c| fire_method.call event, c, blocking:true }
+    expect(received).to match_array chans.map(&:name)
   end
   
 end

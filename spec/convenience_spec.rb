@@ -15,6 +15,8 @@ describe Wires::Convenience do
     
     it_behaves_like "a variable-channel fire method"
     it_behaves_like "a non-blocking fire method"
+    
+    it "can do time related stuff as well"
   end
   
   describe "#fire!" do
@@ -23,5 +25,5 @@ describe Wires::Convenience do
     
     it_behaves_like "a variable-channel fire method"
     it_behaves_like "a blocking fire method"
-  end
+  end 
 end
