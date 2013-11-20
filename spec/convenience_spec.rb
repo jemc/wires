@@ -9,7 +9,7 @@ require 'pry-rescue/rspec'
 describe Wires::Convenience do
   subject { Object.new.extend Wires::Convenience }
   
-  describe "#fire" do
+  describe "#fire and #on" do
     let(:on_method)   { Proc.new { |e,c,&blk| subject.on   e,c,&blk } }
     let(:fire_method) { Proc.new { |e,c,**kw| subject.fire e,c,**kw } }
     
@@ -19,7 +19,7 @@ describe Wires::Convenience do
     it "can do time related stuff as well"
   end
   
-  describe "#fire!" do
+  describe "#fire! and #on" do
     let(:on_method)   { Proc.new { |e,c,&blk| subject.on    e,c,&blk } }
     let(:fire_method) { Proc.new { |e,c,**kw| subject.fire! e,c,**kw } }
     

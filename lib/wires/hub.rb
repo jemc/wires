@@ -63,9 +63,6 @@ module Wires
       # Spawn a task - user code should never call this directly
       def spawn(*args) # :args: event, chan, proc, blocking, fire_bt
         
-        return neglect(*args) \
-          if @hold_lock.instance_variable_get(:@mon_mutex).locked?
-        
         event, chan, proc, blocking, parallel, fire_bt = *args
         *proc_args = event, chan
         *exc_args  = event, chan, fire_bt
@@ -80,6 +77,9 @@ module Wires
           
           return nil
         end
+        
+        return neglect(*args) \
+          if @hold_lock.instance_variable_get(:@mon_mutex).locked?
         
         # If not parallel, clear old threads and spawn a new thread
         Thread.exclusive do

@@ -89,11 +89,11 @@ end
 
 shared_examples "a variable-channel fire method" do
   
-  let(:event) { $whup ||= Wires::Event.new }
+  let(:event) { Wires::Event.new }
+  let(:received) { [] }
   
   it "accepts a channel object as a channel" do
-    received = []
-    chan = Wires::Channel['name']
+    chan = Wires::Channel[Object.new]
     block = Proc.new do |e,c|
       expect(e).to eq event
       expect(c).to eq chan.name
@@ -105,7 +105,6 @@ shared_examples "a variable-channel fire method" do
   end
   
   it "accepts any other object as a channel name" do
-    received = []
     chan = Object.new
     block = Proc.new do |e,c|
       expect(e).to eq event
@@ -118,7 +117,6 @@ shared_examples "a variable-channel fire method" do
   end
   
   it "can fire to a handler on a list of channels" do
-    received = []
     chans = 10.times.map { Wires::Channel[Object.new] }
     block = Proc.new do |e,c|
       expect(e).to eq event
