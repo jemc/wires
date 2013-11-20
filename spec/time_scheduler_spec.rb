@@ -4,7 +4,6 @@ require 'wires'
 require 'spec_helper'
 
 
-# TimeScheduler is the main time-handling object
 describe Wires::TimeScheduler do
   subject { Wires::TimeScheduler }
   after { Wires::Hub.join_children; subject.clear }
@@ -44,7 +43,6 @@ describe Wires::TimeScheduler do
   end
   
   it "can handle a barrage of events without dropping any" do
-    
     fire_count = 50
     done_count = 0
     go_time = Time.now+0.1
@@ -56,13 +54,10 @@ describe Wires::TimeScheduler do
     end
     
     sleep 0.2
-    
     expect(done_count).to eq fire_count
-    
   end
   
   it "can provide a list of scheduled future events" do
-  
     fire_count = 50
     done_count = 0
     go_time = Time.now+10
@@ -74,13 +69,10 @@ describe Wires::TimeScheduler do
     end
     
     sleep 0.05
-    
     expect(subject.list.size).to eq fire_count
-    
   end
   
   it "can clear the scheduled future events" do
-  
     fire_count = 50
     done_count = 0
     go_time = Time.now+10000
@@ -92,15 +84,12 @@ describe Wires::TimeScheduler do
     end
     
     sleep 0.05
-    
     expect(subject.list).to_not be_empty
     subject.clear
     expect(subject.list).to     be_empty
-    
   end
   
   it "correctly sorts the scheduled future events" do
-  
     count = 0
     
     e = []
@@ -112,7 +101,6 @@ describe Wires::TimeScheduler do
     
     e << e.shift
     expect(e).to eq subject.list.map { |x| x.event }
-    
   end
   
 end
