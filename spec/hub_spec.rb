@@ -11,19 +11,18 @@ describe Wires::Hub do
   
   describe "neglecting to spawn ne threads" do
     
+    # Capture stderr to suppress the expected warning messages
     before { $stderr_save, $stderr = $stderr, ::StringIO.new }
     after  { $stderr = $stderr_save }
     
-    # let(:done_flag) { false }
-    # let(:block) {  }
-    
+    # Craft argument set for #spawn
     def make_spargs(block, blocking:false, parallel:!blocking)
-      [ nil,   # event
-        nil,   # channel
-        block, # proc
+      [ nil,      # event
+        nil,      # channel
+        block,    # proc
         blocking, # blocking
-        parallel,  # parallel
-        nil ]  # fire_bt
+        parallel, # parallel
+        nil ]     # fire_bt
     end
     
     
