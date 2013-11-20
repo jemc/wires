@@ -7,7 +7,7 @@ module Wires
     attr_accessor :schedulers
     
     def initialize(time, event, channel='*', 
-                   interval:0.seconds, count:1, 
+                   interval:0, count:1, 
                    ignore_past:false, cancel:false,
                    **kwargs)
       
