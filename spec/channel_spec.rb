@@ -1,9 +1,7 @@
 
 require 'wires'
 
-require_relative 'shared'
-
-require 'pry-rescue/rspec'
+require 'spec_helper'
 
 
 describe Wires::Channel do

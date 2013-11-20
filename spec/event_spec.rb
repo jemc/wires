@@ -1,7 +1,7 @@
 
 require 'wires'
 
-require 'pry-rescue/rspec'
+require 'spec_helper'
 
 
 describe Wires::Event do
