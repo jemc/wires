@@ -6,7 +6,7 @@ module Wires
     attr_reader :time, :event, :channel, :interval
     attr_accessor :schedulers
     
-    def initialize(time, event, channel='*', 
+    def initialize(time, event, channel, 
                    interval:0, count:1, 
                    ignore_past:false, cancel:false,
                    **kwargs)
@@ -61,10 +61,10 @@ module Wires
       count_dec
       @time += @interval if @active
       notify_schedulers
-    nil end
+    true end
     
     # Fire the event only if it is ready
-    def fire_if_ready(**args); self.fire(**kwargs) if ready? end
+    def fire_if_ready(**kwargs); self.fire(**kwargs) if ready? end
     
   private
     

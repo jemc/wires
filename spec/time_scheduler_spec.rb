@@ -11,7 +11,7 @@ describe Wires::TimeScheduler do
   let(:chan_name) { Object.new.tap { |x| x.extend Wires::Convenience } }
   
   it "can accept an existing TimeSchedulerItem with .add" do
-    item = Wires::TimeSchedulerItem.new(Time.now+500, :event, 
+    item = Wires::TimeSchedulerItem.new(Time.now+500, :event, chan_name,
                                         interval:3, count:50)
     subject.add item
     expect(subject.list.size).to eq 1
@@ -19,7 +19,7 @@ describe Wires::TimeScheduler do
   end
   
   it "can accept an existing TimeSchedulerItem with .<<" do
-    item = Wires::TimeSchedulerItem.new(Time.now+500, :event, 
+    item = Wires::TimeSchedulerItem.new(Time.now+500, :event, chan_name,
                                         interval:3, count:50)
     subject << item
     expect(subject.list.size).to eq 1
@@ -27,7 +27,7 @@ describe Wires::TimeScheduler do
   end
   
   it "can create a new TimeSchedulerItem with .add" do
-    subject.add(Time.now+500, :event, 
+    subject.add(Time.now+500, :event, chan_name,
                 interval:3, count:50)
     expect(subject.list.size).to eq 1
     expect(subject.list[0].interval).to eq 3
@@ -35,7 +35,7 @@ describe Wires::TimeScheduler do
   end
   
   it "can create a new TimeSchedulerItem with .<<" do
-    subject << [Time.now+500, :event, 
+    subject << [Time.now+500, :event, chan_name,
                 interval:3, count:50]
     expect(subject.list.size).to eq 1
     expect(subject.list[0].interval).to eq 3
