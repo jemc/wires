@@ -11,7 +11,7 @@ module Wires
     def inspect
       list = [*args, **kwargs].map(&:inspect).join ', '
       the_type = type ? type.inspect : ''
-      "#{self.class}#{the_type}(#{list})"
+      "#{self.class}#{the_type}:#{object_id}(#{list})"
     end
     
     # Internalize all *args and **kwargs and &block to be accessed later

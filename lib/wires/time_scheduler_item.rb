@@ -4,19 +4,26 @@ module Wires
   class TimeSchedulerItem
     
     attr_accessor :schedulers
-    attr_reader :time, :event, :channel, 
-                :count, :interval, :jitter
+    attr_reader   :time, :events, :channel, 
+                  :count, :interval, :jitter
+    attr_accessor :fire_kwargs
     
-    def initialize(time, event, channel, 
+    def initialize(time, events, channel, 
                    count:1, interval:0, jitter:0,
                    ignore_past:false, active:true,
-                   **kwargs)
+                   **fire_kwargs)
       
       time ||= Time.now
       
-      @kwargs = kwargs
-      @active   = active
+      @events   = Event.new_from(events)
+      @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
+      
       tempcount = count
+      @interval = interval
+      @jitter   = jitter
+      
+      @active   = active
+      @fire_kwargs   = fire_kwargs
       
       while (time < Time.now) and (tempcount > 0)
         time += interval
@@ -30,11 +37,7 @@ module Wires
       end
       
       @time     = time
-      @interval = interval
-      
-      @event    = Event.new_from(event)
-      @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
-      
+
       @schedulers = []
     end
     
@@ -61,7 +64,7 @@ module Wires
     
     # Fire the event now, regardless of time or active status
     def fire(**kwargs) # kwargs merge with and override @kwargs
-      @channel.fire(@event, **(@kwargs.merge(kwargs)))
+      @channel.fire(@events, **(@fire_kwargs.merge kwargs))
       count_dec
       @time += @interval if @active
       notify_schedulers
@@ -74,7 +77,9 @@ module Wires
     
   private
     
-    def notify_schedulers; @schedulers.each &:refresh                end
+    def notify_schedulers
+      @schedulers.each &:refresh
+    end
     
     # Lock some of the methods to try to make them atomic
     # Must exclude methods that get called from within the TimeScheduler lock

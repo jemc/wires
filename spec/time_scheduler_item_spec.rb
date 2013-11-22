@@ -90,27 +90,39 @@ shared_examples "a disabled item with a count of 1" do
 end
 
 
+shared_examples "an item that internalized its args correctly" do
+  its(:time)        { should eq time }
+  its(:events)      { should eq Wires::Event.new_from(events) }
+  its(:channel)     { should eq Wires::Channel[chan_name] }
+  its(:interval)    { should eq (kwargs[:interval] or 0) }
+  its(:jitter)      { should eq (kwargs[:jitter]   or 0) }
+  its(:fire_kwargs) { should eq fire_kwargs }
+end
+
+
 describe Wires::TimeSchedulerItem do
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
-  let(:event)       { Wires::Event.new }
-  let(:chan)        { Object.new.tap { |x| x.extend Wires::Convenience } }
+  let(:events)      { Wires::Event.new }
+  let(:chan_name)   { Object.new.tap { |x| x.extend Wires::Convenience } }
   let(:time)        { Time.now }
   let(:kwargs)      { {} }
   let(:fire_kwargs) { {} }
   
-  subject { Wires::TimeSchedulerItem.new time, event, chan, 
+  subject { Wires::TimeSchedulerItem.new time, events, chan_name, 
                                        **(fire_kwargs.merge kwargs) }
   
   describe "an item scheduled for the past" do
-    let(:time) { Time.now - 5 }
+    let(:time)   { Time.now - 5 }
     
+    it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a ready item with a count of 1"
   end
   
   describe "an item scheduled for the future" do
     let(:time)   { Time.now + 5 }
     
+    it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "an unready item with a count of 1"
     
     context "after", 5, :seconds=>:have_passed do
@@ -122,6 +134,7 @@ describe Wires::TimeSchedulerItem do
     let(:time)   { Time.now - 5 }
     let(:kwargs) { {ignore_past:true} }
     
+    it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "an exhausted item"
   end
   
@@ -129,6 +142,7 @@ describe Wires::TimeSchedulerItem do
     let(:time)   { Time.now - 5 }
     let(:kwargs) { {active:false} }
     
+    it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a disabled item with a count of 1"
   end
   
@@ -136,6 +150,7 @@ describe Wires::TimeSchedulerItem do
     let(:time)   { Time.now + 5 }
     let(:kwargs) { {active:false} }
     
+    it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a disabled item with a count of 1"
   end
   

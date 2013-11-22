@@ -100,7 +100,7 @@ describe Wires::TimeScheduler do
     subject << [Time.now+200, e[2], chan_name]
     
     e << e.shift
-    expect(e).to eq subject.list.map { |x| x.event }
+    expect(e).to eq subject.list.map { |x| x.events }
   end
   
 end
