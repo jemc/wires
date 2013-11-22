@@ -90,6 +90,27 @@ shared_examples "a disabled item with a count of 1" do
 end
 
 
+shared_examples "a ready repeating item with count" do |the_count|
+  if !the_count or the_count<=0 
+    it_behaves_like "an exhausted item"
+  else
+    its(:active?)   { should be_true  }
+    its(:ready?)    { should be_true }
+    its(:count)     { should eq the_count }
+    
+    context "when conditionally fired" do
+      before { expect(subject.fire_if_ready).to be_true }
+      it_behaves_like "a ready repeating item with count", the_count-1
+    end
+    
+    context "when unconditionally fired" do
+      before { expect(subject.fire).to be_true }
+      it_behaves_like "a ready repeating item with count", the_count-1
+    end
+  end
+end
+
+
 shared_examples "an item that internalized its args correctly" do
   its(:time)        { should eq time }
   its(:events)      { should eq Wires::Event.new_from(events) }
@@ -153,6 +174,14 @@ describe Wires::TimeSchedulerItem do
     it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a disabled item with a count of 1"
   end
+  
+  describe "scheduled for the past, with count:3" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:3} }
+    
+    it_behaves_like "a ready repeating item with count", 3
+  end
+  
   
   # it "can hold a repeating event" do
   #   time = Time.now
