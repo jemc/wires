@@ -3,17 +3,19 @@ module Wires
   
   class TimeSchedulerItem
     
-    attr_reader :time, :event, :channel, :interval
     attr_accessor :schedulers
+    attr_reader :time, :event, :channel, 
+                :count, :interval, :jitter
     
     def initialize(time, event, channel, 
-                   interval:0, count:1, 
-                   ignore_past:false, cancel:false,
+                   count:1, interval:0, jitter:0,
+                   ignore_past:false, active:true,
                    **kwargs)
       
       time ||= Time.now
       
-      @active = (not cancel)
+      @kwargs = kwargs
+      @active   = active
       tempcount = count
       
       while (time < Time.now) and (tempcount > 0)
@@ -32,28 +34,30 @@ module Wires
       
       @event    = Event.new_from(event)
       @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
-      @kwargs   = kwargs
       
       @schedulers = []
     end
     
-    def active?;        @active                                      end
-    def inactive?;     !@active                                      end
+    def active?;   @active       end
+    def active=(x) @active=x     end
     
-    def ready?(at_time=Time.now);  @active and (at_time>=@time)      end
+    def ready?(at_time=Time.now)
+      @active and (at_time>=@time)
+    end
     
-    def time_until;    (@active ? [(@time - Time.now), 0].max : nil) end
+    def time_until(from_time=Time.now)
+      (@active ? [(@time - from_time), 0].max : nil)
+    end
     
-    def cancel;         self.count=0                            ;nil end
+    # Set @count (and apply constraints)
+    def count=(new_count)
+      @count=[new_count,0].max
+        .tap { |c| @active&&=(c>0) }
+    end
     
-    # Get/set @count (and apply constraints on set)
-    def count;          @count                                       end
-                                          #TODO: handle explicit cancel?
-    def count=(x);      @count=[x,0].max; @active&&=(count>0)   ;nil end
-    
-    # Inc/dec @count. Necessary because += and -= outside of lock are not atomic!
-    def count_inc(x=1); self.count=(@count+x)                        end
-    def count_dec(x=1); self.count=(@count-x)                        end
+    # Inc/dec @count. Necessary because += and -= without lock are not atomic!
+    def count_inc(diff=1); self.count=(@count+diff) end
+    def count_dec(diff=1); self.count=(@count-diff) end
     
     # Fire the event now, regardless of time or active status
     def fire(**kwargs) # kwargs merge with and override @kwargs
@@ -64,7 +68,9 @@ module Wires
     true end
     
     # Fire the event only if it is ready
-    def fire_if_ready(**kwargs); self.fire(**kwargs) if ready? end
+    def fire_if_ready(**kwargs)
+      self.fire(**kwargs) if ready?
+    end
     
   private
     
