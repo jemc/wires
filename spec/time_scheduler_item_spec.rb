@@ -10,6 +10,12 @@ shared_context "seconds have passed", :seconds=>:have_passed do |ex|
 end
 
 
+shared_context "sufficient time has passed", :sufficient_time=>:has_passed do
+  before { Timecop.travel subject.time }
+  after  { Timecop.return }
+end
+
+
 shared_examples "an exhausted item" do
   its(:active?)   { should be_false }
   its(:ready?)    { should be_false }
@@ -33,79 +39,81 @@ shared_examples "an exhausted item" do
 end
 
 
-shared_examples "a ready item with a count of 1" do
-  its(:active?)   { should be_true  }
-  its(:ready?)    { should be_true  }
-  its(:count)     { should eq 1     }
-  
-  context "when conditionally fired" do
-    before { expect(subject.fire_if_ready).to be_true }
-    it_behaves_like "an exhausted item"
-  end
-  
-  context "when unconditionally fired" do
-    before { expect(subject.fire).to be_true }
-    it_behaves_like "an exhausted item"
-  end
-end
-
-
-shared_examples "an unready item with a count of 1" do
-  its(:active?)   { should be_true  }
-  its(:ready?)    { should be_false }
-  its(:count)     { should eq 1     }
-  
-  it "refuses to be conditionally fired" do
-    expect(subject.fire_if_ready).to be_false
-    
-    expect(subject.active?)  .to be_true
-    expect(subject.ready?)   .to be_false
-    expect(subject.count)    .to eq 1
-  end
-  
-  context "when unconditionally fired" do
-    before { expect(subject.fire).to be_true }
-    it_behaves_like "an exhausted item"
-  end
-end
-
-
-shared_examples "a disabled item with a count of 1" do
-  its(:active?)   { should be_false }
-  its(:ready?)    { should be_false }
-  its(:count)     { should eq 1     }
-  
-  it "refuses to be conditionally fired" do
-    expect(subject.fire_if_ready).to be_false
-    
-    expect(subject.active?)  .to be_false
-    expect(subject.ready?)   .to be_false
-    expect(subject.count)    .to eq 1
-  end
-  
-  context "when unconditionally fired" do
-    before { expect(subject.fire).to be_true }
-    it_behaves_like "an exhausted item"
-  end
-end
-
-
-shared_examples "a ready repeating item with count" do |the_count|
+shared_examples "a disabled item with count" do |the_count|
   if !the_count or the_count<=0 
     it_behaves_like "an exhausted item"
   else
-    its(:active?)   { should be_true  }
+    its(:active?)   { should be_false }
+    its(:ready?)    { should be_false }
+    its(:count)     { should eq the_count }
+    
+    it "refuses to be conditionally fired" do
+      expect(subject.fire_if_ready).to be_false
+      
+      expect(subject.active?)  .to be_false
+      expect(subject.ready?)   .to be_false
+      expect(subject.count)    .to eq the_count
+    end
+    
+    context "when unconditionally fired" do
+      before { expect(subject.fire).to be_true }
+      it_behaves_like "a disabled item with count", the_count-1
+    end
+  end
+end
+
+
+shared_examples "an item of unknown readiness with count" do |the_count|
+  context "after", :sufficient_time=>:has_passed do
+    it_behaves_like "a ready item with count", the_count
+  end
+end
+
+
+shared_examples "a ready item with count" do |the_count|
+  if !the_count or the_count<=0 
+    it_behaves_like "an exhausted item"
+  else
+    its(:active?)   { should be_true }
     its(:ready?)    { should be_true }
     its(:count)     { should eq the_count }
     
     context "when conditionally fired" do
       before { expect(subject.fire_if_ready).to be_true }
-      it_behaves_like "a ready repeating item with count", the_count-1
+      it_behaves_like "an item of unknown readiness with count", the_count-1
     end
     
     context "when unconditionally fired" do
       before { expect(subject.fire).to be_true }
-      it_behaves_like "a ready repeating item with count", the_count-1
+      it_behaves_like "an item of unknown readiness with count", the_count-1
+    end
+  end
+end
+
+
+shared_examples "an unready item with count" do |the_count|
+  if !the_count or the_count<=0 
+    it_behaves_like "an exhausted item"
+  else
+    its(:active?)   { should be_true }
+    its(:ready?)    { should be_false }
+    its(:count)     { should eq the_count }
+    
+    it "refuses to be conditionally fired" do
+      expect(subject.fire_if_ready).to be_false
+      
+      expect(subject.active?)  .to be_true
+      expect(subject.ready?)   .to be_false
+      expect(subject.count)    .to eq the_count
+    end
+    
+    context "when unconditionally fired" do
+      before { expect(subject.fire).to be_true }
+      it_behaves_like "an unready item with count", the_count-1
+    end
+    
+    context "after", :sufficient_time=>:has_passed do
+      it_behaves_like "a ready item with count", the_count
     end
   end
 end
@@ -137,18 +145,14 @@ describe Wires::TimeSchedulerItem do
     let(:time)   { Time.now - 5 }
     
     it_behaves_like "an item that internalized its args correctly"
-    it_behaves_like "a ready item with a count of 1"
+    it_behaves_like "a ready item with count", 1
   end
   
   describe "an item scheduled for the future" do
     let(:time)   { Time.now + 5 }
     
     it_behaves_like "an item that internalized its args correctly"
-    it_behaves_like "an unready item with a count of 1"
-    
-    context "after", 5, :seconds=>:have_passed do
-      it_behaves_like "a ready item with a count of 1"
-    end
+    it_behaves_like "an unready item with count", 1
   end
   
   describe "an item scheduled for the past with ignore_past:true" do
@@ -164,7 +168,7 @@ describe Wires::TimeSchedulerItem do
     let(:kwargs) { {active:false} }
     
     it_behaves_like "an item that internalized its args correctly"
-    it_behaves_like "a disabled item with a count of 1"
+    it_behaves_like "a disabled item with count", 1
   end
   
   describe "scheduled for the future, with active:false" do
@@ -172,26 +176,39 @@ describe Wires::TimeSchedulerItem do
     let(:kwargs) { {active:false} }
     
     it_behaves_like "an item that internalized its args correctly"
-    it_behaves_like "a disabled item with a count of 1"
+    it_behaves_like "a disabled item with count", 1
   end
   
   describe "scheduled for the past, with count:3" do
     let(:time)   { Time.now - 5 }
     let(:kwargs) { {count:3} }
     
-    it_behaves_like "a ready repeating item with count", 3
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a ready item with count", 3
   end
   
+  describe "scheduled for the future, with count:3" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:3} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "an unready item with count", 3
+  end
   
-  # it "can hold a repeating event" do
-  #   time = Time.now
-  #   count = 25
-  #   interval = 1.seconds
-  #   item = Wires::TimeSchedulerItem.new(time, :event, 
-  #                                       count:count, interval:interval)
-  #   item.active? .must_equal true
-  #   item.count   .must_equal count
-  #   item.interval.must_equal interval
-  # end
+  describe "scheduled for the past, with count:3, active:false" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:3, active:false} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a disabled item with count", 3
+  end
+  
+  describe "scheduled for the future, with count:3, active:false" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:3, active:false} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a disabled item with count", 3
+  end
   
 end
