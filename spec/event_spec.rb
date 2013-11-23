@@ -4,55 +4,34 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Event do
+describe Wires::Event, iso:true do
   
   context "without arguments" do
-    its(:args)      { should eq []  }
-    its(:kwargs)    { should eq({}) }
-    its(:codeblock) { should_not be }
-    
-    its([:args])      { should_not be }
-    its([:kwargs])    { should_not be }
-    its([:codeblock]) { should_not be }
+    specify { expect(subject).to eq :*[] }
   end
   
   context "with arguments" do
-    subject{ Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
-    
-    its(:args)      { should eq [1, 2, 3] }
-    its(:kwargs)    { should eq a:4, b:5  }
-    its(:codeblock) { should eq :proc.to_proc }
-    
-    its([:args])      { should_not be }
-    its([:kwargs])    { should_not be }
-    its([:codeblock]) { should_not be }
-    
-    its([:a])    { should eq 4 }
-    its([:b])    { should eq 5 }
-    
-    its(:a)      { should eq 4 }
-    its(:b)      { should eq 5 }
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
+    specify { 
+      expect(subject).to eq :*[1, 2, 3, a:4, b:5, &:proc] }
   end
     
   context "with :args keyword argument" do
-    subject{ Wires::Event.new 1,2,3, args:[5,6,7] }
-    
-    its(:args)        { should eq [1, 2, 3] }
-    its([:args])      { should eq [5, 6, 7] }
+    subject { Wires::Event.new 1,2,3, args:[5,6,7] }
+    specify { 
+      expect(subject).to eq :*[1,2,3, args:[5,6,7]] }
   end
     
   context "with :kwargs keyword argument" do
-    subject{ Wires::Event.new a:1,b:2, kwargs:{a:4,b:5} }
-    
-    its(:kwargs)      { should eq a:1, b:2, kwargs:{a:4,b:5} }
-    its([:kwargs])    { should eq({a:4,b:5}) }
+    subject { Wires::Event.new a:1,b:2, kwargs:{a:4,b:5} }
+    specify { 
+      expect(subject).to eq :*[a:1,b:2, kwargs:{a:4,b:5}] }
   end
   
   context "with :codeblock keyword argument" do
-    subject{ Wires::Event.new codeblock:[:anything], &:proc }
-    
-    its(:codeblock)   { should eq :proc.to_proc }
-    its([:codeblock]) { should eq [:anything] }
+    subject { Wires::Event.new codeblock: :anything, &:proc }
+    specify { 
+      expect(subject).to eq :*[codeblock: :anything, &:proc] }
   end
   
   

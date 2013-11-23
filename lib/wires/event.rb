@@ -16,8 +16,12 @@ module Wires
     
     # Internalize all *args and **kwargs and &block to be accessed later
     def initialize(*args, **kwargs, &block)
-      @type = kwargs[:type]
-      kwargs.delete :type if @type
+      if kwargs.has_key? :type
+        @type = kwargs[:type]
+        kwargs.delete  :type
+      else
+        @type = :*
+      end
       
       @args      = args
       @kwargs    = kwargs
@@ -30,6 +34,17 @@ module Wires
     
     # Directly access contents of @kwargs by key
     def [](key); @kwargs[key]; end
+    
+    # Returns true if all meaningful components of two events are equal
+    # Use #equal? instead if you want object identity comparison
+    def ==(other)
+      (other.is_a? Event) ? 
+        ((self.type      == other.type)   and
+         (self.args      == other.args)   and
+         (self.kwargs    == other.kwargs) and
+         (self.codeblock == other.codeblock)) :
+        super
+    end
     
     # Returns true if listening for 'self' would hear a firing of 'other'
     # (not commutative)
