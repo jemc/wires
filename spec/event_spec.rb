@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Event, iso:true do
+describe Wires::Event do
   
   context "without arguments" do
     specify { expect(subject).to eq :*[] }
@@ -14,6 +14,12 @@ describe Wires::Event, iso:true do
     subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
     specify { 
       expect(subject).to eq :*[1, 2, 3, a:4, b:5, &:proc] }
+  end
+  
+  context "with :type keyword argument" do
+    subject { Wires::Event.new    1, 2, 3, a:4, b:5, type: :test, &:proc }
+    specify { 
+      expect(subject).to eq :test[1, 2, 3, a:4, b:5, &:proc] }
   end
     
   context "with :args keyword argument" do

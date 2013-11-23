@@ -39,6 +39,27 @@ describe "wires/core_ext/Symbol#[]" do
     its(:a)      { should eq 4 }
     its(:b)      { should eq 5 }
   end
+  
+  context "with :type keyword argument" do
+    subject { :some_event[1, 2, 3, a:4, b:5, type: :test, &:proc] }
+    
+    its(:class)     { should eq Wires::Event }
+    its(:type)      { should eq :some_event  }
+    
+    its(:args)      { should eq [1, 2, 3] }
+    its(:kwargs)    { should eq a:4, b:5  }
+    its(:codeblock) { should eq :proc.to_proc }
+    
+    its([:args])      { should_not be }
+    its([:kwargs])    { should_not be }
+    its([:codeblock]) { should_not be }
+    
+    its([:a])    { should eq 4 }
+    its([:b])    { should eq 5 }
+    
+    its(:a)      { should eq 4 }
+    its(:b)      { should eq 5 }
+  end
     
   context "with :args keyword argument" do
     subject { :some_event[1,2,3, args:[5,6,7]] }
