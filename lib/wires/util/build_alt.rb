@@ -8,7 +8,7 @@ module Wires
     # >> module MyModule; end
     # >> Wires::Util.build_alt "::MyModule::MyWires"
     def self.build_alt(module_path)
-      main_file = File.expand_path("../clean.rb", File.dirname(__FILE__))
+      main_file = File.expand_path("../base.rb", File.dirname(__FILE__))
       
       File.read(main_file)
         .scan(/require_relative[\s\(]+(["'])(.*)\1/)
