@@ -1,10 +1,19 @@
 
+# Add implicit conversion of symbol into an event
+class Symbol
+  def [](*args, **kwargs, &block)
+    Wires::Event.new(*args, **kwargs, type:self, &block)
+  end
+end
+
+
 # Add Time#fire for timed firing of events
 ::Time.class_eval <<-CODE
   def fire(event, channel='*', **kwargs)
     #{Wires::TimeScheduler}.add(self, event, channel, **kwargs)
   end
 CODE
+
 
 # Add Numeric => Numeric time-factor converters
 {
@@ -22,6 +31,7 @@ CODE
     alias #{k.first.inspect} #{k.last.inspect}
   CODE
 end
+
 
 # Add Numeric => Time converters with implicit anonymous fire
 {

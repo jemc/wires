@@ -2,8 +2,22 @@
 require 'wires'
 
 
+describe "wires/core_ext/Symbol#[]", iso:true do
+  
+  describe "without arguments" do
+    subject { :some_event[] }
+    its(:class)     { should eq Wires::Event }
+    its(:type)      { should eq :some_event  }
+    its(:args)      { should eq []           }
+    its(:kwargs)    { should eq({})          }
+    its(:codeblock) { should eq nil          }
+  end
+  
+end
+
+
 # Time objects get extended to call TimeScheduler.add
-describe "wires/core_ext::Time" do
+describe "wires/core_ext/Time" do
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   let(:chan) { Object.new.tap{|x| x.extend Wires::Convenience} }
   
@@ -41,7 +55,7 @@ end
 
 
 # Duration objects help with syntax sugar and can fire anonymous event blocks
-describe "wires/core_ext::Numeric" do
+describe "wires/core_ext/Numeric" do
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
   it "can convert between basic measures of time" do
