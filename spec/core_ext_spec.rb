@@ -1,52 +1,40 @@
-$LOAD_PATH.unshift(File.expand_path("../lib", File.dirname(__FILE__)))
+
 require 'wires'
-include Wires::Convenience
-
-require 'wires/test'
-begin require 'jemc/reporter'; rescue LoadError; end
-
-
-# Module to ease testing of Time events
-module TimeTester
-  def teardown
-    Wires::Hub.join_children
-    Wires::TimeScheduler.clear
-  end
-end
 
 
 # Time objects get extended to call TimeScheduler.add
 describe "wires/core_ext::Time" do
-  include TimeTester
+  after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
+  let(:chan) { Object.new.tap{|x| x.extend Wires::Convenience} }
   
   it "can now fire events at a specific time" do
     var = 'before'
-    on :event, self do var='after' end
-    0.1.seconds.from_now.fire :event, self
+    chan.on :event do var='after' end
+    0.1.seconds.from_now.fire :event, chan
     sleep 0.05
-    var.must_equal 'before'
+    expect(var).to eq 'before'
     sleep 0.15
-    var.must_equal 'after'
+    expect(var).to eq 'after'
   end
   
   it "will immediately fire events aimed at a time in the past" do
     var = 'before'
-    on :event, self do var='after' end
-    0.1.seconds.ago.fire :event, self
+    chan.on :event do var='after' end
+    0.1.seconds.ago.fire :event, chan
     sleep 0.05
-    var.must_equal 'after'
+    expect(var).to eq 'after'
     sleep 0.15
-    var.must_equal 'after'
+    expect(var).to eq 'after'
   end
   
   it "can be told not to fire events aimed at a time in the past" do
     var = 'before'
-    on :event, self do var='after' end
-    0.1.seconds.ago.fire :event, self, ignore_past:true
+    chan.on :event do var='after' end
+    0.1.seconds.ago.fire :event, chan, ignore_past:true
     sleep 0.05
-    var.must_equal 'before'
+    expect(var).to eq 'before'
     sleep 0.15
-    var.must_equal 'before'
+    expect(var).to eq 'before'
   end
   
 end
@@ -54,7 +42,7 @@ end
 
 # Duration objects help with syntax sugar and can fire anonymous event blocks
 describe "wires/core_ext::Numeric" do
-  include TimeTester
+  after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
   it "can convert between basic measures of time" do
     {
@@ -65,8 +53,8 @@ describe "wires/core_ext::Numeric" do
       [:week,       :weeks]      => '7.days',
       [:fortnight,  :fortnights] => '2.weeks',
     }.each_pair do |k,v|
-      1.send(k.first).must_equal eval(v)
-      1.send(k.last) .must_equal eval(v)
+      expect(1.send(k.first)).to eq eval(v)
+      expect(1.send(k.last) ).to eq eval(v)
     end
   end
   
@@ -84,7 +72,7 @@ describe "wires/core_ext::Numeric" do
       
       t2 = 1.send(num_meth).from_now(t)
       times[0...i].each do |_, time_meth|
-        t.send(time_meth).must_equal t2.send(time_meth), "#{time_meth}: #{[t,t2]}"
+        expect(t.send(time_meth)).to eq t2.send(time_meth)
       end
     end
   end
@@ -95,9 +83,9 @@ describe "wires/core_ext::Numeric" do
       var = 'after'
     end
     sleep 0.05
-    var.must_equal 'before'
+    expect(var).to eq 'before'
     sleep 0.15
-    var.must_equal 'after'
+    expect(var).to eq 'after'
   end
   
   it "can now fire anonymous events at at time related to another time" do
@@ -106,9 +94,9 @@ describe "wires/core_ext::Numeric" do
       var = 'after'
     end
     sleep 0.05
-    var.must_equal 'before'
+    expect(var).to eq 'before'
     sleep 0.15
-    var.must_equal 'after'
+    expect(var).to eq 'after'
     
   end
   
@@ -120,14 +108,14 @@ describe "wires/core_ext::Numeric" do
     for i in 0...fire_count
       (i*0.01+0.1).seconds.from_now do |event|
         done_count += 1
-        past_events.wont_include event
+        expect(past_events).not_to include event
         past_events << event
       end
     end
     
     sleep (fire_count*0.01+0.2)
     
-    done_count.must_equal fire_count
+    expect(done_count).to eq fire_count
   end
   
 end
