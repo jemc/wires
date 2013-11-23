@@ -7,7 +7,7 @@ gemname = 'wires'
 task :default => :spec
 
 RSpec::Core::RakeTask.new :spec do |c|
-  c.pattern = 'spec/**/*.spec'
+  c.pattern = 'spec/**/*.spec.rb'
 end
 
 
