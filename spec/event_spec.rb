@@ -40,6 +40,10 @@ describe Wires::Event do
       expect(subject).to eq :*[codeblock: :anything, &:proc] }
   end
   
+  describe "#to_wires_event" do
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
+    its(:to_wires_event) { should equal subject }
+  end
   
   describe ".new_from" do
     specify "when given one or several existing instances,"\

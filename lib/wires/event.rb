@@ -9,9 +9,11 @@ module Wires
     
     # Return a friendly output upon inspection
     def inspect
-      list = [*args, **kwargs].map(&:inspect).join ', '
+      list = [*args, **kwargs]
+      list << codeblock.to_s if codeblock
+      list = list.map(&:inspect).join ', '
       the_type = type ? type.inspect : ''
-      "#{self.class}#{the_type}:#{object_id}(#{list})"
+      "#{the_type}:[#{list}]"
     end
     
     # Internalize all *args and **kwargs and &block to be accessed later
@@ -32,13 +34,16 @@ module Wires
         .each  { |m| singleton_class.send(:define_method, m) { @kwargs[m] } }
     end
     
+    # Convert to a Wires::Event; returns self, unaltered
+    def to_wires_event; self; end
+    
     # Directly access contents of @kwargs by key
     def [](key); @kwargs[key]; end
     
     # Returns true if all meaningful components of two events are equal
     # Use #equal? instead if you want object identity comparison
     def ==(other)
-      (other.is_a? Event) ? 
+      (other = other.to_wires_event if other.respond_to? :to_wires_event) ? 
         ((self.type      == other.type)   and
          (self.args      == other.args)   and
          (self.kwargs    == other.kwargs) and
