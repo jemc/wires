@@ -1,6 +1,6 @@
 
 # Add implicit conversion of symbol into an event
-class Symbol
+class ::Symbol
   # Create a Wires::Event from any symbol with a payload of arguments
   def [](*args, **kwargs, &block)
     Wires::Event.new(*args, **kwargs, type:self, &block)
