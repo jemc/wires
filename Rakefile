@@ -2,18 +2,14 @@ require 'rake/testtask'
 require 'rdoc/task'
 require 'rspec/core/rake_task'
 
-RSpec::Core::RakeTask.new(:spec)
+gemname = 'wires'
 
 task :default => :spec
 
-gemname = 'wires'
-
-# task :default => [:test]
-
-# Run tests
-Rake::TestTask.new :test do |t|
-    t.test_files = Dir['old-spec/*.rb']
+RSpec::Core::RakeTask.new :spec do |c|
+  c.pattern = 'spec/**/*.spec'
 end
+
 
 # Generate documentation.
 RDoc::Task.new :doc do |rd|

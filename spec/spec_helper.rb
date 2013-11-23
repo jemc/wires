@@ -13,8 +13,12 @@ RSpec.configure do |c|
     
     # Abort after first failure
     c.fail_fast = true
-    
   end
+  
+  # Set output formatter and enable color
+  c.formatter = 'Fivemat'
+  c.color     = true
+  
 end
 
 
