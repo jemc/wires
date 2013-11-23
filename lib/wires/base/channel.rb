@@ -39,7 +39,7 @@ module Wires
     def register(*events, &proc)
       raise ArgumentError, "No callable given to execute on event: #{events}" \
         unless proc.respond_to? :call
-      events = Event.new_from(*events)
+      events = Event.list_from *events
       
       @@aim_lock.synchronize do
         @handlers << [events, proc] \
@@ -68,7 +68,7 @@ module Wires
       
       backtrace = caller
       
-      event = Event.new_from(input)
+      event = Event.list_from input
       
       case event.count
       when 0

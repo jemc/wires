@@ -19,8 +19,8 @@ describe Wires::Channel do
                 '*',         Object.new, Hash.new]}
   let(:event_patterns) { [
                 :dog, :*, Wires::Event.new, 
-                {dog:[55]}, {dog:[55,66]}, 
-                {dog:[arg1:32]}, {dog:[55,arg1:32]},
+                :dog[55], :dog[55,66], 
+                :dog[arg1:32], :dog[55,arg1:32],
                 [:dog,:wolf,:hound,:mutt] ] }
   
   # Convenience function for creating a set of channels by names
@@ -162,8 +162,8 @@ describe Wires::Channel do
       event_patterns.reject{|e| e.is_a? Array}.each do |e|
         subject.fire e, blocking:true
         expect(received).to match_array (event_patterns.select { |e2| 
-          a = Wires::Event.new_from(e2)
-          b = Wires::Event.new_from(e)
+          a = Wires::Event.list_from(e2)
+          b = Wires::Event.list_from(e)
           a.map{|x| x=~b.first}.any?
         })
         received.clear

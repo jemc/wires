@@ -15,7 +15,7 @@ module Wires
       
       time ||= Time.now
       
-      @events   = Event.new_from(events)
+      @events   = Event.list_from(events)
       @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
       
       tempcount = count

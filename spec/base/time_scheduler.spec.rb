@@ -93,7 +93,7 @@ describe Wires::TimeScheduler do
     count = 0
     
     e = []
-    3.times do |i| e << Wires::Event.new_from([:event, index:i]) end
+    3.times do |i| e << Wires::Event.list_from(:event[index:i]) end
     
     subject << [Time.now+300, e[0], chan_name]
     subject << [Time.now+100, e[1], chan_name]

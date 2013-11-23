@@ -183,11 +183,11 @@ describe Wires::Hub do
       chan_name.on :event do |e|
         expect(count).to eq e.i
         count += 1
-        chan_name.fire [event:[i:e.i+1]] unless count >= 10
+        chan_name.fire :event[i:e.i+1] unless count >= 10
         sleep 0.02 until count >= 10
       end
       
-      chan_name.fire [event:[i:0]]
+      chan_name.fire :event[i:0]
       subject.join_children
       expect(count).to eq 10
     end

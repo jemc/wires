@@ -121,7 +121,7 @@ end
 
 shared_examples "an item that internalized its args correctly" do
   its(:time)        { should eq time }
-  its(:events)      { should eq Wires::Event.new_from(events) }
+  its(:events)      { should eq Wires::Event.list_from(events) }
   its(:channel)     { should eq Wires::Channel[chan_name] }
   its(:interval)    { should eq (kwargs[:interval] or 0) }
   its(:jitter)      { should eq (kwargs[:jitter]   or 0) }

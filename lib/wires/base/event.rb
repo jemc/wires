@@ -54,30 +54,16 @@ module Wires
     # Returns true if listening for 'self' would hear a firing of 'other'
     # (not commutative)
     def =~(other)
-      (other.is_a? Event) ? 
+      (other = other.to_wires_event if other.respond_to? :to_wires_event) ? 
         (([:*, other.type].include? self.type) and 
          (not self.kwargs.each_pair.detect{|k,v| other.kwargs[k]!=v}) and
          (not self.args.each_with_index.detect{|a,i| other.args[i]!=a})) :
         super
     end
     
-    # Return an array of Event instance objects generated from
-    # specially formatted input (see spec/event_spec.rb).
-    def self.new_from(*args)
-      args.flatten.each_with_object([]) do |x, list|
-        (x.is_a? Hash) ? 
-          (x.each_pair { |x,y| list << [x,y] }) :
-          (list << [x,[]])
-      end.map do |the_type, obj_args|
-        case the_type
-        when Event;  the_type
-        when Symbol; self.new(*obj_args).tap{|e| e.type=the_type}
-        end
-      end.tap do |x|
-        raise ArgumentError, 
-        "Invalid event creation input: #{args} \noutput: #{x}" \
-          if x.empty? or !x.all?
-      end
+    # Return an array of Event instance objects from the input
+    def self.list_from(*args)
+      args.flatten.map &:to_wires_event
     end
     
   end
