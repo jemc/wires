@@ -4,6 +4,8 @@ module Wires
     
     class Default
       class << self
+        # Refuse to instantiate; it's a singleton!
+        private :new
         
         def clear_channels()
           @table       = {}
@@ -41,6 +43,8 @@ module Wires
     
     class Simple
       class << self
+        # Refuse to instantiate; it's a singleton!
+        private :new
         
         def clear_channels()
           @table = {}

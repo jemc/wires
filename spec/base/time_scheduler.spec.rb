@@ -1,14 +1,17 @@
 
 require 'wires'
 
-require 'spec_helper'
-
 
 describe Wires::TimeScheduler do
   subject { Wires::TimeScheduler }
   after { Wires::Hub.join_children; subject.clear }
   
   let(:chan_name) { Object.new.tap { |x| x.extend Wires::Convenience } }
+  
+  
+  it "is a singleton", iso:true do
+    expect{ subject.new }.to raise_error NoMethodError
+  end
   
   it "can accept an existing TimeSchedulerItem with .add" do
     item = Wires::TimeSchedulerItem.new(Time.now+500, :event, chan_name,

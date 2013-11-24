@@ -5,6 +5,9 @@ module Wires
   class self::Hub
     class << self
       
+      # Refuse to instantiate; it's a singleton!
+      private :new
+      
       # Allow user to get/set limit to number of child threads
       attr_accessor :max_children
       

@@ -1,13 +1,15 @@
 
 require 'wires'
 
-require 'spec_helper'
-
 
 describe Wires::Hub do
   subject { Wires::Hub }
   
-  describe "neglecting to spawn ne threads" do
+  it "is a singleton" do
+    expect{ subject.new }.to raise_error NoMethodError
+  end
+  
+  describe "neglecting to spawn new threads" do
     
     # Capture stderr to suppress the expected warning messages
     before { $stderr_save, $stderr = $stderr, ::StringIO.new }

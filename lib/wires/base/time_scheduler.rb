@@ -10,6 +10,9 @@ module Wires
     
     class << self
       
+      # Refuse to instantiate; it's a singleton!
+      private :new
+      
       # Add an event to the schedule
       def add(*args)
         new_item = args.first
