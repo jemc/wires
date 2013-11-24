@@ -1,3 +1,4 @@
+
 Gem::Specification.new do |s|
   s.name          = 'wires'
   s.version       = '0.4.3'
@@ -18,7 +19,11 @@ Gem::Specification.new do |s|
   
   s.add_dependency('threadlock', '~> 1.2')
   
-  s.add_development_dependency('rake')
-  s.add_development_dependency('wires-test')
-  s.add_development_dependency('fivemat')
+  s.add_development_dependency 'rake'
+  s.add_development_dependency 'rdoc'
+  s.add_development_dependency 'pry'
+  s.add_development_dependency 'pry-rescue'
+  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'fivemat'
+  s.add_development_dependency 'timecop'
 end
