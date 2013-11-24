@@ -127,7 +127,13 @@ end
 
 
 shared_examples "an item that internalized its args correctly" do
-  its(:time)        { should eq time }
+  its(:time) do
+    if time < Time.now and kwargs[:ignore_past]
+      should eq time+((kwargs[:count]||1)-subject.count)*subject.interval
+    else
+      should eq time
+    end
+  end
   its(:events)      { should eq Wires::Event.list_from(events) }
   its(:channel)     { should eq Wires::Channel[chan_name] }
   its(:interval)    { should eq (kwargs[:interval] or 0) }
@@ -230,6 +236,22 @@ describe Wires::TimeSchedulerItem, iso:true do
   describe "scheduled for the future, with count:3, interval:2" do
     let(:time)   { Time.now + 5 }
     let(:kwargs) { {count:3, interval:2} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the past, with count:3, interval:2, ignore_past:true" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:3, interval:2, ignore_past:true} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the future, with count:3, interval:2, ignore_past:true" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:3, interval:2, ignore_past:true} }
     
     it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a repeating item with non-zero interval"
