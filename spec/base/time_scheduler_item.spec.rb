@@ -1,4 +1,7 @@
 
+require 'wires'
+
+require 'spec_helper'
 require 'timecop'
 
 

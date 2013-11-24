@@ -1,6 +1,8 @@
 
 require 'wires'
 
+require 'spec_helper'
+
 
 describe Wires::TimeScheduler do
   subject { Wires::TimeScheduler }

@@ -1,6 +1,8 @@
 
 require 'wires'
 
+require 'spec_helper'
+
 
 module UserModule
   $the_altwires_module = ::Wires::Util.build_alt "::#{self}::AltWires"
