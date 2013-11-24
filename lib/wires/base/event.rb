@@ -9,11 +9,11 @@ module Wires
     
     # Return a friendly output upon inspection
     def inspect
-      list = [*args, **kwargs]
+      list = kwargs.empty? ? [*args] : [*args, **kwargs]
       list << codeblock.to_s if codeblock
       list = list.map(&:inspect).join ', '
       the_type = type ? type.inspect : ''
-      "#{the_type}:[#{list}]"
+      "#{the_type}[#{list}]"
     end
     
     # Internalize all *args and **kwargs and &block to be accessed later
