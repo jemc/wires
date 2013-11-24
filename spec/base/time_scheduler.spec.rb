@@ -9,7 +9,7 @@ describe Wires::TimeScheduler do
   let(:chan_name) { Object.new.tap { |x| x.extend Wires::Convenience } }
   
   
-  it "is a singleton", iso:true do
+  it "is a singleton" do
     expect{ subject.new }.to raise_error NoMethodError
   end
   
