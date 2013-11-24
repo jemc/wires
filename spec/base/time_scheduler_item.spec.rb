@@ -1,18 +1,12 @@
 
 require 'timecop'
 
-
-shared_context "seconds have passed", :seconds=>:have_passed do |ex|
-  let(:time_difference_in_seconds) { 
-    ex.metadata[:example_group][:description_args].last }
-  before { time; subject; Timecop.travel Time.now+time_difference_in_seconds }
-  after  { Timecop.return }
-end
+require 'pry-rescue/rspec'
 
 
-shared_context "sufficient time has passed", :sufficient_time=>:has_passed do
-  before { Timecop.travel subject.time }
-  after  { Timecop.return }
+shared_context "after sufficient time has passed", 
+               :sufficient_time=>:has_passed do
+  before { subject; Timecop.travel subject.time }
 end
 
 
@@ -119,6 +113,19 @@ shared_examples "an unready item with count" do |the_count|
 end
 
 
+shared_examples "a repeating item with non-zero interval" do
+  specify "firability over time" do
+    Timecop.travel subject.time
+    subject.count.times do
+      expect(subject.fire_if_ready).to be
+      expect(subject.fire_if_ready).not_to be
+      Timecop.travel Time.now+subject.interval
+    end
+    expect(subject.fire_if_ready).not_to be
+  end
+end
+
+
 shared_examples "an item that internalized its args correctly" do
   its(:time)        { should eq time }
   its(:events)      { should eq Wires::Event.list_from(events) }
@@ -129,7 +136,8 @@ shared_examples "an item that internalized its args correctly" do
 end
 
 
-describe Wires::TimeSchedulerItem do
+describe Wires::TimeSchedulerItem, iso:true do
+  around { |example| subject; Timecop.freeze { example.run } }
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
   let(:events)      { Wires::Event.new }
@@ -211,4 +219,19 @@ describe Wires::TimeSchedulerItem do
     it_behaves_like "a disabled item with count", 3
   end
   
+  describe "scheduled for the past, with count:3, interval:2" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:3, interval:2} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the future, with count:3, interval:2" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:3, interval:2} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
 end

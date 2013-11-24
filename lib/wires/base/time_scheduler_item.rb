@@ -18,23 +18,20 @@ module Wires
       @events   = Event.list_from(events)
       @channel  = channel.is_a?(Channel) ? channel : Channel.new(channel)
       
-      tempcount = count
       @interval = interval
       @jitter   = jitter
       
       @active   = active
       @fire_kwargs   = fire_kwargs
       
-      while (time < Time.now) and (tempcount > 0)
-        time += interval
-        tempcount -= 1
+      tempcount = count
+      if ignore_past
+        while (time < Time.now) and (tempcount > 0)
+          time += interval
+          tempcount -= 1
+        end
       end
-      if not ignore_past
-        time -= interval
-        self.count = count
-      else
-        self.count = tempcount
-      end
+      self.count = tempcount
       
       @time     = time
 
@@ -66,7 +63,7 @@ module Wires
     def fire(**kwargs) # kwargs merge with and override @kwargs
       @channel.fire(@events, **(@fire_kwargs.merge kwargs))
       count_dec
-      @time += @interval if @active
+      @time = [@time, Time.now].max + @interval if @active
       notify_schedulers
     true end
     
