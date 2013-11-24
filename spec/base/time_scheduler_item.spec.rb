@@ -1,8 +1,6 @@
 
 require 'timecop'
 
-require 'pry-rescue/rspec'
-
 
 shared_context "after sufficient time has passed", 
                :sufficient_time=>:has_passed do
@@ -156,7 +154,7 @@ shared_examples "an item that internalized its args correctly" do
 end
 
 
-describe Wires::TimeSchedulerItem, iso:true do
+describe Wires::TimeSchedulerItem do
   around { |example| Timecop.freeze { subject; example.run } }
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
