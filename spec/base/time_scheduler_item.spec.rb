@@ -6,7 +6,7 @@ require 'pry-rescue/rspec'
 
 shared_context "after sufficient time has passed", 
                :sufficient_time=>:has_passed do
-  before { subject; Timecop.travel subject.time }
+  before { subject; Timecop.freeze subject.time }
 end
 
 
@@ -115,11 +115,25 @@ end
 
 shared_examples "a repeating item with non-zero interval" do
   specify "firability over time" do
-    Timecop.travel subject.time
-    subject.count.times do
+    Timecop.freeze subject.time
+    
+    the_count = subject.count
+    
+    the_count.times do |i|
+      expect(subject.time).to eq Time.now
       expect(subject.fire_if_ready).to be
       expect(subject.fire_if_ready).not_to be
-      Timecop.travel Time.now+subject.interval
+      
+      break if i == the_count-1
+      
+      expected_time = Time.now+subject.interval
+      if subject.jitter == 0
+        expect(subject.time).to eq expected_time
+      else
+        expect(subject.time).not_to eq expected_time
+        expect((expected_time-subject.time).abs).to be <= subject.jitter
+      end
+      Timecop.freeze subject.time
     end
     expect(subject.fire_if_ready).not_to be
   end
@@ -143,7 +157,7 @@ end
 
 
 describe Wires::TimeSchedulerItem, iso:true do
-  around { |example| subject; Timecop.freeze { example.run } }
+  around { |example| Timecop.freeze { subject; example.run } }
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   
   let(:events)      { Wires::Event.new }
@@ -252,6 +266,38 @@ describe Wires::TimeSchedulerItem, iso:true do
   describe "scheduled for the future, with count:3, interval:2, ignore_past:true" do
     let(:time)   { Time.now + 5 }
     let(:kwargs) { {count:3, interval:2, ignore_past:true} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the past, with count:33, interval:4, jitter:3" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:33, interval:4, jitter:3} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the future, with count:33, interval:4, jitter:3" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:33, interval:4, jitter:3} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the past, with count:33, interval:4, jitter:3, ignore_past:true" do
+    let(:time)   { Time.now - 5 }
+    let(:kwargs) { {count:33, interval:4, jitter:3, ignore_past:true} }
+    
+    it_behaves_like "an item that internalized its args correctly"
+    it_behaves_like "a repeating item with non-zero interval"
+  end
+  
+  describe "scheduled for the future, with count:33, interval:4, jitter:3, ignore_past:true" do
+    let(:time)   { Time.now + 5 }
+    let(:kwargs) { {count:33, interval:4, jitter:3, ignore_past:true} }
     
     it_behaves_like "an item that internalized its args correctly"
     it_behaves_like "a repeating item with non-zero interval"

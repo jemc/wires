@@ -63,7 +63,10 @@ module Wires
     def fire(**kwargs) # kwargs merge with and override @kwargs
       @channel.fire(@events, **(@fire_kwargs.merge kwargs))
       count_dec
-      @time = [@time, Time.now].max + @interval if @active
+      
+      if @active
+        @time = [@time, Time.now].max + (@interval + (Random.rand*2-1)*@jitter)
+      end
       notify_schedulers
     true end
     
