@@ -65,7 +65,7 @@ describe Wires::Channel do
   end
   
   
-  describe "#register" do
+  describe "#register", iso:true do
     its(:handlers) { subject.register event, &a_proc
                      should include [[event], a_proc] }
     
@@ -74,6 +74,34 @@ describe Wires::Channel do
     
     it "returns the registered proc" do
       expect(subject.register(event, &a_proc)).to eq a_proc
+    end
+    
+    it "attaches an #unregister method to the returned proc" do
+      return_val = subject.register(event, &a_proc)
+      
+      expect(return_val.unregister).to eq [subject]
+      expect{return_val.unregister}.to raise_error NoMethodError
+      expect(subject.handlers).to eq []
+    end
+    
+    it "attaches an #unregister method that works for "\
+       "all Channels with that proc registered within" do
+      chan1 = Wires::Channel[Object.new]
+      chan2 = Wires::Channel[Object.new]
+      
+      return_val  = subject.register(event, &a_proc)
+      return_val1 = chan1.register(event, &a_proc)
+      return_val2 = chan2.register(event, &a_proc)
+      
+      expect(return_val1).to eq return_val
+      expect(return_val2).to eq return_val
+      
+      expect(return_val.unregister).to match_array [subject, chan1, chan2]
+      expect{return_val.unregister}.to raise_error NoMethodError
+      
+      expect(subject.handlers).to eq []
+      expect(chan1.handlers).to eq []
+      expect(chan2.handlers).to eq []
     end
   end
   
@@ -100,7 +128,6 @@ describe Wires::Channel do
       expect(subject.unregister(a_proc)).to eq false
       subject.register event, &a_proc
       expect(subject.unregister(a_proc)).to eq true
-      expect(subject.unregister(a_proc)).to eq false
     end
   end
   

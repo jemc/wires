@@ -46,6 +46,22 @@ module Wires
           unless @handlers.include? [events, proc]
       end
       
+      # Insert the @registered_channels variable into the proc
+      channels = proc.instance_variable_get(:@registered_channels)
+      if channels
+        channels << self
+      else
+        proc.instance_variable_set(:@registered_channels, [self])
+      end
+      
+      # Insert the #unregister method into the proc
+      proc.singleton_class.send :define_method, :unregister do
+        singleton_class.send :remove_method, :unregister
+        @registered_channels.each do |c|
+          c.unregister self
+        end
+      end unless proc.respond_to? :unregister
+      
       proc
     end
     
