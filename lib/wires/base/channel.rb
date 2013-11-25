@@ -7,7 +7,7 @@ module Wires
     attr_reader :handlers
     attr_accessor :not_firable
     
-    def inspect; "#{self.class}(#{name.inspect})"; end
+    def inspect; "#{self.class}[#{name.inspect}]"; end
     
     @hub    = Hub
     @router = Router::Default
