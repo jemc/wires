@@ -75,25 +75,48 @@ module Wires
       end
     end
     
-    # Fire an event on this channel
-    def fire(input, blocking:false, parallel:!blocking)
+    # Fire an event on this channel.
+    #
+    # Each handler with an event pattern matching the fired event (see 
+    # {Event#=~}) that is {#register}ed on a channel that matches the firing 
+    # channel (see {Channel#=~}) will be executed, and passed the event object
+    # and channel name as arguments.
+    #
+    # This method fires in a nonblocking manner by default, but this behavior 
+    # can be overriden with the +:blocking+ parameter. See {#fire!} for 
+    # blocking default behavior.
+    #
+    # @param [Event, Symbol] input the event to be fired, as an Event or Symbol.
+    #   In this context, a Symbol is treated as an 'empty' Event of that type
+    #   (see to {Symbol#[]}).
+    # @param [Boolean] :blocking when true, the method will wait to return 
+    #   until all handlers have finished their execution.
+    # @param [Boolean] :parallel when true, the handlers will be executed in 
+    #   parallel, if there are more than one; otherwise, they will be executed
+    #   serially (in an undefined order).  Unless otherwise specified, this 
+    #   parameter will be set to the opposite of the value of the :blocking
+    #   parameter; that is, nonblocking firing will by default also be parallel,
+    #   and blocking firing will by default also be sequential.
+    #
+    # @return [Array<Thread>] the array of threads spawned by the method, 
+    #   if any.  This could be useful for manually joining the threads later
+    #   or monitoring their status.
+    #
+    # @raise An exception of the type and message contained in the 
+    #   {#not_firable} attribute if it has been assigned by the active {Router} 
+    #   through the {#not_firable=} accessor.
+    #
+    # @TODO Test the return array in each of the four concurrency cases
+    #
+    def fire(event, blocking: false, parallel: !blocking)
       raise *@not_firable if @not_firable
       
-      return [] << Thread.new { fire(input, blocking:true, parallel:false) } \
+      return [] << Thread.new { fire(event, blocking:true, parallel:false) } \
         if !blocking and !parallel
       
       backtrace = caller
       
-      event = Event.list_from input
-      
-      case event.count
-      when 0
-        raise ArgumentError,"Can't create an event from input: #{input.inspect}"
-      when 1
-        event = event.first
-      else
-        raise ArgumentError,"Can't fire on multiple events: #{event.inspect}"
-      end
+      event = event.to_wires_event
       
       self.class.run_hooks(:@before_fire, event, self.name)
       
@@ -128,7 +151,22 @@ module Wires
       threads
     end
     
-    # Fire a blocking event on this channel
+    # Fire an event on this channel.
+    #
+    # Each handler with an event pattern matching the fired event (see 
+    # {Event#=~}) that is {#register}ed on a channel that matches the firing 
+    # channel (see {Channel#=~}) will be executed, and passed the event object
+    # and channel name as arguments.
+    #
+    # This method fires in a blocking manner by default, but this behavior 
+    # can be overriden with the +:blocking+ parameter. See {#fire!} for 
+    # nonblocking default behavior.
+    #
+    # @param (see Channel#fire)
+    # @return (see Channel#fire)
+    # @raise (see Channel#fire)
+    # @overload fire!(event, blocking: true, parallel: !blocking)
+    #
     def fire!(*args, **kwargs)
       kwargs[:blocking] = true unless kwargs.has_key? :blocking
       fire(*args, **kwargs)

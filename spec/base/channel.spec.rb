@@ -65,7 +65,7 @@ describe Wires::Channel do
   end
   
   
-  describe "#register", iso:true do
+  describe "#register" do
     its(:handlers) { subject.register event, &a_proc
                      should include [[event], a_proc] }
     

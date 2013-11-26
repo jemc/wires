@@ -64,7 +64,7 @@ module Wires
       end
       
       # Spawn a task - user code should never call this directly
-      def spawn(*args) # :args: event, chan, proc, blocking, fire_bt
+      def spawn(*args) # :args: event, chan, proc, blocking, parallel, fire_bt
         
         event, chan, proc, blocking, parallel, fire_bt = *args
         *proc_args = event, chan

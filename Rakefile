@@ -1,26 +1,31 @@
 require 'rake/testtask'
-require 'rdoc/task'
+# require 'rdoc/task'
 require 'rspec/core/rake_task'
 
 gemname = 'wires'
 
-task :default => :spec
+task :default => :doc
 
 RSpec::Core::RakeTask.new :spec do |c|
   c.pattern = 'spec/**/*.spec.rb'
 end
 
 
-# Generate documentation.
-RDoc::Task.new :doc do |rd|
-  rd.template = 'starkfish'
-  rd.rdoc_dir = 'doc'
-  rd.rdoc_files.include 'lib/**/*'
-end
+# # Generate documentation.
+# RDoc::Task.new :doc do |rd|
+#   rd.template = 'starkfish'
+#   rd.rdoc_dir = 'doc'
+#   rd.rdoc_files.include 'lib/**/*'
+# end
 
 # Generate documentation and view.
 task :docv => [:doc] do
-  exec "xdg-open ./doc/Wires/Event.html"
+  exec "xdg-open ./doc/Wires/Channel.html"
+end
+
+# Rebuild gem
+task :doc do 
+  exec "yardoc"
 end
 
 # Rebuild gem
