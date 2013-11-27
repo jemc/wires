@@ -172,8 +172,22 @@ module Wires
       fire(*args, **kwargs)
     end
     
-    # Returns true if listening on 'self' would hear a firing on 'other'
-    # (not commutative)
+    # Determine if one channel matches another.
+    # 
+    # In this context, a match indicates a receiver relationship.
+    # That is, this method tests if +self+ is one of the {#receivers} of 
+    # +other+. For a matching pair of channels, a {#fire}d event on the 
+    # right-hand channel could be received by a relevant event handler on 
+    # the left-hand channel. 
+    #
+    # Note that receiver relationships are entirely dictated by the selected
+    # {.router}. Also note that the operation is not necessarily commutative.
+    # That is, having +a =~ b+ does not guarantee that +b =~ a+.
+    #
+    # @param other [Channel] the channel to which +self+ should be compared.
+    # @return [Boolean] +true+ if +self+ is one of +other+'s {#receivers};
+    #   +false+ otherwise.
+    #
     def =~(other)
       (other.is_a? Channel) ?
         (self.class.router.get_receivers(other).include? self) : 
