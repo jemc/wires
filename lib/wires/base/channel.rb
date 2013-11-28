@@ -103,8 +103,8 @@ module Wires
     #   or monitoring their status.
     #
     # @raise An exception of the type and message contained in the 
-    #   {#not_firable} attribute if it has been assigned by the active {Router} 
-    #   through the {#not_firable=} accessor.
+    #   {#not_firable} attribute if it has been assigned by the active 
+    #   {.router} through the {#not_firable=} accessor.
     #
     # @TODO Test the return array in each of the four concurrency cases
     #
@@ -180,9 +180,15 @@ module Wires
     # right-hand channel could be received by a relevant event handler on 
     # the left-hand channel. 
     #
-    # Note that receiver relationships are entirely dictated by the selected
-    # {.router}. Also note that the operation is not necessarily commutative.
-    # That is, having +a =~ b+ does not guarantee that +b =~ a+.
+    # Note that, depending on the strategy of the {.router}, this operator 
+    # is not necessarily commutative. That is, having +a =~ b+ does not 
+    # guarantee that +b =~ a+.
+    #
+    # @note Channel receiver relationships are entirely dictated by the 
+    #   selected {.router}. Refer to the examples in the documentation for 
+    #   {Router::Default} to learn about the routing patterns of the default
+    #   router, but know that other {Router}s may be substituted as needed
+    #   on a global basis with the {.router=} class-level accessor.
     #
     # @param other [Channel] the channel to which +self+ should be compared.
     # @return [Boolean] +true+ if +self+ is one of +other+'s {#receivers};
@@ -194,6 +200,11 @@ module Wires
         super
     end
     
+    # @return [Array<Channel>] the list of channels whose {#register}ed 
+    #   event handlers would receive a relevant event {#fire}d by this channel.
+    # 
+    # @note (see Channel#=~)
+    #
     def receivers
       self.class.router.get_receivers self
     end
