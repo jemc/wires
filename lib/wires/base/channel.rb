@@ -34,43 +34,95 @@ module Wires
       @handlers = []
     end
     
-    # Register a proc to be triggered by an event on this channel
-    # Return the proc that was passed in
-    def register(*events, &proc)
+    # Register an event handler to be executed when a matching event occurs.
+    #
+    # One or more event patterns should be passed as the arguments.
+    # If an event matching one or more of the given event patterns is 
+    # {#fire}d on a channel that has this channel as one of its {#receivers},
+    # then the handler is executed, and yielded the event object and the {#name} 
+    # of the channel upon which {#fire} was called as arguments.
+    #
+    # @param *events [<Symbol, Event>] the event pattern(s)
+    #   to listen for. If the pattern is a symbol or event with a type and no 
+    #   other arguments, any event with that type will be heard.  If the 
+    #   pattern is an event that has other arguments, each of the arguments 
+    #   and keyword arguments in the pattern must also be present in the
+    #   fired event for it to be heard by the handler, but the fired event may
+    #   also include other arguments that were not declared in the pattern
+    #   and still be heard by the handler (see {Event#=~}).
+    # @param &callable [Proc] the executable code to register as a handler 
+    #   on this channel for the given pattern.
+    #
+    # @return [Proc] the +&callable+ given, which has been extended with an
+    #   +#unregister+ method on the object itself. The injected method takes
+    #   no arguments and will unregister the +&callable+ from every channel
+    #   on which it is {#register}ed. This can be a helpful alternative to 
+    #   calling {#unregister} on the relevant channel(s) by hand.
+    # 
+    # @raise [ArgumentError] if no ampersand-argument or inline block is 
+    #   given as the +&callable+.
+    #
+    def register(*events, &callable)
       raise ArgumentError, "No callable given to execute on event: #{events}" \
-        unless proc.respond_to? :call
+        unless callable.respond_to? :call
       events = Event.list_from *events
       
       @@aim_lock.synchronize do
-        @handlers << [events, proc] \
-          unless @handlers.include? [events, proc]
+        @handlers << [events, callable] \
+          unless @handlers.include? [events, callable]
       end
       
-      # Insert the @registered_channels variable into the proc
-      channels = proc.instance_variable_get(:@registered_channels)
+      # Insert the @registered_channels variable into the callable
+      channels = callable.instance_variable_get(:@registered_channels)
       if channels
         channels << self
       else
-        proc.instance_variable_set(:@registered_channels, [self])
+        callable.instance_variable_set(:@registered_channels, [self])
       end
       
-      # Insert the #unregister method into the proc
-      proc.singleton_class.send :define_method, :unregister do
+      # Insert the #unregister method into the callable
+      callable.singleton_class.send :define_method, :unregister do
         singleton_class.send :remove_method, :unregister
         @registered_channels.each do |c|
           c.unregister self
         end
-      end unless proc.respond_to? :unregister
+      end unless callable.respond_to? :unregister
       
-      proc
+      callable
     end
     
-    # Unregister a proc from the target list of this channel
-    # Return true if at least one matching target was unregistered, else false
-    def unregister(proc)
+    # Unregister an event handler that was defined with #register
+    #
+    # @note It is not necessary to unregister event handlers 'owned' by
+    #   persistent objects, but for short-lived objects, it is critical to
+    #   to do so.  Due to the way that Proc objects (including those 
+    #   generated implicitly from inline blocks) enclose their surrounding 
+    #   scope, the +&callable+ handler will keep alive any objects it encloses,
+    #   and the channel that holds a reference to the +&callable+ will keep it
+    #   alive until it is unregistered.
+    #
+    # @note As an alternative to calling {Channel#unregister}, one may use
+    #   the +#unregister+ method that was injected into the +&callable+ 
+    #   (refer to the return value of {#register})
+    #
+    # @param &callable [Proc] the same callable object that was given to 
+    #   (and returned by) {#register}.
+    #
+    # @return [Boolean] +true+ if the callable was previously {#register}ed 
+    #   (and is now {#unregister}ed); +false+ otherwise.
+    #
+    # @TODO make callable an ampersander and update tests
+    # @TODO implement @handlers as a Hash
+    # @TODO break the GC note out into a dedicated document and link to it
+    # @TODO try to remove all references to this channel object when it
+    #   has no more handlers (and try to determine if this would ever be a 
+    #   bad idea or would cause errant behavior) - possibly implement 
+    #   Channel#forget instead?
+    #
+    def unregister(callable)
       @@aim_lock.synchronize do
-        !!(@handlers.reject! do |stored_events, stored_proc|
-          proc==stored_proc
+        !!(@handlers.reject! do |stored_events, stored_callable|
+          callable==stored_callable
         end)
       end
     end
@@ -210,5 +262,4 @@ module Wires
     end
     
   end
-  
 end
