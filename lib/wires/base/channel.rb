@@ -3,8 +3,21 @@ module Wires
   
   class Channel
     
+    # The unique name of the channel, which can be any kind of hashable object.
+    #
+    # Because it is unique, a reference to the channel may be obtained from 
+    # the class-level method {Channel.[] Channel[]} using only the {#name}.
+    #
     attr_reader :name
+    
     attr_reader :handlers
+    
+    # An array specifying the exception type and string to raise if {#fire} is
+    # called, or +nil+ if it's okay to {#fire} from this channel.
+    #
+    # This is meant to be determined by the {Router} that is selected as the 
+    # current {.router}, and not accessed from any other user code.
+    #
     attr_accessor :not_firable
     
     def inspect; "#{self.class}[#{name.inspect}]"; end
