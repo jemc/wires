@@ -25,23 +25,42 @@ module Wires
     @hub    = Hub
     @router = Router::Default
     @new_lock = Monitor.new
-    @@aim_lock = Mutex.new
+    @@aim_lock = Mutex.new # @api private
     
     # Add hook methods
     extend Util::Hooks
     
     class << self
+      
+      # The currently selected {Hub} for all channels.
+      #
+      # It is the hub's responsibility to execute event handlers.
+      # @api private
+      #
       attr_accessor :hub
+      
+      # The currently selected {Router} for all channels.
+      #
+      # It is the router's responsibility to decide whether to create new 
+      # channel objects or return existing ones when {.[] Channel[]} is called
+      # and to determine which channels should receive {#fire}d events from
+      # a channel (its {#receivers}).
+      #
+      # {Wires} provides two routers: {Router::Default} and {Router::Simple},
+      # but any object that implements the router interface can be selected.
+      #
       attr_accessor :router
       
-      def new(*args)
+      def [](*args)
         channel = @new_lock.synchronize do
           router.get_channel(self, *args) { |name| super(name) }
         end
       end
-      alias_method :[], :new
+      alias_method :new, :[]
     end
     
+    # Assigns the given +name+ as the {#name} of this channel object
+    # @param name [#hash] a hashable object of any type, unique to this channel
     def initialize(name)
       @name = name
       @handlers = []
