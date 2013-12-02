@@ -10,8 +10,6 @@ module Wires
     #
     attr_reader :name
     
-    attr_reader :handlers
-    
     # An array specifying the exception type and string to raise if {#fire} is
     # called, or +nil+ if it's okay to {#fire} from this channel.
     #
@@ -81,7 +79,7 @@ module Wires
     #
     def initialize(name)
       @name = name
-      @handlers = []
+      @handlers = {}
     end
     
     # Register an event handler to be executed when a matching event occurs.
@@ -117,9 +115,12 @@ module Wires
         unless callable.respond_to? :call
       events = Event.list_from *events
       
+      # Register the events under the callable in the @handlers hash
       @@aim_lock.synchronize do
-        @handlers << [events, callable] \
-          unless @handlers.include? [events, callable]
+        ary = (@handlers.has_key?(callable) ?
+                 @handlers[callable]        :
+                 @handlers[callable] = [])
+        events.each { |e| ary << e unless ary.include? e }
       end
       
       # Insert the @registered_channels variable into the callable
@@ -162,7 +163,6 @@ module Wires
     #   (and is now {#unregister}ed); +false+ otherwise.
     #
     # @TODO make callable an ampersander and update tests
-    # @TODO implement @handlers as a Hash
     # @TODO break the GC note out into a dedicated document and link to it
     # @TODO try to remove all references to this channel object when it
     #   has no more handlers (and try to determine if this would ever be a 
@@ -171,10 +171,17 @@ module Wires
     #
     def unregister(callable)
       @@aim_lock.synchronize do
-        !!(@handlers.reject! do |stored_events, stored_callable|
-          callable==stored_callable
-        end)
+        !!(@handlers.delete callable)
       end
+    end
+    
+    # Return the list of {#register}ed handlers for this channel
+    #
+    # @return [Array<Array(Array<Symbol,Event>,Proc)>] an array of arrays, each 
+    #   containing an array of event patterns followed by the associated Proc.
+    #
+    def handlers
+      @handlers.map { |callable, events| [events, callable] }
     end
     
     # Fire an event on this channel.

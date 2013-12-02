@@ -11,6 +11,7 @@ describe Wires::Channel do
   
   # Some common objects to operate with
   let(:event) { Wires::Event.new }
+  let(:event2) { :other_event[] }
   let(:a_proc)  { Proc.new { nil } }
   let(:names) {['channel',   'Channel',  'CHANNEL',
                 :channel,    :Channel,   :CHANNEL,
@@ -69,8 +70,8 @@ describe Wires::Channel do
     its(:handlers) { subject.register event, &a_proc
                      should include [[event], a_proc] }
     
-    its(:handlers) { subject.register event, event, &a_proc
-                     should include [[event, event], a_proc] }
+    its(:handlers) { subject.register event, event2, &a_proc
+                     should include [[event, event2], a_proc] }
     
     it "returns the registered proc" do
       expect(subject.register(event, &a_proc)).to eq a_proc
