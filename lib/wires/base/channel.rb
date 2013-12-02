@@ -32,14 +32,15 @@ module Wires
     
     class << self
       
-      # The currently selected {Hub} for all channels.
+      # The currently selected {Hub} for all channels ({Hub} by default).
       #
       # It is the hub's responsibility to execute event handlers.
       # @api private
       #
       attr_accessor :hub
       
-      # The currently selected {Router} for all channels.
+      # The currently selected {Router} for all channels 
+      # ({Router::Default} by default).
       #
       # It is the router's responsibility to decide whether to create new 
       # channel objects or return existing ones when {.[] Channel[]} is called
@@ -51,16 +52,31 @@ module Wires
       #
       attr_accessor :router
       
-      def [](*args)
+      # Access a channel by {#name}, creating a new channel object if necessary.
+      #
+      # The work of deciding if an object with the given {#name} already 
+      # exists is delegated to the currently selected {.router}.
+      #
+      # @note Although this method is aliased as {.new}, it may not
+      #   always create a new object.
+      #
+      # @param name [#hash] a hashable object of any type 
+      #   to use as the channel {#name}
+      #
+      # @return [Channel] the new or existing channel object with that {#name}
+      #
+      def [](name)
         channel = @new_lock.synchronize do
-          router.get_channel(self, *args) { |name| super(name) }
+          router.get_channel(self, name) { |name| super(name) }
         end
       end
       alias_method :new, :[]
     end
     
     # Assigns the given +name+ as the {#name} of this channel object
+    #
     # @param name [#hash] a hashable object of any type, unique to this channel
+    #
     def initialize(name)
       @name = name
       @handlers = []
@@ -170,7 +186,7 @@ module Wires
     # can be overriden with the +:blocking+ parameter. See {#fire!} for 
     # blocking default behavior.
     #
-    # @param [Event, Symbol] input the event to be fired, as an Event or Symbol.
+    # @param [Event, Symbol] event the event to be fired, as an Event or Symbol.
     #   In this context, a Symbol is treated as an 'empty' Event of that type
     #   (see to {Symbol#[]}).
     # @param [Boolean] :blocking when true, the method will wait to return 
