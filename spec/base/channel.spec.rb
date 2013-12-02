@@ -110,25 +110,25 @@ describe Wires::Channel do
   describe "#unregister" do
     its(:handlers) { "with a matching proc, unregisters the registration of it"
                      subject.register event, &a_proc
-                     subject.unregister a_proc
+                     subject.unregister &a_proc
                      should be_empty }
     
     its(:handlers) { "with a matching proc, unregisters all registrations of it"
                      subject.register event, &a_proc
                      subject.register :other_event, &a_proc
                      subject.register :yet_another_event, &a_proc
-                     subject.unregister a_proc
+                     subject.unregister &a_proc
                      should be_empty }
     
     its(:handlers) { "with a non-matching proc, does nothing"
                      subject.register event, &a_proc
-                     subject.unregister Proc.new{nil}
+                     subject.unregister &Proc.new{nil}
                      should_not be_empty }
     
     it "returns true/false to indicate if an unregistration occurred" do
-      expect(subject.unregister(a_proc)).to eq false
+      expect(subject.unregister(&a_proc)).to eq false
       subject.register event, &a_proc
-      expect(subject.unregister(a_proc)).to eq true
+      expect(subject.unregister(&a_proc)).to eq true
     end
   end
   

@@ -135,7 +135,7 @@ module Wires
       callable.singleton_class.send :define_method, :unregister do
         singleton_class.send :remove_method, :unregister
         @registered_channels.each do |c|
-          c.unregister self
+          c.unregister &self
         end
       end unless callable.respond_to? :unregister
       
@@ -162,14 +162,13 @@ module Wires
     # @return [Boolean] +true+ if the callable was previously {#register}ed 
     #   (and is now {#unregister}ed); +false+ otherwise.
     #
-    # @TODO make callable an ampersander and update tests
     # @TODO break the GC note out into a dedicated document and link to it
     # @TODO try to remove all references to this channel object when it
     #   has no more handlers (and try to determine if this would ever be a 
     #   bad idea or would cause errant behavior) - possibly implement 
     #   Channel#forget instead?
     #
-    def unregister(callable)
+    def unregister(&callable)
       @@aim_lock.synchronize do
         !!(@handlers.delete callable)
       end
