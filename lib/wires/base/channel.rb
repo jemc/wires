@@ -20,6 +20,7 @@ module Wires
     #
     attr_accessor :not_firable
     
+    # @return [String] friendly output showing the class and channel {#name}
     def inspect; "#{self.class}[#{name.inspect}]"; end
     
     @hub    = Hub
