@@ -61,7 +61,8 @@ module Wires
     
     # Fire the event now, regardless of time or active status
     def fire(**kwargs) # kwargs merge with and override @kwargs
-      @channel.fire(@events, **(@fire_kwargs.merge kwargs))
+      kwargs = @fire_kwargs.merge kwargs
+      @events.each { |e| @channel.fire(e, **kwargs) }
       count_dec
       
       if @active
