@@ -226,7 +226,7 @@ module Wires
       
       event = event.to_wires_event
       
-      self.class.run_hooks(:@before_fire, event, self.name)
+      self.class.send(:run_hooks, :@before_fire, event, self.name)
       
       # Select appropriate targets
       procs = []
@@ -254,7 +254,7 @@ module Wires
       
       threads.each &:join if blocking and parallel
       
-      self.class.run_hooks(:@after_fire, event, self.name)
+      self.class.send(:run_hooks, :@after_fire, event, self.name)
       
       threads
     end

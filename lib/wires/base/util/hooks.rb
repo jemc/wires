@@ -21,12 +21,14 @@ module Wires
         hooks.reject! {|h| h[0]==proc}
       end
       
-      # Run all hooks, deleting those not marked for retention
+    private
+      
+      # Run all hooks
       def run_hooks(hooks_sym, *exc_args)
         hooks = instance_variable_get(hooks_sym.to_sym)
         return unless hooks
         for hook in hooks
-          proc, retain = hook
+          proc, _ = hook
           proc.call(*exc_args)
         end
       nil end

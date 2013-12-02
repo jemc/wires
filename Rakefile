@@ -4,7 +4,7 @@ require 'rspec/core/rake_task'
 
 gemname = 'wires'
 
-task :default => :spec
+task :default => :doc
 
 RSpec::Core::RakeTask.new :spec do |c|
   c.pattern = 'spec/**/*.spec.rb'
