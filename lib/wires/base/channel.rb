@@ -35,7 +35,7 @@ module Wires
       
       # The currently selected {Hub} for all channels ({Hub} by default).
       #
-      # It is the hub's responsibility to execute event handlers.
+      # It is the {Hub}'s responsibility to execute event handlers.
       # @api private
       #
       attr_accessor :hub
@@ -58,20 +58,21 @@ module Wires
       # The work of deciding if an object with the given {#name} already 
       # exists is delegated to the currently selected {.router}.
       #
-      # @note Although this method is aliased as {.new}, it may not
-      #   always create a new object.
+      # @note Because this method does not always create a new object,
+      #   it is recommended to use the alias {[] Channel[]}, which more clearly
+      #   communicates the intention.
       #
       # @param name [#hash] a hashable object of any type 
       #   to use as the channel {#name}
       #
       # @return [Channel] the new or existing channel object with that {#name}
       #
-      def [](name)
+      def new(name)
         channel = @new_lock.synchronize do
           router.get_channel(self, name) { |name| super(name) }
         end
       end
-      alias_method :new, :[]
+      alias_method :[], :new
     end
     
     # Assigns the given +name+ as the {#name} of this channel object
