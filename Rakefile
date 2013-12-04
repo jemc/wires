@@ -25,7 +25,7 @@ end
 
 # Rebuild gem
 task :doc do 
-  exec "yardoc"
+  exec "yardoc; cp ./yard/common.css ./doc/css/"
 end
 
 # Rebuild gem

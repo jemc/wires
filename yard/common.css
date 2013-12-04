@@ -1,0 +1,136 @@
+/* Override this file with custom rules */
+
+body {
+  background-color: #060811;
+  /*color: #F1C260;*/
+  /*color: #8CCAB7;*/
+  color: #C3DDE6;
+}
+
+body.frames { padding: 0 0px; }
+
+.summary .summary_signature, p.signature, h3.signature {
+  background: #0A0D30;
+  border: 1px dashed #4A4D80;
+}
+p.signature, h3.signature {
+  font-size:15px;
+}
+
+#filecontents dl.box .r1, dl.box .r1 {
+  background: #0A0D30;
+}
+
+#filecontents dl.box dd, dl.box dd,
+#filecontents dl.box dt, dl.box dt,
+#filecontents dl.box .last, dl.box .last {
+  border-color: #4A4D80;
+}
+
+li.r1 {
+  background: #080B21;
+}
+li.r2 {
+  background: #0A0D30;
+}
+#search_frame {
+  border-color: #4A4D80;
+  -webkit-box-shadow: -7px 5px 25px black;
+  -moz-box-shadow: -7px 5px 25px #aaa;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+
+#search a.inactive,
+#search a:link, 
+#search a:visited {
+  background: #080B21;
+  border-color: #4A4D80;
+  color: #6B6EA5;
+  -webkit-box-shadow: -1px 1px 3px black;
+}
+#search a.active {
+  background: #0A0D30;
+  border-color: #4A4D80;
+  color: #C3DDE6;
+}
+
+p.signature .not_defined_here, h3.signature .not_defined_here, 
+p.signature .aliases, h3.signature .aliases, 
+p.signature .extras, h3.signature .extras, 
+p.signature .aliases .names, h3.signature .aliases .names {
+  color: #B5E685;
+}
+
+.note,
+.note.title {
+  background: #301D0A;
+  border: 1px dashed #80654A;
+  color: #E6DAC3;
+}
+
+.note.private, 
+.note.title.private {
+  background: #300A0A;
+  border: 1px dashed #804A4A;
+}
+
+.note.readonly,
+.note.title.readonly,
+.note.constructor,
+.note.title.constructor {
+  background: #1D300A;
+  border: 1px dashed #65804A;
+}
+
+.note.title,
+.note.title.private,
+.note.title.constructor,
+.note.title.readonly {
+  border-style: solid;
+}
+
+#content a:link, #content a:visited {
+  /*color: #76E22E;*/
+  color: #FFAB3A;
+  /*text-decoration: underline;*/
+  font-family: monospace;
+  /*font-size:13px;*/
+  font-weight: bold;
+}
+
+#content .summary_signature:hover a:link,
+#content .summary_signature:hover a:visited,
+#content a:hover {
+  background: transparent;
+  color: #FFEB6C;
+}
+
+#menu a:link,   #menu a:visited {
+  color: #FFAB3A;
+  text-decoration: underline;
+  border: none;
+}
+#menu .title {
+  color: #8DFF65;
+}
+#menu {
+  color: #988BCA;
+}
+
+code, 
+tt,
+.tags ul .name {
+  /*color: #FFB9DD;*/
+  /*color: #AEFD51;*/
+  color: #8DFF65;
+  /*font-weight: bold;*/
+}
+
+.tags ul .type tt {
+  color: #988BCA;
+  /*color: #AEFD51;*/
+  /*color: #C3DDE6;*/
+  font-weight: bold;
+  font-family: Monaco,Consolas,Courier,monospace;
+}
