@@ -1,6 +1,17 @@
 
 module Wires
   
+  # 
+  # = Hooks Summary
+  # As a courtesy for custom services seeking to integrate with {Wires}, some
+  # hooks are provided for the {Channel} class.  These hooks can be accessed
+  # by the methods inherited from {Util::Hooks}.  Note that they are on a class
+  # level, so registering a hook will affect all instances of {Channel}. 
+  # There are two hooks types that {Channel} will invoke:
+  # * +:@before_fire+ - yields the event object and channel name to the 
+  #   user block before {#fire} invokes {Hub.spawn} (see source code).
+  # * +:@after_fire+ - yields the event object and channel name to the 
+  #   user block after {#fire} invokes {Hub.spawn} (see source code).
   class Channel
     
     # The unique name of the channel, which can be any kind of hashable object.
@@ -26,7 +37,6 @@ module Wires
     @new_lock = Monitor.new
     @@aim_lock = Mutex.new # @api private
     
-    # Add hook methods
     extend Util::Hooks
     
     class << self
@@ -235,7 +245,7 @@ module Wires
         .get_receivers(self).each do |chan|
           chan.handlers.each do |elist, pr|
             elist.each do |e|
-              procs << pr if e =~ event
+              procs << pr if e =~ [event, 55, 55.6, 0x00, /regexp/, 'string', "string"]
             end
           end
         end

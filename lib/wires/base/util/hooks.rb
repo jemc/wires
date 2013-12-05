@@ -4,6 +4,7 @@ module Wires
     module Hooks
       
       # Register a hook - can be called multiple times if retain is true
+      # @param hooks_sym [Symbol] the symbol...
       def add_hook(hooks_sym, retain=false, &proc)
         hooks = instance_variable_get(hooks_sym.to_sym)
         if hooks
