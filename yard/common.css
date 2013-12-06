@@ -106,7 +106,8 @@ p.signature .aliases .names, h3.signature .aliases .names {
   color: #FFEB6C;
 }
 
-#menu a:link,   #menu a:visited {
+#menu a:link,
+#menu a:visited {
   color: #FFAB3A;
   text-decoration: underline;
   border: none;
@@ -133,4 +134,52 @@ tt,
   /*color: #C3DDE6;*/
   font-weight: bold;
   font-family: Monaco,Consolas,Courier,monospace;
+}
+
+.source_code {
+  border: 1px dashed #65804A;
+  background-color: #020305;
+}
+
+pre.code { /* punctuation */
+  color: #901025;
+}
+pre.code .symbol {
+  color: #AE81FF;
+}
+pre.code .label {
+  color: #B36EE7;
+}
+pre.code .kw {
+  color: #C89112;
+}
+pre.code .identifier {
+  color: #318495;
+}
+pre.code .op {
+  color: #D83B21;
+}
+pre.code .comment {
+  color: #343459;
+}
+pre.code .int,
+pre.code .float
+ {
+  color: #24C367;
+}
+pre.code .tstring,
+pre.code .tstring_content, 
+pre.code .heredoc_beg, 
+pre.code .heredoc_end, 
+pre.code .qwords_beg, 
+pre.code .qwords_end, 
+pre.code .tstring, 
+pre.code .dstring {
+  color: #62C324;
+}
+pre.code .const, 
+pre.code .constant,
+pre.code .cvar,
+pre.code .ivar {
+  color: #585CF6;
 }
