@@ -1,16 +1,17 @@
 
 module Wires
   
-  # 
+  #  
+  #
   # = Hooks Summary
   # As a courtesy for custom services seeking to integrate with {Wires}, some
   # hooks are provided for the {Channel} class.  These hooks can be accessed
   # by the methods inherited from {Util::Hooks}.  Note that they are on a class
   # level, so registering a hook will affect all instances of {Channel}. 
   # There are two hooks types that {Channel} will invoke:
-  # * +:@before_fire+ - yields the event object and channel name to the 
+  # * +:@before_fire+ - yields the event object and channel {#name} to the 
   #   user block before {#fire} invokes {Hub.spawn} (see source code).
-  # * +:@after_fire+ - yields the event object and channel name to the 
+  # * +:@after_fire+ - yields the event object and channel {#name} to the 
   #   user block after {#fire} invokes {Hub.spawn} (see source code).
   class Channel
     
@@ -212,7 +213,7 @@ module Wires
     # @param [Boolean] :parallel when true, the handlers will be executed in 
     #   parallel, if there are more than one; otherwise, they will be executed
     #   serially (in an undefined order).  Unless otherwise specified, this 
-    #   parameter will be set to the opposite of the value of the :blocking
+    #   parameter will be set to the opposite of the value of the +:blocking+
     #   parameter; that is, nonblocking firing will by default also be parallel,
     #   and blocking firing will by default also be sequential.
     #
