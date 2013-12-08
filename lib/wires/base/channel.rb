@@ -246,7 +246,7 @@ module Wires
         .get_receivers(self).each do |chan|
           chan.handlers.each do |elist, pr|
             elist.each do |e|
-              procs << pr if e =~ [event, 55, 55.6, 0x00, /regexp/, 'string', "string"]
+              procs << pr if e =~ event
             end
           end
         end
