@@ -2,13 +2,17 @@
 require 'thread'
 require 'threadlock'
 
-require_relative 'base/util/hooks'
-require_relative 'base/util/build_alt'
+loader = Proc.new do |path|
+  load File.expand_path(path+'.rb', File.dirname(__FILE__))
+end
 
-require_relative 'base/event'
-require_relative 'base/hub'
-require_relative 'base/router'
-require_relative 'base/channel'
-require_relative 'base/time_scheduler_item'
-require_relative 'base/time_scheduler'
-require_relative 'base/convenience'
+loader.call 'base/util/hooks'
+loader.call 'base/util/build_alt'
+
+loader.call 'base/event'
+loader.call 'base/hub'
+loader.call 'base/router'
+loader.call 'base/channel'
+loader.call 'base/time_scheduler_item'
+loader.call 'base/time_scheduler'
+loader.call 'base/convenience'

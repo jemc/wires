@@ -11,7 +11,7 @@ module Wires
       main_file = File.expand_path("../../base.rb", File.dirname(__FILE__))
       
       File.read(main_file)
-        .scan(/require_relative[\s\(]+(["'])(.*)\1/)
+        .scan(/loader.call[\s\(]+(["'])(.*)\1/)
         .map(&:last)
         .map  { |file| File.expand_path("#{file}.rb", File.dirname(main_file)) }
         .map  { |file| File.read file }
