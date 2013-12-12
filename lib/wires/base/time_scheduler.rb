@@ -1,5 +1,5 @@
 
-module Wires
+module Wires.current_network::Namespace
   
   # A singleton class to schedule future firing of events
   class TimeScheduler

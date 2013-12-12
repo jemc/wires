@@ -1,5 +1,5 @@
 
-module Wires
+module Wires.current_network::Namespace
 
   module Convenience
     

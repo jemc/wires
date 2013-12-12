@@ -1,5 +1,5 @@
 
-module Wires
+module Wires.current_network::Namespace
   module Util
     
     # Build an alternate version of the Wires module that doesn't 
@@ -10,14 +10,17 @@ module Wires
     def self.build_alt(module_path)
       main_file = File.expand_path("../../base.rb", File.dirname(__FILE__))
       
-      File.read(main_file)
-        .scan(/loader.call[\s\(]+(["'])(.*)\1/)
-        .map(&:last)
-        .map  { |file| File.expand_path("#{file}.rb", File.dirname(main_file)) }
-        .map  { |file| File.read file }
-        .each { |code| eval code.gsub("Wires", "#{module_path}") }
+      token = Object.new
       
-      eval "#{module_path}"
+      Wires.set_current_network token
+      load main_file
+      
+      the_new_wires = Wires.dup
+      the_new_wires.set_current_network token
+      
+      Wires.set_current_network :main
+      
+      eval "#{module_path} = the_new_wires"
     end
     
   end
