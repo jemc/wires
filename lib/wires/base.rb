@@ -19,6 +19,10 @@ module Wires
     @current_network = network(*args)
   end
   
+  def self.current_network_name
+    @networks.each_pair.select{ |k,v| v==@current_network }.first.first
+  end
+  
   def self.current_network
     @current_network ||= network
   end
