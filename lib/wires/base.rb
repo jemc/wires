@@ -30,6 +30,21 @@ module Wires
   def self.const_missing *args
     self.current_network::Namespace.const_get *args
   end
+  
+  def self.replicate
+    save_name = Wires.current_network_name
+    token = Object.new
+    Wires.set_current_network token
+    
+    load __FILE__
+    
+    other = Wires.dup
+    other.set_current_network token
+    
+    Wires.set_current_network save_name
+    
+    other
+  end
 end
 
 

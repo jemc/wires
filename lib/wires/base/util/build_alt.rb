@@ -8,20 +8,7 @@ module Wires.current_network::Namespace
     # >> module MyModule; end
     # >> Wires::Util.build_alt "::MyModule::MyWires"
     def self.build_alt(module_path)
-      main_file = File.expand_path("../../base.rb", File.dirname(__FILE__))
-      
-      save_name = Wires.current_network_name
-      token = Object.new
-      Wires.set_current_network token
-      
-      load main_file
-      
-      the_new_wires = Wires.dup
-      the_new_wires.set_current_network token
-      
-      Wires.set_current_network save_name
-      
-      eval "#{module_path} = the_new_wires"
+      eval "#{module_path} = Wires.replicate"
     end
     
   end
