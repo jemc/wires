@@ -7,15 +7,12 @@ module Wires
   def self.network(id=:main)
     @networks ||= {main:Wires}
     
-    unless @networks.has_key? id
-      @networks[id] = Module.new
-    end
+    @networks[id] = Module.new \
+      unless @networks.has_key? id
+    @networks[id].const_set :Namespace, @networks[id] \
+      unless @networks[id].const_defined? :Namespace
     
-    unless @networks[id].const_defined? :Namespace
-      @networks[id].const_set :Namespace, @networks[id]
-    end
-    
-    @networks[id]
+    return @networks[id]
   end
   
   def self.set_current_network(*args)
