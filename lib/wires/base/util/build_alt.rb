@@ -8,6 +8,9 @@ module Wires.current_network::Namespace
     # >> module MyModule; end
     # >> Wires::Util.build_alt "::MyModule::MyWires"
     def self.build_alt(module_path)
+      warn "DEPRECATED: Wires::Util.build_alt('::MyModule::MyWires')"\
+           " is deprecated, and will be removed in version 0.6."\
+           "  Please use ::MyModule::MyWires=Wires.replicate"
       eval "#{module_path} = Wires.replicate"
     end
     
