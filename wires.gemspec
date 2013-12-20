@@ -1,8 +1,8 @@
 
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.5.3' # Remove deprecations before 0.6.0!
-  s.date          = '2013-12-09'
+  s.version       = '0.5.4' # Remove deprecations before 0.6.0!
+  s.date          = '2013-12-19'
   s.summary       = "wires"
   s.description   = "A lightweight, extensible asynchronous"\
                     " event routing framework in Ruby."\
