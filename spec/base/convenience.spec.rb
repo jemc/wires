@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe 'wires/base/Convenience' do
+describe Wires::Convenience do
   subject { Object.new.extend Wires::Convenience }
   
   describe "#fire and #on" do

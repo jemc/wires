@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe 'wires/base/Hub' do
+describe Wires::Hub do
   subject { Wires::Hub }
   
   it "is a singleton" do

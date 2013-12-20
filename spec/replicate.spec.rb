@@ -10,7 +10,7 @@ module UserModule
 end
 
 
-describe "wires/replicate" do
+describe "Wires.replicate" do
   
   describe "creates a module which" do
     subject       { ::UserModule::AltWires }

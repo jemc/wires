@@ -157,7 +157,7 @@ shared_examples "an item that internalized its args correctly" do
 end
 
 
-describe 'wires/base/TimeSchedulerItem' do
+describe Wires::TimeSchedulerItem do
   around { |example| Timecop.freeze { subject; example.run } }
   after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
   

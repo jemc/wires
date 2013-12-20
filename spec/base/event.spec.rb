@@ -4,9 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe 'wires/base/Event' do
-  
-  subject { Wires::Event.new }
+describe Wires::Event do
   
   context "without arguments" do
     specify { expect(subject).to eq :*[] }

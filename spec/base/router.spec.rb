@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe 'wires/base/Router' do
+describe Wires::Router do
   
   let(:names) { ['channel',   'Channel',  'CHANNEL',
                  :channel,    :Channel,   :CHANNEL,
