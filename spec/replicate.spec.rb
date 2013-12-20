@@ -5,12 +5,12 @@ require 'spec_helper'
 
 
 module UserModule
-  $the_altwires_module = ::Wires::Util.build_alt "::#{self}::AltWires"
+  AltWires = ::Wires.replicate
   Wires = ::Wires
 end
 
 
-describe "wires/base/util/build_alt" do
+describe "wires/replicate" do
   
   describe "creates a module which" do
     subject       { ::UserModule::AltWires }
@@ -33,10 +33,6 @@ describe "wires/base/util/build_alt" do
       end
       
       array - [Wires]
-    end
-    
-    it "is the return value of the build_alt method" do
-      expect($the_altwires_module).to eq subject
     end
     
     it "contains an alternate version of each Wires singleton" do
