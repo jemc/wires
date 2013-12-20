@@ -5,11 +5,14 @@ require 'threadlock'
 
 module Wires
   def self.network(id=:main)
-    @networks ||= {main:Module.new}
+    @networks ||= {main:Wires}
     
     unless @networks.has_key? id
       @networks[id] = Module.new
-      @networks[id].const_set :Namespace, Module.new
+    end
+    
+    unless @networks[id].const_defined? :Namespace
+      @networks[id].const_set :Namespace, @networks[id]
     end
     
     @networks[id]
@@ -27,10 +30,6 @@ module Wires
     @current_network ||= network
   end
   
-  def self.const_missing *args
-    self.current_network::Namespace.const_get *args
-  end
-  
   def self.replicate
     save_name = Wires.current_network_name
     token = Object.new
@@ -38,8 +37,7 @@ module Wires
     
     load __FILE__
     
-    other = Wires.dup
-    other.set_current_network token
+    other = Wires.current_network::Namespace
     
     Wires.set_current_network save_name
     
