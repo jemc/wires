@@ -32,16 +32,12 @@ module Wires
   
   def self.replicate
     save_name = Wires.current_network_name
-    token = Object.new
-    Wires.set_current_network token
+    other = Wires.set_current_network Object.new
     
     load __FILE__
     
-    other = Wires.current_network::Namespace
-    
     Wires.set_current_network save_name
-    
-    other
+    return other
   end
 end
 
