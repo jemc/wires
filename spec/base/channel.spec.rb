@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Channel do
+describe 'wires/base/Channel' do
   
   # A Channel object to operate on
   subject { Wires::Channel.new 'channel' }

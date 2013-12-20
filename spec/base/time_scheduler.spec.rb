@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::TimeScheduler do
+describe 'wires/base/TimeScheduler' do
   subject { Wires::TimeScheduler }
   after { Wires::Hub.join_children; subject.clear }
   

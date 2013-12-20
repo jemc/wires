@@ -10,7 +10,7 @@ module UserModule
 end
 
 
-describe "Wires::Util.build_alt" do
+describe "wires/base/util/build_alt" do
   
   describe "creates a module which" do
     subject       { ::UserModule::AltWires }
