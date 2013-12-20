@@ -84,6 +84,7 @@ module Wires.current_network::Namespace
     
     # Lock some of the methods to try to make them atomic
     # Must exclude methods that get called from within the TimeScheduler lock
+    include Threadlock
     threadlock :fire,
                :count=,
                :count_inc,
