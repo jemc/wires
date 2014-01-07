@@ -1,7 +1,7 @@
 
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.5.4' # Remove deprecations before 0.6.0!
+  s.version       = '0.5.5' # Remove deprecations before 0.6.0!
   s.date          = '2013-12-19'
   s.summary       = "wires"
   s.description   = "A lightweight, extensible asynchronous"\
