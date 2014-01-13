@@ -13,7 +13,7 @@ module Wires.current_network::Namespace
       codeblock
     end
     
-    def fire(event, channel, **kwargs)
+    def fire(event, channel=self, **kwargs)
       channel = Channel.new(channel) unless channel.is_a? Channel
       
       if kwargs[:time] or (kwargs[:count] and kwargs[:count]!=1)
