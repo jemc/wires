@@ -3,9 +3,7 @@ require "bundler/gem_tasks"
 require 'rspec/core/rake_task'
 
 # RSpec tests
-RSpec::Core::RakeTask.new :test do |c|
-  c.pattern = 'spec/**/*.spec.rb'
-end
+RSpec::Core::RakeTask.new :test
 
 # Yard Documentation
 task :doc do 

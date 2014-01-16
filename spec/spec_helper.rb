@@ -1,8 +1,6 @@
 
 $IN_DEVELOPMENT = true
 
-$IN_DEVELOPMENT = true
-
 # Pry into the context of exceptions and failures
 require 'pry-rescue/rspec' if $IN_DEVELOPMENT
 
@@ -20,7 +18,6 @@ RSpec.configure do |c|
   # Set output formatter and enable color
   c.formatter = 'Fivemat'
   c.color     = true
-  
 end
 
 
