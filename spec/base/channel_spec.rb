@@ -270,12 +270,31 @@ describe Wires::Channel do
   
   
   describe "#sync", iso:true do
-    before { subject.register(:tie_up) { subject.fire :free_up } }
+    let(:freed) { [] }
+    before {
+      subject.register :tie_up do
+        sleep 0.1
+        freed << self
+        subject.fire :free_up
+      end
+    }
     
     it "can wait within a block until a given event is fired on the channel" do
       subject.sync :free_up do |cond|
         subject.fire :tie_up
+        freed.should be_empty
       end
+      freed.should_not be_empty
+    end
+    
+    it "can wait with a timeout" do
+      start = Time.now
+      subject.sync :free_up, timeout:0.2 do |cond|
+        subject.fire :nothing
+      end
+      elapsed = Time.now - start
+      elapsed.should be <  0.3
+      elapsed.should be >= 0.2
     end
   end
   

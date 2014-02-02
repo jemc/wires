@@ -293,15 +293,14 @@ module Wires.current_network::Namespace
     
     # Synchronize execution of this thread to an incoming event.
     # @TODO: finish documenting
-    def sync(event)
+    def sync(event, timeout:nil)
       lock, cond = Mutex.new, ConditionVariable.new
       proc = Proc.new{ lock.synchronize { cond.signal } }
       
       lock.synchronize do
         register event, &proc
         yield
-        cond.wait lock
-        Thread.pass
+        cond.wait lock, timeout
       end
       
       unregister &proc
