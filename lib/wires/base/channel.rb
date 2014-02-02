@@ -293,24 +293,32 @@ module Wires.current_network::Namespace
     
     # Synchronize execution of this thread to an incoming event.
     # @TODO: finish documenting
-    def sync(event, timeout:nil)
-      lock, cond, helper = Mutex.new, ConditionVariable.new, SyncHelper.new
-      proc = proc{ |e,c| lock.synchronize { cond.signal if helper.check e,c } }
-      
-      lock.synchronize do
-        register event, &proc
-        yield helper
-        cond.wait lock, timeout
-      end
-      
-      unregister &proc
+    def sync(event, **kwargs, &block)
+      SyncHelper.new(event, self, **kwargs, &block)
+      nil
     end
     
     # Helper class passed to user block in {#sync} method
     # @api private
+    # @TODO: finish documenting
     class SyncHelper
-      def initialize
-        @conditions = []
+      def initialize(event, channel, timeout:nil)
+        @timeout = timeout
+        @lock, @cond = Mutex.new, ConditionVariable.new
+        
+        # Create the temporary event handler to capture incoming matches
+        proc = Proc.new { |e,c|
+          @lock.synchronize { @cond.signal if try e,c }
+        }
+        
+        # Run the user block within the lock and wait afterward if they didn't
+        @lock.synchronize {
+          channel.register event, &proc
+          @conditions = []
+          yield self
+          wait unless @waited
+          channel.unregister &proc
+        }
       end
       
       # Add a condition which must be fulfilled for {#check} to return +true+.
@@ -319,10 +327,18 @@ module Wires.current_network::Namespace
         nil
       end
       
+      # Wait for exactly one matching event meeting all {#conditions} to come.
+      def wait(timeout=@timeout)
+        @waited = true
+        @cond.wait @lock, timeout
+      end
+      
+    private
+      
       # Check that conditions have been met for the given event and channel.
       #
       # @return [Boolean] +true+ if {#condition}s are met; +false+ otherwise.
-      def check(event, channel)
+      def try(event, channel)
         !@conditions.detect do |blk|
           !blk.call event, channel
         end
