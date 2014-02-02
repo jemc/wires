@@ -294,16 +294,39 @@ module Wires.current_network::Namespace
     # Synchronize execution of this thread to an incoming event.
     # @TODO: finish documenting
     def sync(event, timeout:nil)
-      lock, cond = Mutex.new, ConditionVariable.new
-      proc = Proc.new{ lock.synchronize { cond.signal } }
+      lock, cond, helper = Mutex.new, ConditionVariable.new, SyncHelper.new
+      proc = proc{ |e,c| lock.synchronize { cond.signal if helper.check e,c } }
       
       lock.synchronize do
         register event, &proc
-        yield
+        yield helper
         cond.wait lock, timeout
       end
       
       unregister &proc
+    end
+    
+    # Helper class passed to user block in {#sync} method
+    # @api private
+    class SyncHelper
+      def initialize
+        @conditions = []
+      end
+      
+      # Add a condition which must be fulfilled for {#check} to return +true+.
+      def condition(&block)
+        @conditions << block if block
+        nil
+      end
+      
+      # Check that conditions have been met for the given event and channel.
+      #
+      # @return [Boolean] +true+ if {#condition}s are met; +false+ otherwise.
+      def check(event, channel)
+        !@conditions.detect do |blk|
+          !blk.call event, channel
+        end
+      end
     end
     
     # Determine if one channel matches another.

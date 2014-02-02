@@ -272,15 +272,26 @@ describe Wires::Channel do
   describe "#sync", iso:true do
     let(:freed) { [] }
     before {
-      subject.register :tie_up do
-        sleep 0.1
+      subject.register :tie_up do |e|
+        sleep 0.05
         freed << self
-        subject.fire :free_up
+        subject.fire :free_up[*e.args,**e.kwargs]
       end
     }
+    let!(:start_time) { Time.now }
+    def elapsed_time; Time.now - start_time; end
+    def should_timeout(duration)
+      elapsed = elapsed_time
+      elapsed.should be <  duration+0.1
+      elapsed.should be >= duration
+    end
+    def should_not_timeout(duration)
+      elapsed = elapsed_time
+      elapsed.should be < duration
+    end
     
     it "can wait within a block until a given event is fired on the channel" do
-      subject.sync :free_up do |cond|
+      subject.sync :free_up do
         subject.fire :tie_up
         freed.should be_empty
       end
@@ -288,13 +299,30 @@ describe Wires::Channel do
     end
     
     it "can wait with a timeout" do
-      start = Time.now
-      subject.sync :free_up, timeout:0.2 do |cond|
+      subject.sync :free_up, timeout:0.2 do
         subject.fire :nothing
+        freed.should be_empty
       end
-      elapsed = Time.now - start
-      elapsed.should be <  0.3
-      elapsed.should be >= 0.2
+      freed.should be_empty
+      should_timeout 0.2
+    end
+    
+    it "can wait with extra conditions" do
+      subject.sync :free_up, timeout:0.2 do |s|
+        subject.fire :tie_up[1,2,3]
+        s.condition { |e| e.args == [1,2,3] }
+      end
+      freed.should_not be_empty
+      should_not_timeout 0.2
+    end
+    
+    it "will timeout when extra conditions are not met" do
+      subject.sync :free_up, timeout:0.2 do |s|
+        subject.fire :tie_up[1,2,3]
+        s.condition { |e| e.args == [5,6,7] }
+      end
+      freed.should_not be_empty
+      should_timeout 0.2
     end
   end
   
