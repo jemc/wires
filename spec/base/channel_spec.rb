@@ -268,4 +268,15 @@ describe Wires::Channel do
     it_behaves_like "a blocking fire method"
   end
   
+  
+  describe "#sync", iso:true do
+    before { subject.register(:tie_up) { subject.fire :free_up } }
+    
+    it "can wait within a block until a given event is fired on the channel" do
+      subject.sync :free_up do |cond|
+        subject.fire :tie_up
+      end
+    end
+  end
+  
 end

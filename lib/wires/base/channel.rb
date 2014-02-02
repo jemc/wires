@@ -291,6 +291,22 @@ module Wires.current_network::Namespace
       fire(*args, **kwargs)
     end
     
+    # Synchronize execution of this thread to an incoming event.
+    # @TODO: finish documenting
+    def sync(event)
+      lock, cond = Mutex.new, ConditionVariable.new
+      proc = Proc.new{ lock.synchronize { cond.signal } }
+      
+      lock.synchronize do
+        register event, &proc
+        yield
+        cond.wait lock
+        Thread.pass
+      end
+      
+      unregister &proc
+    end
+    
     # Determine if one channel matches another.
     # 
     # In this context, a match indicates a receiver relationship.
