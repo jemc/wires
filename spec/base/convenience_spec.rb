@@ -58,7 +58,7 @@ describe Wires::Convenience do
     end
   end
   
-  describe "sync_on", iso:true do
+  describe "sync_on" do
     it "forwards to Channel#sync" do
       extend Wires::Convenience
       event, channel = :test[], 'test_chan'
