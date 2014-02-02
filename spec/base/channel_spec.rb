@@ -329,7 +329,7 @@ describe Wires::Channel do
       subject.sync :free_up do |s|
         subject.fire :tie_up
         freed.should be_empty
-        s.wait
+        s.wait.should eq :free_up[]
         freed.should_not be_empty
       end
       freed.should_not be_empty
@@ -337,8 +337,18 @@ describe Wires::Channel do
     
     it "can wait at an explicit point with a timeout" do
       subject.sync :free_up do |s|
+        subject.fire :tie_up
+        freed.should be_empty
+        s.wait(0.2).should eq :free_up[]
+        freed.should_not be_empty
+      end
+      freed.should_not be_empty
+    end
+    
+    it "can wait at an explicit point, giving nil if timed out" do
+      subject.sync :free_up do |s|
         subject.fire :nothing
-        s.wait 0.2
+        s.wait(0.2).should eq nil
         freed.should be_empty
       end
       freed.should be_empty
