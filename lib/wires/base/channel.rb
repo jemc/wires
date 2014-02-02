@@ -339,12 +339,11 @@ module Wires.current_network::Namespace
     private
       
       # Check that conditions have been met for the given event and channel.
-      #
-      # @return [Boolean] +true+ if {#condition}s are met; +false+ otherwise.
       def try(event, channel)
         if !@conditions.detect { |blk| !blk.call event, channel }
           @executions.each     { |blk|  blk.call event, channel }
           @received << event
+          true
         else
           false
         end

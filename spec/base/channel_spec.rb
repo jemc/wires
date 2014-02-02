@@ -310,7 +310,8 @@ describe Wires::Channel do
     it "can wait with extra conditions" do
       subject.sync :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
-        s.condition { |e| e.args == [1,2,3] }
+        s.condition { |e| e.args.include? 1 }
+        s.condition { |e| e.args.include? 2 }
       end
       freed.should_not be_empty
       should_not_timeout 0.2
@@ -319,7 +320,8 @@ describe Wires::Channel do
     it "will timeout when extra conditions are not met" do
       subject.sync :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
-        s.condition { |e| e.args == [5,6,7] }
+        s.condition { |e| e.args.include? 1 }
+        s.condition { |e| e.args.include? 999 } # won't be met
       end
       freed.should_not be_empty
       should_timeout 0.2
