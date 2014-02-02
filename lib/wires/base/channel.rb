@@ -307,6 +307,7 @@ module Wires.current_network::Namespace
         @lock, @cond = Mutex.new, ConditionVariable.new
         @conditions = []
         @executions = []
+        @received   = []
         
         # Create the temporary event handler to capture incoming matches
         proc = Proc.new { |e,c|
@@ -331,9 +332,8 @@ module Wires.current_network::Namespace
       # Wait for exactly one matching event meeting all {#conditions} to come.
       def wait(timeout=@timeout)
         @waited = true
-        @last_event = nil
-        @cond.wait @lock, timeout
-        @last_event
+        @cond.wait @lock, timeout if @received.empty?
+        @received.pop
       end
       
     private
@@ -344,7 +344,7 @@ module Wires.current_network::Namespace
       def try(event, channel)
         if !@conditions.detect { |blk| !blk.call event, channel }
           @executions.each     { |blk|  blk.call event, channel }
-          @last_event = event
+          @received << event
         else
           false
         end

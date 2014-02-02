@@ -354,6 +354,29 @@ describe Wires::Channel do
       freed.should be_empty
       should_timeout 0.2
     end
+    
+    it "can wait multiple explicit times" do
+      subject.sync :free_up do |s|
+        subject.fire :tie_up[1,2,3]
+        freed.count.should be 0
+        s.wait(0.2).should eq :free_up[1,2,3]
+        subject.fire :tie_up[4,5,6]
+        freed.count.should be 1
+        s.wait(0.2).should eq :free_up[4,5,6]
+        freed.count.should be 2
+        s.wait(0.2).should eq nil
+      end
+    end
+    
+    it "will queue up matching events for additional waits" do
+      subject.sync :free_up do |s|
+        freed.count.should be 0
+        3.times { subject.fire! :tie_up }
+        freed.count.should be 3
+        3.times { s.wait(0.2).should eq :free_up }
+        s.wait(0.2).should eq nil
+      end
+    end
   end
   
 end
