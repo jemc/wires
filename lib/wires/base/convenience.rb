@@ -13,6 +13,11 @@ module Wires.current_network::Namespace
       codeblock
     end
     
+    def sync_on(event, channel=self, **kwargs, &codeblock)
+      channel = Channel.new(channel) unless channel.is_a? Channel
+      channel.sync_on(event, **kwargs, &codeblock)
+    end
+    
     def fire(event, channel=self, **kwargs)
       channel = Channel.new(channel) unless channel.is_a? Channel
       

@@ -269,7 +269,7 @@ describe Wires::Channel do
   end
   
   
-  describe "#sync", iso:true do
+  describe "#sync_on", iso:true do
     let(:freed) { [] }
     before {
       subject.register :tie_up do |e|
@@ -291,7 +291,7 @@ describe Wires::Channel do
     end
     
     it "can wait within a block until a given event is fired on the channel" do
-      subject.sync :free_up do
+      subject.sync_on :free_up do
         subject.fire :tie_up
         freed.should be_empty
       end
@@ -299,7 +299,7 @@ describe Wires::Channel do
     end
     
     it "can wait with a timeout" do
-      subject.sync :free_up, timeout:0.2 do
+      subject.sync_on :free_up, timeout:0.2 do
         subject.fire :nothing
         freed.should be_empty
       end
@@ -308,7 +308,7 @@ describe Wires::Channel do
     end
     
     it "can wait with extra conditions" do
-      subject.sync :free_up, timeout:0.2 do |s|
+      subject.sync_on :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 2 }
@@ -318,7 +318,7 @@ describe Wires::Channel do
     end
     
     it "will timeout when extra conditions are not met" do
-      subject.sync :free_up, timeout:0.2 do |s|
+      subject.sync_on :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 999 } # won't be met
@@ -329,7 +329,7 @@ describe Wires::Channel do
     
     it "can wait with one or more blocks to execute on the matching event" do
       bucket = []
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         subject.fire :tie_up[1,2,3]
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 2 }
@@ -340,7 +340,7 @@ describe Wires::Channel do
     end
     
     it "can wait at an explicit point within the block" do
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         subject.fire :tie_up
         freed.should be_empty
         s.wait.should eq :free_up[]
@@ -350,7 +350,7 @@ describe Wires::Channel do
     end
     
     it "can wait at an explicit point with a timeout" do
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         subject.fire :tie_up
         freed.should be_empty
         s.wait(0.2).should eq :free_up[]
@@ -360,7 +360,7 @@ describe Wires::Channel do
     end
     
     it "can wait at an explicit point, giving nil if timed out" do
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         subject.fire :nothing
         s.wait(0.2).should eq nil
         freed.should be_empty
@@ -370,7 +370,7 @@ describe Wires::Channel do
     end
     
     it "can wait multiple explicit times" do
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         subject.fire :tie_up[1,2,3]
         freed.count.should be 0
         s.wait(0.2).should eq :free_up[1,2,3]
@@ -383,7 +383,7 @@ describe Wires::Channel do
     end
     
     it "will queue up matching events for additional waits" do
-      subject.sync :free_up do |s|
+      subject.sync_on :free_up do |s|
         freed.count.should be 0
         3.times { subject.fire! :tie_up }
         freed.count.should be 3

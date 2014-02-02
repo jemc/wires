@@ -293,7 +293,7 @@ module Wires.current_network::Namespace
     
     # Synchronize execution of this thread to an incoming event.
     # @TODO: finish documenting
-    def sync(event, **kwargs, &block)
+    def sync_on(event, **kwargs, &block)
       SyncHelper.new(event, self, **kwargs, &block)
       nil
     end

@@ -56,5 +56,29 @@ describe Wires::Convenience do
       fire! :sym, self
       received.should eq true
     end
-  end 
+  end
+  
+  describe "sync_on", iso:true do
+    it "forwards to Channel#sync" do
+      extend Wires::Convenience
+      event, channel = :test[], 'test_chan'
+      kwargs = {timeout:55}
+      block = Proc.new{}
+      
+      Wires::Channel[channel].should_receive(:sync_on)
+                             .with(event, **kwargs, &block)
+      sync_on event, channel, **kwargs, &block
+    end
+    
+    it "forwards to Channel#sync with self as the default channel" do
+      extend Wires::Convenience
+      event, channel = :test[], 'test_chan'
+      kwargs = {}
+      block = Proc.new{}
+      
+      Wires::Channel[self].should_receive(:sync_on)
+                          .with(event, **kwargs, &block)
+      sync_on event, **kwargs, &block
+    end
+  end
 end
