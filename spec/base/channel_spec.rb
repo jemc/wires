@@ -327,6 +327,17 @@ describe Wires::Channel do
       should_timeout 0.2
     end
     
+    it "can wait with one or more blocks to execute on the matching event" do
+      bucket = []
+      subject.sync :free_up, timeout:0.2 do |s|
+        subject.fire :tie_up[1,2,3]
+        s.condition { |e| e.args.include? 1 }
+        s.condition { |e| e.args.include? 2 }
+        s.execute { |e,c| bucket << e }
+      end
+      should_not_timeout 0.2
+    end
+    
     it "can wait at an explicit point within the block" do
       subject.sync :free_up do |s|
         subject.fire :tie_up

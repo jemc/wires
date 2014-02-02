@@ -329,6 +329,13 @@ module Wires.current_network::Namespace
         nil
       end
       
+      # Add a execution to run on the matching event for each {#wait}.
+      #   The block will not be run if the {#wait} times out.
+      def execute(&block)
+        @executions << block if block
+        nil
+      end
+      
       # Wait for exactly one matching event meeting all {#conditions} to come.
       def wait(timeout=@timeout)
         @waited = true
