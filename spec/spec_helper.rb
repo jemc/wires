@@ -2,7 +2,7 @@
 $IN_DEVELOPMENT = true
 
 # Pry into the context of exceptions and failures
-require 'pry-rescue/rspec' if $IN_DEVELOPMENT
+# require 'pry-rescue/rspec' if $IN_DEVELOPMENT
 
 RSpec.configure do |c|
   if $IN_DEVELOPMENT
