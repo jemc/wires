@@ -392,11 +392,20 @@ describe Wires::Channel do
       end
     end
     
-    it "will let exceptions raised from within an execute block pass through" do
+    it "lets exceptions raised from within an execute block pass out" do
       expect {
         subject.sync_on :free_up do |s|
           subject.fire :tie_up
           s.execute { raise RuntimeError, 'whoops' }
+        end
+      }.to raise_error RuntimeError, /whoops/
+    end
+    
+    it "lets exceptions raised from within a condition block pass out" do
+      expect {
+        subject.sync_on :free_up do |s|
+          subject.fire :tie_up
+          s.condition { raise RuntimeError, 'whoops' }
         end
       }.to raise_error RuntimeError, /whoops/
     end

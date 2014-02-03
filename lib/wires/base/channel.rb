@@ -310,7 +310,7 @@ module Wires.current_network::Namespace
         @received   = []
         
         # Create the temporary event handler to capture incoming matches
-        proc = Proc.new { |e,c| @lock.synchronize { try e,c } }
+        proc = Proc.new { |e,c| @lock.synchronize { snag e,c } }
         
         # Run the user block within the lock and wait afterward if they didn't
         @lock.synchronize {
@@ -337,24 +337,25 @@ module Wires.current_network::Namespace
       # Wait for exactly one matching event meeting all {#conditions} to come.
       def wait(timeout=@timeout)
         @waited = true
-        @cond.wait @lock, timeout if @received.empty?
-        event, channel = @received.pop
+        result = nil
         
-        @executions.each { |blk| blk.call event, channel }
-        event
+        loop do
+          @cond.wait @lock, timeout
+          result = @received.pop
+          return nil unless result
+          break if !@conditions.detect { |blk| !blk.call *result }
+        end
+        
+        @executions.each { |blk| blk.call *result }
+        result.first # event
       end
       
     private
       
-      # Check that conditions have been met for the given event and channel.
-      def try(event, channel)
-        if !@conditions.detect { |blk| !blk.call event, channel }
-          @received << [event, channel]
-          @cond.signal
-          true
-        else
-          false
-        end
+      # Snag the given event and channel to try it out in the blocking thread
+      def snag(*args)
+        @received << args
+        @cond.signal # Pass execution back to blocking thread and block this one
       end
     end
     
