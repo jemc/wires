@@ -1,8 +1,8 @@
 
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.5.6' # Remove deprecations before 0.6.0!
-  s.date          = '2013-12-19'
+  s.version       = '0.5.7' # Remove deprecations before 0.6.0!
+  s.date          = '2014-02-02'
   s.summary       = "wires"
   s.description   = "A lightweight, extensible asynchronous"\
                     " event routing framework in Ruby."\
@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/jemc/wires/'
-  s.licenses      = "Copyright 2013 Joe McIlvain. All rights reserved."
+  s.licenses      = "Copyright 2013-2014 Joe McIlvain. All rights reserved."
   
   s.add_dependency('threadlock', '2.0')
   
