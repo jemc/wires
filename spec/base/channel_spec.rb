@@ -298,6 +298,12 @@ describe Wires::Channel do
       freed.should_not be_empty
     end
     
+    it "always returns nil" do
+      subject.sync_on :free_up do
+        subject.fire :tie_up
+      end.should eq nil
+    end
+    
     it "can wait with a timeout" do
       subject.sync_on :free_up, timeout:0.2 do
         subject.fire :nothing
