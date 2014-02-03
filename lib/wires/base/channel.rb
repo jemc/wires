@@ -101,7 +101,7 @@ module Wires.current_network::Namespace
     # then the handler is executed, and yielded the event object and the {#name} 
     # of the channel upon which {#fire} was called as arguments.
     #
-    # @param *events [<Symbol, Event>] the event pattern(s)
+    # @param events [<Symbol, Event>] the event pattern(s)
     #   to listen for. If the pattern is a symbol or event with a type and no 
     #   other arguments, any event with that type will be heard.  If the 
     #   pattern is an event that has other arguments, each of the arguments 
@@ -109,7 +109,7 @@ module Wires.current_network::Namespace
     #   fired event for it to be heard by the handler, but the fired event may
     #   also include other arguments that were not declared in the pattern
     #   and still be heard by the handler (see {Event#=~}).
-    # @param &callable [Proc] the executable code to register as a handler 
+    # @param callable [Proc] the executable code to register as a handler 
     #   on this channel for the given pattern.
     #
     # @return [Proc] the +&callable+ given, which has been extended with an
@@ -167,7 +167,7 @@ module Wires.current_network::Namespace
     #   the +#unregister+ method that was injected into the +&callable+ 
     #   (refer to the return value of {#register})
     #
-    # @param &callable [Proc] the same callable object that was given to 
+    # @param callable [Proc] the same callable object that was given to 
     #   (and returned by) {#register}.
     #
     # @return [Boolean] +true+ if the callable was previously {#register}ed 
@@ -208,9 +208,9 @@ module Wires.current_network::Namespace
     # @param [Event, Symbol] event the event to be fired, as an Event or Symbol.
     #   In this context, a Symbol is treated as an 'empty' Event of that type
     #   (see to {Symbol#[]}).
-    # @param [Boolean] :blocking when true, the method will wait to return 
+    # @param [Boolean] blocking when true, the method will wait to return 
     #   until all handlers have finished their execution.
-    # @param [Boolean] :parallel when true, the handlers will be executed in 
+    # @param [Boolean] parallel when true, the handlers will be executed in 
     #   parallel, if there are more than one; otherwise, they will be executed
     #   serially (in an undefined order).  Unless otherwise specified, this 
     #   parameter will be set to the opposite of the value of the +:blocking+
@@ -292,9 +292,9 @@ module Wires.current_network::Namespace
     end
     
     # Synchronize execution of this thread to an incoming event.
-    #   The user block will be executed, and will not return until a matching
-    #   incoming event has been fired
-    #   (see the {SyncHelper})
+    # The user block will be executed, and will not return until a matching
+    # incoming event has been fired
+    # (see the {SyncHelper})
     #
     # @note In order to use this method correctly, the "action" that causes the
     #   incoming event to be fired should happen within the user block.  If
@@ -303,26 +303,27 @@ module Wires.current_network::Namespace
     #   As long as the feedback event happens after execution of the user block
     #   has begun, the event is guaranteed to be caught and processed.
     #
-    # @param *events [<Symbol, Event>] the event pattern(s) filter
+    # @param events [<Symbol, Event>] the event pattern(s) filter
     #   to listen with. (see {#register}).
     # @param timeout [Fixnum] the timeout, in seconds.
     #   (see {SyncHelper#wait}).
-    # @param &block [Proc] the user block. This block will be executed inline
+    # @param block [Proc] the user block. This block will be executed inline
     #   and passed an instance of {SyncHelper}.  Within this block, the helper
     #   should be configured using its methods.  Optionally, {SyncHelper#wait}
     #   can be called to wait in a specific location in the block.  Otherwise,
     #   it will be called implicitly at the end of the block.
     #
+    # @!method sync_on(*events, timeout:nil, &block)
     def sync_on(*events, timeout:nil, &block)
       SyncHelper.new(events, self, timeout:timeout, &block)
       nil
     end
     
-    # Helper class passed to user block in {Channel#sync} method.
+    # Helper class passed to user block in {Channel#sync_on} method.
     #   Read here for how to use the helper, but never instantiate it yourself.
     class SyncHelper
       
-      # Don't instantiate this class directly, use {Channel#sync}
+      # Don't instantiate this class directly, use {Channel#sync_on}
       # @api private
       def initialize(events, channel, timeout:nil)
         @timeout = timeout
@@ -345,7 +346,7 @@ module Wires.current_network::Namespace
       
       # Add a condition which must be fulfilled for {#wait} to find a match.
       #
-      # @param &block [Proc] the block specifiying the condition to be met.
+      # @param block [Proc] the block specifiying the condition to be met.
       #   It will be passed the event and channel, and the truthiness of its
       #   return value will be evaluated to determine if the condition is met.
       #   It will only be executed if the +[event,channel]+ pair fits the 
@@ -358,7 +359,7 @@ module Wires.current_network::Namespace
       
       # Add a execution to run on the matching event for each {#wait}.
       #
-      # @param &block [Proc] the block to be executed.
+      # @param block [Proc] the block to be executed.
       #   It will only be executed if the +[event,channel]+ pair fits the 
       #   filter and met all of the conditions to fulfill the {#wait}.
       #   The block will not be run if the {#wait} times out.
@@ -368,7 +369,7 @@ module Wires.current_network::Namespace
         nil
       end
       
-      # Wait for exactly one matching event meeting all {#conditions} to come.
+      # Wait for exactly one matching event meeting all {#condition}s to come.
       #
       # @note This will be called once implicitly at the end of the user block
       #   unless it gets called explicitly somewhere within the user block.
