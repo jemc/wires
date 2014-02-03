@@ -269,7 +269,7 @@ describe Wires::Channel do
   end
   
   
-  describe "#sync_on", iso:true do
+  describe "#sync_on" do
     let(:freed) { [] }
     before {
       subject.register :tie_up do |e|
@@ -316,8 +316,8 @@ describe Wires::Channel do
     it "can wait with extra conditions" do
       subject.sync_on :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
-        s.condition { |e| e.args.include? 1 }
-        s.condition { |e| e.args.include? 2 }
+        s.condition { |e|   e.args.include? 1 }
+        s.condition { |e,c| e.args.include? 2; c.should eq subject.name }
       end
       freed.should_not be_empty
       should_not_timeout 0.2
@@ -334,15 +334,30 @@ describe Wires::Channel do
     end
     
     it "can wait with one or more blocks to execute on the matching event" do
-      bucket = []
+      bucket1, bucket2 = [], []
       subject.sync_on :free_up do |s|
         subject.fire :tie_up[1,2,3]
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 2 }
-        s.execute { |e,c| bucket << e }
+        s.execute { |e|   bucket1 << e }
+        s.execute { |e,c| bucket2 << e; c.should eq subject.name }
       end
-      bucket.should match_array [:free_up[1,2,3]]
-      should_not_timeout 0.2
+      bucket1.should match_array [:free_up[1,2,3]]
+      bucket2.should match_array [:free_up[1,2,3]]
+    end
+    
+    it "will not run the execute blocks if the wait timed out" do
+      bucket1, bucket2 = [], []
+      subject.sync_on :free_up, timeout:0.2 do |s|
+        subject.fire :tie_up[1,2,3]
+        s.condition { |e| e.args.include? 1 }
+        s.condition { |e| e.args.include? 999 } # won't be met
+        s.execute { |e| bucket1 << e }
+        s.execute { |e| bucket2 << e }
+      end
+      bucket1.should be_empty
+      bucket2.should be_empty
+      should_timeout 0.2
     end
     
     it "can wait at an explicit point within the block" do
@@ -372,6 +387,20 @@ describe Wires::Channel do
         freed.should be_empty
       end
       freed.should be_empty
+      should_timeout 0.2
+    end
+    
+    it "can wait at an explicit point using the default timeout" do
+      subject.sync_on :free_up, timeout:0.2 do |s|
+        s.wait.should eq nil
+      end
+      should_timeout 0.2
+    end
+    
+    it "can wait at an explicit point using some other timeout" do
+      subject.sync_on :free_up, timeout:500 do |s|
+        s.wait(0.2).should eq nil
+      end
       should_timeout 0.2
     end
     

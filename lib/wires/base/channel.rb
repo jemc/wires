@@ -292,17 +292,39 @@ module Wires.current_network::Namespace
     end
     
     # Synchronize execution of this thread to an incoming event.
-    # @TODO: finish documenting
-    def sync_on(event, **kwargs, &block)
-      SyncHelper.new(event, self, **kwargs, &block)
+    #   The user block will be executed, and will not return until a matching
+    #   incoming event has been fired
+    #   (see the {SyncHelper})
+    #
+    # @note In order to use this method correctly, the "action" that causes the
+    #   incoming event to be fired should happen within the user block.  If
+    #   it happens before the user block, one risks a race condition; if after,
+    #   one risks deadlock (or timeout) due to the feedback event being missed.
+    #   As long as the feedback event happens after execution of the user block
+    #   has begun, the event is guaranteed to be caught and processed.
+    #
+    # @param *events [<Symbol, Event>] the event pattern(s) filter
+    #   to listen with. (see {#register}).
+    # @param timeout [Fixnum] the timeout, in seconds.
+    #   (see {SyncHelper#wait}).
+    # @param &block [Proc] the user block. This block will be executed inline
+    #   and passed an instance of {SyncHelper}.  Within this block, the helper
+    #   should be configured using its methods.  Optionally, {SyncHelper#wait}
+    #   can be called to wait in a specific location in the block.  Otherwise,
+    #   it will be called implicitly at the end of the block.
+    #
+    def sync_on(*events, timeout:nil, &block)
+      SyncHelper.new(events, self, timeout:timeout, &block)
       nil
     end
     
-    # Helper class passed to user block in {#sync} method
-    # @api private
-    # @TODO: finish documenting
+    # Helper class passed to user block in {Channel#sync} method.
+    #   Read here for how to use the helper, but never instantiate it yourself.
     class SyncHelper
-      def initialize(event, channel, timeout:nil)
+      
+      # Don't instantiate this class directly, use {Channel#sync}
+      # @api private
+      def initialize(events, channel, timeout:nil)
         @timeout = timeout
         @lock, @cond = Mutex.new, ConditionVariable.new
         @conditions = []
@@ -314,31 +336,57 @@ module Wires.current_network::Namespace
         
         # Run the user block within the lock and wait afterward if they didn't
         @lock.synchronize {
-          channel.register event, &proc
+          channel.register events, &proc
           yield self
           wait unless @waited
           channel.unregister &proc
         }
       end
       
-      # Add a condition which must be fulfilled for {#check} to return +true+.
+      # Add a condition which must be fulfilled for {#wait} to find a match.
+      #
+      # @param &block [Proc] the block specifiying the condition to be met.
+      #   It will be passed the event and channel, and the truthiness of its
+      #   return value will be evaluated to determine if the condition is met.
+      #   It will only be executed if the +[event,channel]+ pair fits the 
+      #   filter and meets all of the other evaluated conditions so far.
+      #    
       def condition(&block)
         @conditions << block if block
         nil
       end
       
       # Add a execution to run on the matching event for each {#wait}.
+      #
+      # @param &block [Proc] the block to be executed.
+      #   It will only be executed if the +[event,channel]+ pair fits the 
+      #   filter and met all of the conditions to fulfill the {#wait}.
       #   The block will not be run if the {#wait} times out.
+      #
       def execute(&block)
         @executions << block if block
         nil
       end
       
       # Wait for exactly one matching event meeting all {#conditions} to come.
+      #
+      # @note This will be called once implicitly at the end of the user block
+      #   unless it gets called explicitly somewhere within the user block.
+      #   It can be called multiple times within the user block to require
+      #   one matching event each time within the block.
+      #
+      # @param timeout [Fixnum] The maximum time to wait for a match, 
+      #   specified in seconds.  By default, it will be the number used at
+      #   instantiation (passed from {Channel#sync_on}).
+      #
+      # @return the matching {Event} object, or nil if timed out.
+      #
       def wait(timeout=@timeout)
         @waited = true
         result = nil
         
+        # Loop through each result, making sure it matches the conditions,
+        #   returning nil if the wait timed out and didn't push into @received
         loop do
           @cond.wait @lock, timeout
           result = @received.pop
@@ -346,8 +394,9 @@ module Wires.current_network::Namespace
           break if !@conditions.detect { |blk| !blk.call *result }
         end
         
+        # Run all the execute blocks on the result
         @executions.each { |blk| blk.call *result }
-        result.first # event
+        result.first #=> return event
       end
       
     private
