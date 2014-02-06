@@ -331,9 +331,16 @@ module Wires.current_network::Namespace
         @conditions = []
         @executions = []
         @received   = []
+        @thread     = Thread.current
         
         # Create the temporary event handler to capture incoming matches
-        proc = Proc.new { |e,c| @lock.synchronize { snag e,c } }
+        proc = Proc.new do |e,c|
+          if Thread.current==@thread
+            snag e,c
+          else
+            @lock.synchronize { snag e,c }
+          end
+        end
         
         # Run the user block within the lock and wait afterward if they didn't
         @lock.synchronize {
@@ -389,7 +396,7 @@ module Wires.current_network::Namespace
         # Loop through each result, making sure it matches the conditions,
         #   returning nil if the wait timed out and didn't push into @received
         loop do
-          @cond.wait @lock, timeout
+          @cond.wait @lock, timeout if @received.empty?
           result = @received.pop
           return nil unless result
           break if !@conditions.detect { |blk| !blk.call *result }

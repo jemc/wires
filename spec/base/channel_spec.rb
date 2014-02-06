@@ -304,6 +304,12 @@ describe Wires::Channel do
       end.should eq nil
     end
     
+    it "is re-entrant to allow matching blocking fire within" do
+      subject.sync_on :free_up do
+        subject.fire! :free_up
+      end
+    end
+    
     it "can wait with a timeout" do
       subject.sync_on :free_up, timeout:0.2 do
         subject.fire :nothing
