@@ -1,6 +1,7 @@
 
 require 'thread'
 require 'threadlock'
+require 'weakref'
 
 
 module Wires

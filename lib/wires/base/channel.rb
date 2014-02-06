@@ -121,10 +121,11 @@ module Wires.current_network::Namespace
     # @raise [ArgumentError] if no ampersand-argument or inline block is 
     #   given as the +&callable+.
     #
-    def register(*events, &callable)
+    def register(*events, weak:false, &callable)
       raise ArgumentError, "No callable given to execute on event: #{events}" \
         unless callable.respond_to? :call
       events = Event.list_from *events
+      callable = weak ? WeakRef.new(callable) : callable
       
       # Register the events under the callable in the @handlers hash
       @@aim_lock.synchronize do

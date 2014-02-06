@@ -106,6 +106,16 @@ describe Wires::Channel do
       expect(chan1.handlers).to eq []
       expect(chan2.handlers).to eq []
     end
+    
+    it "can hold a weak reference instead if requested", iso:true do
+      return_val = subject.register(event, weak:true, &Proc.new{})
+      
+      loop do # one-time loop so that GC.start will work
+        expect(return_val.weakref_alive?).to be
+        GC.start
+        expect(return_val.weakref_alive?).not_to be
+      break end
+    end
   end
   
   
