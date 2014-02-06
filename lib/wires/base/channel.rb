@@ -134,23 +134,22 @@ module Wires.current_network::Namespace
         events.each { |e| ary << e unless ary.include? e }
       end
       
-      # Insert the @registered_channels variable into the callable
-      channels = callable.instance_variable_get(:@registered_channels)
-      if channels
-        channels << self
-      else
-        callable.instance_variable_set(:@registered_channels, [self])
-      end
-      
-      # Insert the #unregister method into the callable
-      callable.singleton_class.send :define_method, :unregister do
-        singleton_class.send :remove_method, :unregister
-        @registered_channels.each do |c|
-          c.unregister &self
-        end
-      end unless callable.respond_to? :unregister
+      callable.extend RegisteredHandler unless callable.is_a? RegisteredHandler
+      callable.register_on_channel self
       
       callable
+    end
+    
+    module RegisteredHandler
+      def register_on_channel(channel)
+        (@registered_channels ||= []) << channel
+      end
+      
+      def unregister
+        @registered_channels.each do |c|
+          c.unregister &self
+        end.tap { @registered_channels = [] }
+      end
     end
     
     # Unregister an event handler that was defined with #register

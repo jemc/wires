@@ -81,7 +81,9 @@ describe Wires::Channel do
       return_val = subject.register(event, &a_proc)
       
       expect(return_val.unregister).to eq [subject]
-      expect{return_val.unregister}.to raise_error NoMethodError
+      expect(subject.handlers).to eq []
+      
+      expect(return_val.unregister).to eq []
       expect(subject.handlers).to eq []
     end
     
@@ -98,7 +100,7 @@ describe Wires::Channel do
       expect(return_val2).to eq return_val
       
       expect(return_val.unregister).to match_array [subject, chan1, chan2]
-      expect{return_val.unregister}.to raise_error NoMethodError
+      expect(return_val.unregister).to eq []
       
       expect(subject.handlers).to eq []
       expect(chan1.handlers).to eq []
