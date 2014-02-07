@@ -90,7 +90,7 @@ module Wires.current_network::Namespace
     #
     def initialize(name)
       @name = name
-      @handlers = {}
+      @handlers = []
     end
     
     # Register an event handler to be executed when a matching event occurs.
@@ -125,18 +125,14 @@ module Wires.current_network::Namespace
       raise ArgumentError, "No callable given to execute on event: #{events}" \
         unless callable.respond_to? :call
       events = Event.list_from *events
-      callable = weak ? WeakRef.new(callable) : callable
       
-      # Register the events under the callable in the @handlers hash
+      ref = weak ? Ref::WeakReference.new(callable) :
+                   Ref::StrongReference.new(callable)
       @@aim_lock.synchronize do
-        ary = (@handlers.has_key?(callable) ?
-                 @handlers[callable]        :
-                 @handlers[callable] = [])
-        events.each { |e| ary << e unless ary.include? e }
+        @handlers << [events, ref]
+        callable.extend RegisteredHandler
+        callable.register_on_channel self
       end
-      
-      callable.extend RegisteredHandler unless callable.is_a? RegisteredHandler
-      callable.register_on_channel self
       
       callable
     end
@@ -181,7 +177,9 @@ module Wires.current_network::Namespace
     #
     def unregister(&callable)
       @@aim_lock.synchronize do
-        !!(@handlers.delete callable)
+        !!@handlers.reject! do |stored|
+          stored.last.object == callable
+        end
       end
     end
     
@@ -191,7 +189,8 @@ module Wires.current_network::Namespace
     #   containing an array of event patterns followed by the associated Proc.
     #
     def handlers
-      @handlers.map { |callable, events| [events, callable] }
+      @handlers.reject! { |_, ref| ref.object.nil? }
+      @handlers.map { |events, ref| [events, ref.object] }
     end
     
     # Fire an event on this channel.

@@ -33,7 +33,6 @@ describe Wires::Channel do
   before { Wires::Channel.router = Wires::Router::Default
            Wires::Channel.router.clear_channels }
   
-  
   describe ".new / #initialize" do
     it "creates exactly one unique instance for each unique name" do
       past_channels = []
@@ -73,6 +72,8 @@ describe Wires::Channel do
     its(:handlers) { subject.register event, event2, &a_proc
                      should include [[event, event2], a_proc] }
     
+    around { |ex| Ref::Mock.use { ex.run } }
+    
     it "returns the registered proc" do
       expect(subject.register(event, &a_proc)).to eq a_proc
     end
@@ -107,14 +108,17 @@ describe Wires::Channel do
       expect(chan2.handlers).to eq []
     end
     
-    it "can hold a weak reference instead if requested", iso:true do
-      return_val = subject.register(event, weak:true, &Proc.new{})
+    it "can hold a weak reference instead if requested" do
+      bucket = []
+      return_val = subject.register event, weak:true do
+        bucket << 88
+      end
+      return_val.should be_a Proc
       
-      loop do # one-time loop so that GC.start will work
-        expect(return_val.weakref_alive?).to be
-        GC.start
-        expect(return_val.weakref_alive?).not_to be
-      break end
+      subject.fire! event; bucket.count.should eq 1
+      subject.fire! event; bucket.count.should eq 2
+      Ref::Mock.gc
+      subject.fire! event; bucket.count.should eq 2
     end
   end
   
