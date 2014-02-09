@@ -47,6 +47,13 @@ describe Wires::Router do
       end
     end
     
+    it "can forget channels by name" do
+      names.each do |n|
+        a = Wires::Channel[n]; Wires::Channel.forget n
+        b = Wires::Channel[n]
+        expect(a).not_to equal b
+      end
+    end
   end
 
 
@@ -63,6 +70,14 @@ describe Wires::Router do
     
     it "routes only on exact object matches" do
       channels.each { |c| expect(c.receivers).to match_array [c] }
+    end
+    
+    it "can forget channels by name" do
+      names.each do |n|
+        a=Wires::Channel[n]; Wires::Channel.forget n
+        b=Wires::Channel[n]
+        expect(a).not_to equal b
+      end
     end
   end
   

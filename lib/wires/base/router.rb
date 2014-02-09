@@ -13,6 +13,11 @@ module Wires.current_network::Namespace
           @star        = nil
         end
         
+        def forget_channel(chan_cls, name)
+          @table.delete name
+          @fuzzy_table.delete name
+        end
+        
         def get_channel(chan_cls, name)
           @chan_cls ||= chan_cls
           channel = @table[name] ||= (new_one=true; yield name)
@@ -48,6 +53,10 @@ module Wires.current_network::Namespace
         
         def clear_channels()
           @table = {}
+        end
+        
+        def forget_channel(chan_cls, name)
+          @table.delete name
         end
         
         def get_channel(chan_cls, name)

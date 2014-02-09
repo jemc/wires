@@ -81,7 +81,26 @@ module Wires.current_network::Namespace
           router.get_channel(self, name) { |name| super(name) }
         end
       end
+      
       alias_method :[], :new
+      
+      # Forget a channel by {#name}.  All registered handlers are forgotten,
+      # and a future attempt to access the channel object by name will create 
+      # a new object.
+      #
+      # The work of forgetting the object with the given {#name} is delegated 
+      # to the currently selected {.router}.
+      #
+      # @param name [#hash] a hashable object of any type as the channel {#name}
+      #
+      # @return [nil]
+      #
+      def forget(name)
+        @new_lock.synchronize do
+          router.forget_channel(self, name)
+        end
+        nil
+      end
     end
     
     # Assigns the given +name+ as the {#name} of this channel object
