@@ -33,8 +33,7 @@ module Wires.current_network::Namespace
     # @return [String] friendly output showing the class and channel {#name}
     def inspect; "#{self.class}[#{name.inspect}]"; end
     
-    @hub    = Hub
-    @router = Router::Default
+    @hub = Hub
     @new_lock = Monitor.new
     @@aim_lock = Mutex.new # @api private
     
@@ -471,5 +470,8 @@ module Wires.current_network::Namespace
       self.class.router.get_receivers self
     end
     
+    Channel.router = Router::Default
+    Router::Default.clear_channels
+    Router::Simple.clear_channels
   end
 end
