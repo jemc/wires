@@ -11,18 +11,31 @@ module Wires.current_network::Namespace
         raise ValueError "AbstractReference referent cannot be nil" if obj.nil?
         
         # Make initial weak reference (if possible)
-        @ref = begin
-          Ref::WeakReference.new(obj)
+        begin
+          @ref = Ref::WeakReference.new obj
+          @weak = true
         rescue RuntimeError;
-          Ref::StrongReference.new(obj)
+          @ref = Ref::StrongReference.new obj
+          @weak = false
         end
       end
       
-      def weak?
-        @ref.is_a? Ref::WeakReference
+      def make_weak
+        unless @weak
+          @ref = Ref::WeakReference.new @ref.object
+          @weak = true
+        end
+      rescue RuntimeError
       end
       
-      private
+      def make_strong
+        if @weak
+          @ref = Ref::StrongReference.new @ref.object
+          @weak = false
+        end
+      end
+      
+      def weak?; @weak end
       
     end
     
