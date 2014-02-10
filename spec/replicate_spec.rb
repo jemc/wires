@@ -27,7 +27,9 @@ describe "Wires.replicate" do
       10.times do
         ary = []
         array.each do |obj|
-          ary += obj.constants.map { |sym| obj.const_get(sym) }
+          if obj.respond_to? :constants
+            ary += obj.constants.map { |sym| obj.const_get(sym) }
+          end
         end
         (array += ary).uniq!
       end

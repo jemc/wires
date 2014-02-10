@@ -38,9 +38,9 @@ describe Wires::Channel do
       past_channels = []
       for name in names
         past_channels << (c = Wires::Channel.new(name))
-        expect(Wires::Channel.new(name)).to eq c
+        expect(Wires::Channel.new(name)).to equal c
       end
-      expect(past_channels.map{|c| c.name}).to match_array names
+      expect(past_channels.map(&:name)).to match_array names
     end
     
     it "assigns new/existing objects in a threadsafe way" do

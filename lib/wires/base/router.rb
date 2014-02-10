@@ -13,6 +13,10 @@ module Wires.current_network::Namespace
         @weakmap.extend Enumerable
       end
       
+      def clear
+        initialize
+      end
+      
       def each(&block)
         Enumerator.new do |y|
           @mainmap.each { |e| y << e }
@@ -43,72 +47,74 @@ module Wires.current_network::Namespace
     end
     
     class Abstract
-      class << self
-        # Refuse to instantiate; it's a singleton!
-        private :new
+      def self.new(&block)
+        obj = super
+        obj.singleton_class.class_eval &block
+        obj
+      end
+      
+      def initialize
+        @table = Hash.new { |h,k| h[k] = Router::Map.new }
       end
     end
     
-    class Default < Abstract
-      class << self
+    Default = Abstract.new do
+      def clear_channels()
+        @table[:main].clear
+        @table[:fuzzy].clear
         
-        def clear_channels()
-          @table       = Router::Map.new
-          @fuzzy_table = Router::Map.new
-          @star        = Channel['*'.freeze]
+        @star = Channel['*'.freeze]
+      end
+      
+      def forget_channel(chan_cls, name)
+        @table[:main].delete name
+        @table[:fuzzy].delete name
+      end
+      
+      def get_channel(chan_cls, name)
+        return @star if @star and name == '*'
+        
+        channel = @table[:main][name]
+        return channel if channel
+        @table[:main][name] = channel = yield name
+        
+        if name.is_a? Regexp
+          @table[:fuzzy][name] = channel
+          channel.not_firable = [TypeError,
+            "Cannot fire on Regexp channel: #{name.inspect}."\
+            "  Regexp channels can only used in event handlers."]
         end
         
-        def forget_channel(chan_cls, name)
-          @table.delete name
-          @fuzzy_table.delete name
-        end
+        channel
+      end
+      
+      def get_receivers(chan)
+        name = chan.name
+        return @table[:main].values if name == '*'
         
-        def get_channel(chan_cls, name)
-          return @star if @star and name == '*'
-          
-          channel = @table[name] ||= (new_one=true; yield name)
-          
-          if new_one and name.is_a? Regexp then
-            @fuzzy_table[name] = channel
-            channel.not_firable = [TypeError,
-              "Cannot fire on Regexp channel: #{name.inspect}."\
-              "  Regexp channels can only used in event handlers."]
-          end
-          
-          channel
-        end
-        
-        def get_receivers(chan)
-          name = chan.name
-          return @table.values if name == '*'
-          
-          @fuzzy_table.each_pair.select do |k,v|
-            (begin; name =~ k; rescue TypeError; end)
-          end.map { |k,v| v } + [chan, @star]
-        end
+        @table[:fuzzy].each_pair.select do |k,v|
+          (begin; name =~ k; rescue TypeError; end)
+        end.map { |k,v| v } + [chan, @star]
       end
     end
     
-    class Simple < Abstract
-      class << self
-        def clear_channels()
-          @table = Router::Map.new
-        end
-        
-        def forget_channel(chan_cls, name)
-          @table.delete name
-        end
-        
-        def get_channel(chan_cls, name)
-          @table[name] ||= yield name
-        end
-        
-        def get_receivers(chan)
-          [chan]
-        end
+    Simple = Abstract.new do
+      def clear_channels
+        @table[:main].clear
+      end
+      
+      def forget_channel(chan_cls, name)
+        @table[:main].delete name
+      end
+      
+      def get_channel(chan_cls, name)
+        @table[:main][name] ||= yield name
+      end
+      
+      def get_receivers(chan)
+        [chan]
       end
     end
-    
     
   end
 end
