@@ -77,7 +77,7 @@ module Wires.current_network::Namespace
       #
       def new(name)
         channel = @new_lock.synchronize do
-          router.get_channel(self, name) { |name| super(name) }
+          router.get_channel(name) { |name| super(name) }
         end
       end
       
@@ -96,7 +96,7 @@ module Wires.current_network::Namespace
       #
       def forget(name)
         @new_lock.synchronize do
-          router.forget_channel(self, name)
+          router.forget_channel(name)
         end
         nil
       end
