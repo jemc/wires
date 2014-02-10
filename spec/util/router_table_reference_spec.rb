@@ -56,3 +56,8 @@ describe Wires::RouterTable::KeyReference, iso:true do
     h[subject.hash].should eq 88
   end
 end
+
+describe Wires::RouterTable::ValueReference, iso:true do
+  subject { Wires::RouterTable::ValueReference.new(obj) }
+  it_behaves_like "a router table reference"
+end

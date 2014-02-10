@@ -49,6 +49,9 @@ module Wires.current_network::Namespace
       end
     end
     
+    class ValueReference < AbstractReference
+    end
+    
     
     include Enumerable
     
