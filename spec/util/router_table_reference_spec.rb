@@ -4,9 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::RouterTable::AbstractReference, iso:true do
-  subject { Wires::RouterTable::AbstractReference.new(obj) }
-  
+shared_examples_for "a router table reference" do
   # Check that weak? matches actual weakness
   after { subject.ref.should be_a \
     (subject.weak? ? Ref::WeakReference : Ref::StrongReference) }
@@ -38,11 +36,16 @@ describe Wires::RouterTable::AbstractReference, iso:true do
   end
 end
 
+describe Wires::RouterTable::AbstractReference, iso:true do
+  subject { Wires::RouterTable::AbstractReference.new(obj) }
+  it_behaves_like "a router table reference"
+end
+
 describe Wires::RouterTable::KeyReference, iso:true do
   subject { Wires::RouterTable::KeyReference.new(obj) }
-  let(:obj) { Object.new }
+  it_behaves_like "a router table reference"
   
-  specify { subject.should be_a Wires::RouterTable::AbstractReference }
+  let(:obj) { Object.new }
   
   its(:hash) { should eq obj.hash }
   specify { subject.should eql obj }
