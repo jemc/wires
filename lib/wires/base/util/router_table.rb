@@ -2,6 +2,31 @@
 module Wires.current_network::Namespace
   
   class RouterTable
+    
+    class AbstractReference
+      
+      attr_reader :ref
+      
+      def initialize(obj)
+        raise ValueError "AbstractReference referent cannot be nil" if obj.nil?
+        
+        # Make initial weak reference (if possible)
+        @ref = begin
+          Ref::WeakReference.new(obj)
+        rescue RuntimeError;
+          Ref::StrongReference.new(obj)
+        end
+      end
+      
+      def weak?
+        @ref.is_a? Ref::WeakReference
+      end
+      
+      private
+      
+    end
+    
+    
     include Enumerable
     
     def initialize
