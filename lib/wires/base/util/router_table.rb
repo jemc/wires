@@ -4,8 +4,9 @@ module Wires.current_network::Namespace
   class RouterTable
     
     class AbstractReference
-      
       attr_reader :ref
+      def object; @ref.object; end
+      def weak?; @weak end
       
       def initialize(obj)
         raise ValueError "AbstractReference referent cannot be nil" if obj.nil?
@@ -34,9 +35,18 @@ module Wires.current_network::Namespace
           @weak = false
         end
       end
+    end
+    
+    # A key reference is an AbstractReference that is 'transparent'
+    # as a hash key.  That is - it acts as if the referenced object is the key
+    class KeyReference < AbstractReference
+      def hash
+        object.hash
+      end
       
-      def weak?; @weak end
-      
+      def eql?(other)
+        hash == other.hash
+      end
     end
     
     
