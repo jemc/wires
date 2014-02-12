@@ -6,7 +6,7 @@ require 'spec_helper'
 
 describe Wires::TimeScheduler do
   subject { Wires::TimeScheduler }
-  after { Wires::Hub.join_children; subject.clear }
+  after { Wires::Launcher.join_children; subject.clear }
   
   let(:chan_name) { Object.new.tap { |x| x.extend Wires::Convenience } }
   

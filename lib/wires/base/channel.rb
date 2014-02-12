@@ -10,9 +10,9 @@ module Wires.current_network::Namespace
   # level, so registering a hook will affect all instances of {Channel}. 
   # There are two hooks types that {Channel} will invoke:
   # * +:@before_fire+ - yields the event object and channel {#name} to the 
-  #   user block before {#fire} invokes {Hub.spawn} (see source code).
+  #   user block before {#fire} invokes {Launcher.spawn} (see source code).
   # * +:@after_fire+ - yields the event object and channel {#name} to the 
-  #   user block after {#fire} invokes {Hub.spawn} (see source code).
+  #   user block after {#fire} invokes {Launcher.spawn} (see source code).
   class Channel
     
     # The unique name of the channel, which can be any kind of hashable object.
@@ -33,20 +33,12 @@ module Wires.current_network::Namespace
     # @return [String] friendly output showing the class and channel {#name}
     def inspect; "#{self.class}[#{name.inspect}]"; end
     
-    @hub = Hub
     @new_lock = Monitor.new
     @@aim_lock = Mutex.new # @api private
     
     extend Util::Hooks
     
     class << self
-      
-      # The currently selected {Hub} for all channels ({Hub} by default).
-      #
-      # It is the {Hub}'s responsibility to execute event handlers.
-      # @api private
-      #
-      attr_accessor :hub
       
       # The currently selected {Router} for all channels 
       # ({Router::Default} by default).
@@ -273,7 +265,7 @@ module Wires.current_network::Namespace
       
       # Fire to selected targets
       threads = procs.uniq.map do |pr|
-        self.class.hub.spawn \
+        Launcher.spawn \
           event,     # fired event object event
           self.name, # name of channel fired from
           pr,        # proc to execute

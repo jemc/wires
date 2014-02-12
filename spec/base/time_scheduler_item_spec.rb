@@ -159,7 +159,7 @@ end
 
 describe Wires::TimeSchedulerItem do
   around { |example| Timecop.freeze { subject; example.run } }
-  after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
+  after { Wires::Launcher.join_children; Wires::TimeScheduler.clear }
   
   let(:events)      { Wires::Event.new }
   let(:chan_name)   { Object.new.tap { |x| x.extend Wires::Convenience } }

@@ -61,8 +61,8 @@ describe "Wires.replicate" do
       main_obj.fire :event, 'chan_name'
       alt_obj .fire :event, 'chan_name'
       
-      UserModule::Wires::Hub.join_children
-      UserModule::AltWires::Hub.join_children
+      UserModule::Wires::Launcher.join_children
+      UserModule::AltWires::Launcher.join_children
       
       expect(it_happened.count).to eq 2
       expect(it_happened).to include UserModule::Wires

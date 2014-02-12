@@ -1,7 +1,7 @@
 
 # Duration objects help with syntax sugar and can fire anonymous event blocks
 describe "wires/core_ext/Numeric" do
-  after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
+  after { Wires::Launcher.join_children; Wires::TimeScheduler.clear }
   
   it "can convert between basic measures of time" do
     {

@@ -4,8 +4,8 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Hub do
-  subject { Wires::Hub }
+describe Wires::Launcher do
+  subject { Wires::Launcher }
   
   it "is a singleton" do
     expect{ subject.new }.to raise_error NoMethodError
@@ -76,7 +76,7 @@ describe Wires::Hub do
     
     
     it "temporarily neglects procs that try to spawn as threads"\
-       " during Wires::Hub.hold, but allows procs to spawn in place" do
+       " during Wires::Launcher.hold, but allows procs to spawn in place" do
       var = 'before'
       spargs  = make_spargs Proc.new { var = 'after' }
       spargs2 = make_spargs Proc.new { var = 'after' }, blocking:true

@@ -1,8 +1,8 @@
 
 module Wires.current_network::Namespace
-  # An Event Hub. Event/proc associations come in, and the procs 
+  # An Event Launcher. Event/proc associations come in, and the procs 
   # get called in new threads in the order received
-  class Hub
+  class Launcher
     class << self
       
       # Refuse to instantiate; it's a singleton!

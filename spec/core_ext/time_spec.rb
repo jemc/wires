@@ -1,6 +1,6 @@
 
 describe "wires/core_ext/Time" do
-  after { Wires::Hub.join_children; Wires::TimeScheduler.clear }
+  after { Wires::Launcher.join_children; Wires::TimeScheduler.clear }
   let(:chan) { Object.new.tap{|x| x.extend Wires::Convenience} }
   
   it "can now fire events at a specific time" do
