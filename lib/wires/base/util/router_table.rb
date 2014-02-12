@@ -109,6 +109,22 @@ module Wires.current_network::Namespace
     end
     alias_method :each_pair, :each
     
+    def make_weak(key)
+      @lock.synchronize do
+        id = @key_ids[key.hash]
+        @keys[id].make_weak
+        @values[id].make_weak
+      end
+    end
+    
+    def make_strong(key)
+      @lock.synchronize do
+        id = @key_ids[key.hash]
+        @keys[id].make_strong
+        @values[id].make_strong
+      end
+    end
+    
   private
     
     def remove_reference_to_key(object_id)

@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::RouterTable do
+describe Wires::RouterTable, iso:true do
   
   describe Wires::RouterTable::Reference do
     subject { Wires::RouterTable::Reference.new(obj) }
@@ -95,6 +95,32 @@ describe Wires::RouterTable do
         i += 1
         subject[Object.new] = :foo
       end
+    end
+    
+    it "can make_weak an entry by key" do
+      subject['baz'] = Object.new
+      
+      kref = subject.instance_variable_get(:@keys).values.last
+      vref = subject.instance_variable_get(:@values).values.last
+      kref.should be_a Wires::RouterTable::Reference
+      vref.should be_a Wires::RouterTable::Reference
+      kref.should receive :make_weak
+      vref.should receive :make_weak
+      
+      subject.make_weak('baz')
+    end
+    
+    it "can make_strong an entry by key" do
+      subject['baz'] = Object.new
+      
+      kref = subject.instance_variable_get(:@keys).values.last
+      vref = subject.instance_variable_get(:@values).values.last
+      kref.should be_a Wires::RouterTable::Reference
+      vref.should be_a Wires::RouterTable::Reference
+      kref.should receive :make_strong
+      vref.should receive :make_strong
+      
+      subject.make_strong('baz')
     end
   end
   
