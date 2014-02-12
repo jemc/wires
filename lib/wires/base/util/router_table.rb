@@ -3,13 +3,13 @@ module Wires.current_network::Namespace
   
   class RouterTable
     
-    class AbstractReference
+    class Reference
       attr_reader :ref
       def object; @ref.object; end
       def weak?; @weak end
       
       def initialize(obj)
-        raise ValueError "AbstractReference referent cannot be nil" if obj.nil?
+        raise ValueError "#{self.class} referent cannot be nil" if obj.nil?
         
         # Make initial weak reference (if possible)
         begin
@@ -35,62 +35,88 @@ module Wires.current_network::Namespace
           @weak = false
         end
       end
-    end
-    
-    # A key reference is an AbstractReference that is 'transparent'
-    # as a hash key.  That is - it acts as if the referenced object is the key
-    class KeyReference < AbstractReference
-      def hash
-        object.hash
-      end
       
-      def eql?(other)
-        hash == other.hash
+      def inspect
+        "<##{self.class} #{object.nil? ? "#Object not available" : object.inspect}>"
       end
     end
     
-    class ValueReference < AbstractReference
-    end
-    
-    
+  end
+  
+  
+  class RouterTable
     include Enumerable
     
     def initialize
-      @mainmap = {}
-      @weakmap = Ref::WeakKeyMap.new
-      @weakmap.extend Enumerable
+      @keys = {}
+      @key_ids = {}
+      @values = {}
+      @lock = Mutex.new
+      @finalizer = lambda { |id| remove_reference_to_key id }
     end
-    
-    def clear
-      initialize
-    end
-    
-    def each(&block)
-      Enumerator.new do |y|
-        @mainmap.each { |e| y << e }
-        @weakmap.each { |e| y << e }
-      end.each(&block)
-    end
-    
-    alias_method :each_pair, :each
-    
-    def keys;   map { |k,v| v } end
-    def values; map { |k,v| v } end
     
     def [](key)
-      @mainmap[key] or @weakmap[key]
+      @lock.synchronize do
+        ref = @values[@key_ids[key.hash]]
+        ref.object if ref
+      end
     end
     
-    def []=(key, value, weak:false)
-      if weak and not key.frozen?
-        @weakmap[key] = value
-      else
-        @mainmap[key] = value
+    def []=(key, value)
+      begin; ObjectSpace.define_finalizer key, @finalizer
+      rescue RuntimeError; end
+      
+      @lock.synchronize do
+        id    = key.object_id
+        key   = RouterTable::Reference.new key
+        value = RouterTable::Reference.new value
+        
+        @keys[id] = key
+        @values[id] = value
+        @key_ids[key.object.hash] = id
       end
     end
     
     def delete(key)
-      @mainmap.delete(key) or @weakmap.delete(key)
+      @lock.synchronize do
+        id = @key_ids[key.hash]
+        @key_ids.delete key.hash
+        @keys.delete id
+        @values.delete id
+      end
+    end
+    
+    def clear
+      @lock.synchronize do
+        @keys.clear
+        @values.clear
+        @key_ids.clear
+      end
+      nil
+    end
+    
+    def keys;     @keys.values.map(&:object) end
+    def values; @values.values.map(&:object) end
+    
+    def each
+      Enumerator.new do |y|
+        @key_ids.values.each do |id|
+          key = @keys[id]
+          val = @values[id]
+          y << [key.object,val.object] unless key.nil? or val.nil?
+        end
+      end.each
+    end
+    alias_method :each_pair, :each
+    
+  private
+    
+    def remove_reference_to_key(object_id)
+      @lock.synchronize do
+        @key_ids.delete_if { |k,v| v==object_id }
+        @keys.delete object_id
+        @values.delete object_id
+      end
     end
   end
   
