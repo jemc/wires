@@ -155,12 +155,12 @@ describe Wires::Channel do
       return_val = subject.register event, weak:true do
         bucket << 88
       end
-      return_val.should be_a Proc
+      expect(return_val).to be_a Proc
       
-      subject.fire! event; bucket.count.should eq 1
-      subject.fire! event; bucket.count.should eq 2
+      subject.fire! event; expect(bucket.count).to eq 1
+      subject.fire! event; expect(bucket.count).to eq 2
       Ref::Mock.gc
-      subject.fire! event; bucket.count.should eq 2
+      subject.fire! event; expect(bucket.count).to eq 2
     end
   end
   
@@ -340,26 +340,27 @@ describe Wires::Channel do
     def elapsed_time; Time.now - start_time; end
     def should_timeout(duration)
       elapsed = elapsed_time
-      elapsed.should be <  duration+0.1
-      elapsed.should be >= duration
+      expect(elapsed).to be <  duration+0.1
+      expect(elapsed).to be >= duration
     end
     def should_not_timeout(duration)
       elapsed = elapsed_time
-      elapsed.should be < duration
+      expect(elapsed).to be < duration
     end
     
     it "can wait within a block until a given event is fired on the channel" do
       subject.sync_on :free_up do
         subject.fire :tie_up
-        freed.should be_empty
+        expect(freed).to be_empty
       end
-      freed.should_not be_empty
+      expect(freed).to_not be_empty
     end
     
     it "always returns nil" do
-      subject.sync_on :free_up do
+      return_val = subject.sync_on :free_up do
         subject.fire :tie_up
-      end.should eq nil
+      end
+      expect(return_val).to eq nil
     end
     
     it "is re-entrant to allow matching blocking fire within" do
@@ -371,9 +372,9 @@ describe Wires::Channel do
     it "can wait with a timeout" do
       subject.sync_on :free_up, timeout:0.2 do
         subject.fire :nothing
-        freed.should be_empty
+        expect(freed).to be_empty
       end
-      freed.should be_empty
+      expect(freed).to be_empty
       should_timeout 0.2
     end
     
@@ -381,9 +382,9 @@ describe Wires::Channel do
       subject.sync_on :free_up, timeout:0.2 do |s|
         subject.fire :tie_up[1,2,3]
         s.condition { |e|   e.args.include? 1 }
-        s.condition { |e,c| e.args.include? 2; c.should eq subject.name }
+        s.condition { |e,c| e.args.include? 2; expect(c).to eq subject.name }
       end
-      freed.should_not be_empty
+      expect(freed).to_not be_empty
       should_not_timeout 0.2
     end
     
@@ -393,7 +394,7 @@ describe Wires::Channel do
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 999 } # won't be met
       end
-      freed.should_not be_empty
+      expect(freed).to_not be_empty
       should_timeout 0.2
     end
     
@@ -404,10 +405,10 @@ describe Wires::Channel do
         s.condition { |e| e.args.include? 1 }
         s.condition { |e| e.args.include? 2 }
         s.execute { |e|   bucket1 << e }
-        s.execute { |e,c| bucket2 << e; c.should eq subject.name }
+        s.execute { |e,c| bucket2 << e; expect(c).to eq subject.name }
       end
-      bucket1.should match_array [:free_up[1,2,3]]
-      bucket2.should match_array [:free_up[1,2,3]]
+      expect(bucket1).to match_array [:free_up[1,2,3]]
+      expect(bucket2).to match_array [:free_up[1,2,3]]
     end
     
     it "will not run the execute blocks if the wait timed out" do
@@ -419,51 +420,51 @@ describe Wires::Channel do
         s.execute { |e| bucket1 << e }
         s.execute { |e| bucket2 << e }
       end
-      bucket1.should be_empty
-      bucket2.should be_empty
+      expect(bucket1).to be_empty
+      expect(bucket2).to be_empty
       should_timeout 0.2
     end
     
     it "can wait at an explicit point within the block" do
       subject.sync_on :free_up do |s|
         subject.fire :tie_up
-        freed.should be_empty
-        s.wait.should eq :free_up[]
-        freed.should_not be_empty
+        expect(freed).to be_empty
+        expect(s.wait).to eq :free_up[]
+        expect(freed).to_not be_empty
       end
-      freed.should_not be_empty
+      expect(freed).to_not be_empty
     end
     
     it "can wait at an explicit point with a timeout" do
       subject.sync_on :free_up do |s|
         subject.fire :tie_up
-        freed.should be_empty
-        s.wait(0.2).should eq :free_up[]
-        freed.should_not be_empty
+        expect(freed).to be_empty
+        expect(s.wait(0.2)).to eq :free_up[]
+        expect(freed).to_not be_empty
       end
-      freed.should_not be_empty
+      expect(freed).to_not be_empty
     end
     
     it "can wait at an explicit point, giving nil if timed out" do
       subject.sync_on :free_up do |s|
         subject.fire :nothing
-        s.wait(0.2).should eq nil
-        freed.should be_empty
+        expect(s.wait(0.2)).to eq nil
+        expect(freed).to be_empty
       end
-      freed.should be_empty
+      expect(freed).to be_empty
       should_timeout 0.2
     end
     
     it "can wait at an explicit point using the default timeout" do
       subject.sync_on :free_up, timeout:0.2 do |s|
-        s.wait.should eq nil
+        expect(s.wait).to eq nil
       end
       should_timeout 0.2
     end
     
     it "can wait at an explicit point using some other timeout" do
       subject.sync_on :free_up, timeout:500 do |s|
-        s.wait(0.2).should eq nil
+        expect(s.wait(0.2)).to eq nil
       end
       should_timeout 0.2
     end
@@ -471,23 +472,23 @@ describe Wires::Channel do
     it "can wait multiple explicit times" do
       subject.sync_on :free_up do |s|
         subject.fire :tie_up[1,2,3]
-        freed.count.should be 0
-        s.wait(0.2).should eq :free_up[1,2,3]
+        expect(freed.count).to be 0
+        expect(s.wait(0.2)).to eq :free_up[1,2,3]
         subject.fire :tie_up[4,5,6]
-        freed.count.should be 1
-        s.wait(0.2).should eq :free_up[4,5,6]
-        freed.count.should be 2
-        s.wait(0.2).should eq nil
+        expect(freed.count).to be 1
+        expect(s.wait(0.2)).to eq :free_up[4,5,6]
+        expect(freed.count).to be 2
+        expect(s.wait(0.2)).to eq nil
       end
     end
     
     it "will queue up matching events for additional waits" do
       subject.sync_on :free_up do |s|
-        freed.count.should be 0
+        expect(freed.count).to be 0
         3.times { subject.fire! :tie_up }
-        freed.count.should be 3
-        3.times { s.wait(0.2).should eq :free_up }
-        s.wait(0.2).should eq nil
+        expect(freed.count).to be 3
+        3.times { expect(s.wait(0.2)).to eq :free_up }
+        expect(s.wait(0.2)).to eq nil
       end
     end
     
