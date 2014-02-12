@@ -45,7 +45,6 @@ loader = Proc.new do |path|
 end
 
 loader.call 'base/util/hooks'
-loader.call 'base/util/build_alt'
 loader.call 'base/util/router_table'
 
 loader.call 'base/event'
