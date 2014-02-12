@@ -49,10 +49,6 @@ module Wires.current_network::Namespace
       @refreshes.each { |r| instance_eval &r }
     end
     
-    def forget_channel(name)
-      @categories.map(&:last).each { |c| c.table.delete name }
-    end
-    
     def get_channel(name, &block)
       channel = nil
       @categories.map(&:last).each do |c|
@@ -67,6 +63,18 @@ module Wires.current_network::Namespace
     
     def get_receivers(chan)
       [chan]
+    end
+    
+    def forget_channel(name)
+      @categories.map(&:last).each { |c| c.table.delete name }
+    end
+    
+    def hold_channel(name)
+      @categories.map(&:last).each { |c| c.table.make_strong name }
+    end
+    
+    def release_channel(name)
+      @categories.map(&:last).each { |c| c.table.make_weak name }
     end
     
     

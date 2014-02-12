@@ -112,16 +112,20 @@ module Wires.current_network::Namespace
     def make_weak(key)
       @lock.synchronize do
         id = @key_ids[key.hash]
-        @keys[id].make_weak
-        @values[id].make_weak
+        kref = @keys[id]
+        vref = @values[id]
+        kref.make_weak if kref
+        vref.make_weak if vref
       end
     end
     
     def make_strong(key)
       @lock.synchronize do
         id = @key_ids[key.hash]
-        @keys[id].make_strong
-        @values[id].make_strong
+        kref = @keys[id]
+        vref = @values[id]
+        kref.make_strong if kref
+        vref.make_strong if vref
       end
     end
     

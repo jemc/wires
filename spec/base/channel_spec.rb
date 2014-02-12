@@ -54,6 +54,48 @@ describe Wires::Channel do
         expect(channels.uniq.size).to eq 1
       end
     end
+    
+    def loop_gc_with_timeout
+      start_time = Time.now
+      refs = []
+      loop { # loop until one of the channel name objects is gone
+        refs << Ref::WeakReference.new(Object.new)
+        chan = Wires::Channel.new refs.last.object
+        yield chan if block_given?
+        GC.start
+        break if refs.map(&:object).map(&:nil?).any?
+        raise Timeout::Error if Time.now-0.5 > start_time
+      }
+    end
+    
+    it "doesn't prevent the name object from being garbage collected" do
+      expect { loop_gc_with_timeout }.not_to raise_error
+    end
+    
+    it "will prevent the name object from being garbage collected"\
+       " if a handler has been registered" do
+      expect { loop_gc_with_timeout { |chan|
+        chan.register event, &a_proc
+      }}.to raise_error Timeout::Error
+    end
+    
+    it "won't prevent the name object from being garbage collected"\
+       " if all handlers have been unregistered" do
+      expect { loop_gc_with_timeout { |chan|
+        chan.register event, &a_proc
+        a_proc.unregister
+      }}.not_to raise_error
+    end
+    
+    it "will prevent the name object from being garbage collected"\
+       " if not all handlers have been unregistered" do
+      expect { loop_gc_with_timeout { |chan|
+        chan.register event, &a_proc
+        chan.register event, &Proc.new{}
+        a_proc.unregister
+      }}.to raise_error Timeout::Error
+    end
+    
   end
   
   
@@ -169,9 +211,9 @@ describe Wires::Channel do
   end
   
   
-  # describe ".router" do
-  #   specify { expect(Wires::Channel.router).to eq Wires::Router::Default }
-  # end
+  describe ".router" do
+    specify { expect(Wires::Channel.router).to eq Wires::Router::Default }
+  end
   
   
   describe ".router=" do

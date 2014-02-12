@@ -20,7 +20,7 @@ module Wires.current_network::Namespace
     # Because it is unique, a reference to the channel may be obtained from 
     # the class-level method {Channel.[] Channel[]} using only the {#name}.
     #
-    attr_reader :name
+    def name; @name.object end
     
     # An array specifying the exception type and string to raise if {#fire} is
     # called, or +nil+ if it's okay to {#fire} from this channel.
@@ -107,7 +107,7 @@ module Wires.current_network::Namespace
     # @param name [#hash] a hashable object of any type, unique to this channel
     #
     def initialize(name)
-      @name = name
+      @name = RouterTable::Reference.new name
       @handlers = []
     end
     
@@ -147,6 +147,7 @@ module Wires.current_network::Namespace
       ref = weak ? Ref::WeakReference.new(callable) :
                    Ref::StrongReference.new(callable)
       @@aim_lock.synchronize do
+        self.class.router.hold_channel name if @handlers.empty?
         @handlers << [events, ref]
         callable.extend RegisteredHandler
         callable.register_on_channel self
@@ -198,6 +199,7 @@ module Wires.current_network::Namespace
         !!@handlers.reject! do |stored|
           stored.last.object == callable
         end
+        .tap { self.class.router.release_channel name if @handlers.empty? }
       end
     end
     

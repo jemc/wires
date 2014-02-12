@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::RouterTable, iso:true do
+describe Wires::RouterTable do
   
   describe Wires::RouterTable::Reference do
     subject { Wires::RouterTable::Reference.new(obj) }
@@ -121,6 +121,11 @@ describe Wires::RouterTable, iso:true do
       vref.should receive :make_strong
       
       subject.make_strong('baz')
+    end
+    
+    it "ignores when make_weak or make_strong is called on missing keys" do
+      subject.make_weak(:foo)
+      subject.make_strong('bar')
     end
   end
   
