@@ -10,7 +10,7 @@ describe Wires::RouterTable do
     subject { Wires::RouterTable::Reference.new(obj) }
     
     after do # Check that weak? matches actual weakness
-      subject.ref.should be_a \
+      expect(subject.ref).to be_a \
         (subject.weak? ? Ref::WeakReference : Ref::StrongReference)
     end
     
@@ -46,45 +46,45 @@ describe Wires::RouterTable do
     
     after do # Check consistency of tables
       GC.start
-      subject.each.to_a.map(&:first).should eq subject.keys
-      subject.each.to_a.map(&:last).should eq subject.values
+      expect(subject.each.to_a.map(&:first)).to eq subject.keys
+      expect(subject.each.to_a.map(&:last)).to eq subject.values
     end
     
     it "provides Hash-like key-indexed access" do
       subject[:foo]  = 88
-      subject[:foo] .should eq 88
-      subject['bar'].should eq nil
+      expect(subject[:foo] ).to eq 88
+      expect(subject['bar']).to eq nil
       subject['bar'] = 99
-      subject[:foo] .should eq 88
-      subject['bar'].should eq 99
+      expect(subject[:foo] ).to eq 88
+      expect(subject['bar']).to eq 99
       subject.delete :foo
-      subject[:foo] .should eq nil
-      subject['bar'].should eq 99
+      expect(subject[:foo] ).to eq nil
+      expect(subject['bar']).to eq 99
       subject.delete 'bar'
-      subject[:foo] .should eq nil
-      subject['bar'].should eq nil
+      expect(subject[:foo] ).to eq nil
+      expect(subject['bar']).to eq nil
     end
     
     it "provides Hash-like #clear" do
       subject[:foo]  = 88
       subject['bar'] = 99
       subject.clear
-      subject[:foo] .should eq nil
-      subject['bar'].should eq nil
+      expect(subject[:foo] ).to eq nil
+      expect(subject['bar']).to eq nil
     end
     
     it "provides the Hash-like #keys and #values arrays" do
       subject[:foo]  = 88
       subject['bar'] = 99
-      subject.keys.should match_array [:foo,'bar']
-      subject.values.should match_array [88,99]
+      expect(subject.keys).to match_array [:foo,'bar']
+      expect(subject.values).to match_array [88,99]
     end
     
     it "provides the Hash-like #each Enumerator (aliased #each_pair)" do
       subject[:foo]  = 88
       subject['bar'] = 99
-      subject.each.to_a.should match_array [[:foo,88],['bar',99]]
-      subject.each_pair.to_a.should eq subject.each.to_a
+      expect(subject.each.to_a).to match_array [[:foo,88],['bar',99]]
+      expect(subject.each_pair.to_a).to eq subject.each.to_a
     end
     
     it "clears out garbage-collected keys" do
@@ -102,10 +102,10 @@ describe Wires::RouterTable do
       
       kref = subject.instance_variable_get(:@keys).values.last
       vref = subject.instance_variable_get(:@values).values.last
-      kref.should be_a Wires::RouterTable::Reference
-      vref.should be_a Wires::RouterTable::Reference
-      kref.should receive :make_weak
-      vref.should receive :make_weak
+      expect(kref).to be_a Wires::RouterTable::Reference
+      expect(vref).to be_a Wires::RouterTable::Reference
+      expect(kref).to receive :make_weak
+      expect(vref).to receive :make_weak
       
       subject.make_weak('baz')
     end
@@ -115,10 +115,10 @@ describe Wires::RouterTable do
       
       kref = subject.instance_variable_get(:@keys).values.last
       vref = subject.instance_variable_get(:@values).values.last
-      kref.should be_a Wires::RouterTable::Reference
-      vref.should be_a Wires::RouterTable::Reference
-      kref.should receive :make_strong
-      vref.should receive :make_strong
+      expect(kref).to be_a Wires::RouterTable::Reference
+      expect(vref).to be_a Wires::RouterTable::Reference
+      expect(kref).to receive :make_strong
+      expect(vref).to receive :make_strong
       
       subject.make_strong('baz')
     end
