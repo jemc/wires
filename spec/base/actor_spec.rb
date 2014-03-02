@@ -5,7 +5,7 @@ require 'wires/base/actor'
 require 'spec_helper'
 
 
-describe Wires::Actor, iso:true do
+describe Wires::Actor do
   let(:klass_def) { proc{} }
   let(:klass) {
     kls = Class.new

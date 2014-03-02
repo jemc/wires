@@ -37,8 +37,9 @@ describe "Wires.replicate" do
       array - [Wires]
     end
     
-    it "contains an alternate version of each Wires singleton" do
-      wires_constants.reject{|obj| obj.respond_to? :new}.each do |obj|
+    it "contains an alternate version of each Wires singleton Class" do
+      wires_constants.select{ |obj| obj.is_a? Class }
+                     .reject{ |obj| obj.respond_to? :new }.each do |obj|
         alt_obj = eval obj.to_s.gsub(/^Wires/, subject.to_s)
         expect(alt_obj).to_not equal obj
       end
