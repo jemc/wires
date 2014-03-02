@@ -1,6 +1,8 @@
 Wires
 =====
 
+[![Build Status](https://travis-ci.org/jemc/wires.png)](https://travis-ci.org/jemc/wires)
+
 A lightweight, extensible asynchronous event routing framework in Ruby.
 
 Patch your objects together with wires.
