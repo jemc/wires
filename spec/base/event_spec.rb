@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Event do
+describe Wires::Event, iso:true do
   
   context "without arguments" do
     specify { expect(subject).to eq :*[] }
@@ -43,6 +43,35 @@ describe Wires::Event do
   describe "#to_wires_event" do
     subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
     its(:to_wires_event) { should equal subject }
+  end
+  
+  describe "#==" do
+    specify { Wires::Event.new                     .should_not eql \
+              Wires::Event.new }
+    specify { :test[]                              .should_not eql \
+              :test[] }
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not eql \
+              :test[1, 2, 3, a:4, b:5, &:proc] }
+    specify { Wires::Event.new                     .should == \
+              Wires::Event.new }
+    specify { :test[]                              .should == \
+              :test[] }
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should == \
+              :test[1, 2, 3, a:4, b:5, &:proc] }
+    specify { :test[1, 2, 3]                       .should == \
+              :test[1, 2, 3] }
+    specify { :test[a:4, b:5]                      .should == \
+              :test[a:4, b:5] }
+    specify { :test[&:proc]                        .should == \
+              :test[&:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
+              :other[1, 2, 3, a:4, b:5, &:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
+              :test[4, 5, 6, a:4, b:5, &:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
+              :test[1, 2, 3, a:4, &:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &Proc.new{}].should_not == \
+              :test[1, 2, 3, a:4, b:5, &Proc.new{}] }
   end
   
   describe ".list_from" do
