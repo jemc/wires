@@ -9,7 +9,7 @@ module Wires.current_network::Namespace
     end
     
     def listen_on(obj)
-      @_wires_actor_listen_proc ||= Proc.new do |e|
+      @_wires_actor_listen_proc ||= Proc.new do |e,c|
         @_wires_actor_channel.fire! e
       end
       
@@ -28,9 +28,9 @@ module Wires.current_network::Namespace
     
     module ClassMethods
       
-      def handler(event, meth=event)
+      def handler(method_name, event_type: method_name)
         @_wires_actor_handler_events ||= []
-        @_wires_actor_handler_events << [event, meth]
+        @_wires_actor_handler_events << [event_type, method_name]
       end
       
       def new(*args)
@@ -41,9 +41,9 @@ module Wires.current_network::Namespace
             @_wires_actor_handlers = []
             @_wires_actor_channel = Channel.new Object.new
             
-            @_wires_actor_handler_events.each do |event, meth|
+            @_wires_actor_handler_events.each do |event_type, meth|
               @_wires_actor_handlers << (
-                @_wires_actor_channel.register event, weak:true do |e|
+                @_wires_actor_channel.register event_type, weak:true do |e, c|
                   send meth, *e.args, **e.kwargs, &e.codeblock
                 end
               )

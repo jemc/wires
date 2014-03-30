@@ -72,5 +72,26 @@ describe Wires::Actor, iso:true do
       Wires::Channel['channel_old'].fire! event_a # Expect no forwarding
       Wires::Channel['channel_old'].fire! event_b # Expect no forwarding
     end
+    
+    describe "with event type specified distinctly from method name" do
+      let(:klass_def) { proc {
+        def foo(*args) end
+        def type_b(*args) end
+        handler :foo, :event_type=>:type_a
+        handler :type_b
+      } }
+      
+      it "will forward events of that type to the given handler" do
+        subject.listen_on 'channel'
+        
+        expect(subject).to receive(:foo)
+          .with(*event_args_a, **event_kwargs_a, &event_blk_a)
+        Wires::Channel['channel'].fire! event_a
+        
+        expect(subject).to receive(event_type_b)
+          .with(*event_args_b, **event_kwargs_b, &event_blk_b)
+        Wires::Channel['channel'].fire! event_b
+      end
+    end
   end
 end
