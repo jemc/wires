@@ -35,7 +35,12 @@ describe Wires::Actor, iso:true do
   
   describe "when included in a class" do
     subject { inst }
-    let(:klass_def) { proc { handler :type_a; handler :type_b } }
+    let(:klass_def) { proc {
+      def type_a(*args) end
+      def type_b(*args) end
+      handler :type_a
+      handler :type_b
+    } }
     
     it { should be_a Wires::Actor }
     
@@ -49,6 +54,23 @@ describe Wires::Actor, iso:true do
       expect(subject).to receive(event_type_b)
         .with(*event_args_b, **event_kwargs_b, &event_blk_b)
       Wires::Channel['channel'].fire! event_b
+    end
+    
+    it "overwrites the old listen_on call when listen_on is called again" do
+      subject.listen_on 'channel_old'
+      subject.listen_on 'channel' # Overwrite 'channel_old'
+      subject.listen_on 'channel' # Overwrite 'channel' - essentially no effect
+      
+      expect(subject).to receive(event_type_a)
+        .with(*event_args_a, **event_kwargs_a, &event_blk_a)
+      Wires::Channel['channel'].fire! event_a
+      
+      expect(subject).to receive(event_type_b)
+        .with(*event_args_b, **event_kwargs_b, &event_blk_b)
+      Wires::Channel['channel'].fire! event_b
+      
+      Wires::Channel['channel_old'].fire! event_a # Expect no forwarding
+      Wires::Channel['channel_old'].fire! event_b # Expect no forwarding
     end
   end
 end

@@ -9,9 +9,21 @@ module Wires.current_network::Namespace
     end
     
     def listen_on(obj)
-      Channel[obj].register :* do |e|
+      @_wires_actor_listen_proc ||= Proc.new do |e|
         @_wires_actor_channel.fire! e
       end
+      
+      @_wires_actor_listening_channels ||= []
+      @_wires_actor_listening_channels.each do |c|
+        Channel[c].unregister &@_wires_actor_listen_proc
+      end
+      
+      @_wires_actor_listening_channels = [obj]
+      @_wires_actor_listening_channels.each do |c|
+        Channel[c].register :*, &@_wires_actor_listen_proc
+      end
+      
+      return @_wires_actor_listening_channels
     end
     
     module ClassMethods
