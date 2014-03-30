@@ -46,11 +46,11 @@ describe Wires::Event, iso:true do
   end
   
   describe "#==" do
-    specify { Wires::Event.new                     .should_not eql \
+    specify { Wires::Event.new                     .should_not equal \
               Wires::Event.new }
-    specify { :test[]                              .should_not eql \
+    specify { :test[]                              .should_not equal \
               :test[] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not eql \
+    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not equal \
               :test[1, 2, 3, a:4, b:5, &:proc] }
     specify { Wires::Event.new                     .should == \
               Wires::Event.new }
@@ -72,6 +72,20 @@ describe Wires::Event, iso:true do
               :test[1, 2, 3, a:4, &:proc] }
     specify { :test[1, 2, 3, a:4, b:5, &Proc.new{}].should_not == \
               :test[1, 2, 3, a:4, b:5, &Proc.new{}] }
+  end
+  
+  describe "#dup" do
+    let(:event) { :test[1, 2, 3, a:4, b:5, &:proc] }
+    
+    specify { event.dup.should            ==    event }
+    specify { event.dup.should_not        equal event }
+    specify { event.dup.args.should       ==    event.args }
+    specify { event.dup.args.should_not   equal event.args }
+    specify { event.dup.kwargs.should     ==    event.kwargs }
+    specify { event.dup.kwargs.should_not equal event.kwargs }
+    
+    specify { event.dup.type.should       equal event.type }
+    specify { event.dup.codeblock.should  equal event.codeblock }
   end
   
   describe ".list_from" do

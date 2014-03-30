@@ -40,6 +40,13 @@ module Wires.current_network::Namespace
     # Directly access contents of @kwargs by key
     def [](key); @kwargs[key]; end
     
+    # Duplicate this event, ensuring that the args Array and kwargs Hash are
+    #   not the same object, and receivers of an event can't modify that
+    #   Array or Hash in ways that might affect other receivers of the event
+    def dup
+      Event.new *@args, type:@type, **@kwargs, &@codeblock
+    end
+    
     # Returns true if all meaningful components of two events are equal
     # Use #equal? instead if you want object identity comparison
     def ==(other)
