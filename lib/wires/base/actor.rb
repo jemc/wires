@@ -28,14 +28,24 @@ module Wires.current_network::Namespace
       return @_wires_actor_listening_channels
     end
     
+    def handler(method_name, event_type: method_name, expand_args: true)
+      @_wires_actor_handlers << (
+        @_wires_actor_channel.register event_type, weak:true do |e|
+          orig_channel = e.kwargs.delete :_wires_actor_original_channel
+          if expand_args
+            send method_name, *e.args, **e.kwargs, &e.codeblock
+          else
+            send method_name, e, orig_channel
+          end
+        end
+      )
+    end
+    
     module ClassMethods
       
-      def handler(method_name, event_type: method_name, expand_args: true)
+      def handler(*args)
         @_wires_actor_handler_events ||= []
-        @_wires_actor_handler_events << [method_name, {
-          event_type:  event_type,
-          expand_args: expand_args,
-        }]
+        @_wires_actor_handler_events << args
       end
       
       def new(*args)
@@ -46,20 +56,7 @@ module Wires.current_network::Namespace
             @_wires_actor_handlers = []
             @_wires_actor_channel = Channel.new Object.new
             
-            @_wires_actor_handler_events.each do |meth, **opts|
-             event_type  = opts.fetch :event_type
-             expand_args = opts.fetch :expand_args
-              @_wires_actor_handlers << (
-                @_wires_actor_channel.register event_type, weak:true do |e|
-                  orig_channel = e.kwargs.delete :_wires_actor_original_channel
-                  if expand_args
-                    send meth, *e.args, **e.kwargs, &e.codeblock
-                  else
-                    send meth, e, orig_channel
-                  end
-                end
-              )
-            end
+            @_wires_actor_handler_events.each { |a| handler(*a) }
           end
         end
       end
