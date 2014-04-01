@@ -114,5 +114,30 @@ describe Wires::Actor, iso:true do
         Wires::Channel['channel'].fire! event_b
       end
     end
+    
+    describe "when handler isn't called in the class definition" do
+      let(:klass_def) { proc {
+        def type_a(*args) raise "Unexpected call to #{__method__}" end
+        def type_b(*args) raise "Unexpected call to #{__method__}" end
+      } }
+      
+      it "can set up an instance-local handler in the object" do
+        subject.listen_on 'channel'
+        
+        Wires::Channel['channel'].fire! event_a # Expect no forwarding
+        Wires::Channel['channel'].fire! event_b # Expect no forwarding
+        
+        subject.handler :type_a
+        subject.handler :type_b
+        
+        expect(subject).to receive(event_type_a)
+          .with(*event_args_a, **event_kwargs_a, &event_blk_a)
+        Wires::Channel['channel'].fire! event_a
+        
+        expect(subject).to receive(event_type_b)
+          .with(*event_args_b, **event_kwargs_b, &event_blk_b)
+        Wires::Channel['channel'].fire! event_b
+      end
+    end
   end
 end
