@@ -8,8 +8,10 @@ module Wires.current_network::Namespace
       obj.extend ClassMethods
     end
     
-    def listen_on(obj)
+    def listen_on(*channels, **keyed_channels)
       @_wires_actor_listen_proc ||= Proc.new do |e,c|
+        e = e.dup
+        e.kwargs[:_wires_actor_original_channel] = c
         @_wires_actor_channel.fire! e
       end
       
@@ -18,8 +20,8 @@ module Wires.current_network::Namespace
         Channel[c].unregister &@_wires_actor_listen_proc
       end
       
-      @_wires_actor_listening_channels = [obj]
-      @_wires_actor_listening_channels.each do |c|
+      @_wires_actor_listening_channels = [*channels, **keyed_channels]
+      (channels + keyed_channels.values).each do |c|
         Channel[c].register :*, &@_wires_actor_listen_proc
       end
       
@@ -28,9 +30,12 @@ module Wires.current_network::Namespace
     
     module ClassMethods
       
-      def handler(method_name, event_type: method_name)
+      def handler(method_name, event_type: method_name, expand_args: true)
         @_wires_actor_handler_events ||= []
-        @_wires_actor_handler_events << [event_type, method_name]
+        @_wires_actor_handler_events << [method_name, {
+          event_type:  event_type,
+          expand_args: expand_args,
+        }]
       end
       
       def new(*args)
@@ -41,10 +46,17 @@ module Wires.current_network::Namespace
             @_wires_actor_handlers = []
             @_wires_actor_channel = Channel.new Object.new
             
-            @_wires_actor_handler_events.each do |event_type, meth|
+            @_wires_actor_handler_events.each do |meth, **opts|
+             event_type  = opts.fetch :event_type
+             expand_args = opts.fetch :expand_args
               @_wires_actor_handlers << (
-                @_wires_actor_channel.register event_type, weak:true do |e, c|
-                  send meth, *e.args, **e.kwargs, &e.codeblock
+                @_wires_actor_channel.register event_type, weak:true do |e|
+                  orig_channel = e.kwargs.delete :_wires_actor_original_channel
+                  if expand_args
+                    send meth, *e.args, **e.kwargs, &e.codeblock
+                  else
+                    send meth, e, orig_channel
+                  end
                 end
               )
             end
