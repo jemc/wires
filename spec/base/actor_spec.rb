@@ -27,6 +27,12 @@ describe Wires::Actor, iso:true do
   let(:event_blk_b)    { Proc.new { } }
   let(:event_b) { event_type_b[*event_args_b, **event_kwargs_b, &event_blk_b] }
   
+  let(:event_type_c)   { :type_c }
+  let(:event_args_c)   { [8,9,0] }
+  let(:event_kwargs_c) { {foo:44,bar:55} }
+  let(:event_blk_c)    { Proc.new { } }
+  let(:event_c) { event_type_c[*event_args_c, **event_kwargs_c, &event_blk_c] }
+  
   let(:event_type)   { event_type_a }
   let(:event_args)   { event_args_a }
   let(:event_kwargs) { event_kwargs_a }
@@ -112,6 +118,44 @@ describe Wires::Actor, iso:true do
         expect(subject).to receive(event_type_b)
           .with(*event_args_b, **event_kwargs_b, &event_blk_b)
         Wires::Channel['channel'].fire! event_b
+      end
+    end
+    
+    describe "with :channel specified" do
+      let(:klass_def) { proc {
+        def type_a(*args) end
+        def type_b(*args) end
+        def type_c(*args) end
+        handler :type_a, :channel=>:alpha
+        handler :type_b, :channel=>:beta
+        handler :type_c
+      } }
+      
+      it "will filter/route events based on channel codes in listen_on" do
+        subject.listen_on 'channel', 'other', alpha:'AAA', beta:'BBB'
+        
+        expect(subject).to receive(event_type_a)
+          .with(*event_args_a, **event_kwargs_a, &event_blk_a)
+        Wires::Channel['AAA'].fire! event_a
+        
+        expect(subject).to receive(event_type_b)
+          .with(*event_args_b, **event_kwargs_b, &event_blk_b)
+        Wires::Channel['BBB'].fire! event_b
+        
+        expect(subject).to receive(event_type_c)
+          .with(*event_args_c, **event_kwargs_c, &event_blk_c)
+        Wires::Channel['channel'].fire! event_c
+        
+        expect(subject).to receive(event_type_c)
+          .with(*event_args_c, **event_kwargs_c, &event_blk_c)
+        Wires::Channel['other'].fire! event_c
+        
+        Wires::Channel['AAA'].fire! event_b # Expect no forwarding
+        Wires::Channel['AAA'].fire! event_c # Expect no forwarding
+        Wires::Channel['BBB'].fire! event_a # Expect no forwarding
+        Wires::Channel['BBB'].fire! event_c # Expect no forwarding
+        Wires::Channel['channel'].fire! event_a # Expect no forwarding
+        Wires::Channel['channel'].fire! event_b # Expect no forwarding
       end
     end
     

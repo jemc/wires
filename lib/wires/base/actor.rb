@@ -15,27 +15,39 @@ module Wires.current_network::Namespace
         @_wires_actor_channel.fire! e
       end
       
-      @_wires_actor_listening_channels ||= []
-      @_wires_actor_listening_channels.each do |c|
-        Channel[c].unregister &@_wires_actor_listen_proc
-      end
+      unreg = Proc.new { |c| Channel[c].unregister &@_wires_actor_listen_proc }
+      reg = Proc.new { |c| Channel[c].register :*, &@_wires_actor_listen_proc }
       
-      @_wires_actor_listening_channels = [*channels, **keyed_channels]
-      (channels + keyed_channels.values).each do |c|
-        Channel[c].register :*, &@_wires_actor_listen_proc
-      end
+      @_wires_actor_channels       ||= []
+      @_wires_actor_keyed_channels ||= {}
       
-      return @_wires_actor_listening_channels
+      @_wires_actor_channels.each              &unreg
+      @_wires_actor_keyed_channels.values.each &unreg
+      
+      @_wires_actor_channels       = channels
+      @_wires_actor_keyed_channels = keyed_channels
+      
+      @_wires_actor_channels.each              &reg
+      @_wires_actor_keyed_channels.values.each &reg
+      
+      return [*channels, **keyed_channels]
     end
     
-    def handler(method_name, event_type: method_name, expand_args: true)
+    def handler(method_name,
+                event_type:  method_name,
+                expand_args: true,
+                channel:     nil )
       @_wires_actor_handlers << (
         @_wires_actor_channel.register event_type, weak:true do |e|
           orig_channel = e.kwargs.delete :_wires_actor_original_channel
-          if expand_args
-            send method_name, *e.args, **e.kwargs, &e.codeblock
-          else
-            send method_name, e, orig_channel
+          
+          if (channel.nil? && @_wires_actor_channels.include?(orig_channel)) \
+          || (@_wires_actor_keyed_channels[channel] == orig_channel)
+            if expand_args
+              send method_name, *e.args, **e.kwargs, &e.codeblock
+            else
+              send method_name, e, orig_channel
+            end
           end
         end
       )
