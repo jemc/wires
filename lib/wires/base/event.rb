@@ -44,7 +44,10 @@ module Wires.current_network::Namespace
     #   not the same object, and receivers of an event can't modify that
     #   Array or Hash in ways that might affect other receivers of the event
     def dup
-      Event.new *@args, type:@type, **@kwargs, &@codeblock
+      super.tap do |e|
+        e.args   = e.args.dup
+        e.kwargs = e.kwargs.dup
+      end
     end
     
     # Returns true if all meaningful components of two events are equal
