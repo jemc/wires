@@ -39,7 +39,7 @@ module Wires.current_network::Namespace
                 event_type:  method_name,
                 expand_args: true,
                 channel:     nil )
-      @_wires_actor_handlers << (
+      @_wires_actor_handler_procs << (
         @_wires_actor_channel.register event_type, weak:true do |e|
           orig_channel = e.kwargs.delete :_wires_actor_original_channel
           
@@ -60,19 +60,19 @@ module Wires.current_network::Namespace
     module ClassMethods
       
       def handler(*args)
-        @_wires_actor_handler_events ||= []
-        @_wires_actor_handler_events << args
+        @_wires_actor_handlers ||= []
+        @_wires_actor_handlers << args
       end
       
       def new(*args)
         super.tap do |obj|
           obj.instance_eval do
-            @_wires_actor_handler_events = self.class.instance_variable_get :@_wires_actor_handler_events
-            @_wires_actor_handler_events ||= []
-            @_wires_actor_handlers = []
             @_wires_actor_channel = Channel.new Object.new
+            @_wires_actor_handler_procs = []
+            @_wires_actor_handlers = 
+              self.class.instance_variable_get(:@_wires_actor_handlers) || []
             
-            @_wires_actor_handler_events.each { |a| handler(*a) }
+            @_wires_actor_handlers.each { |a| handler(*a) }
           end
         end
       end
