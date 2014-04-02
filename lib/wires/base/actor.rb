@@ -30,7 +30,7 @@ module Wires.current_network::Namespace
       @_wires_actor_channels.each              &reg
       @_wires_actor_keyed_channels.values.each &reg
       
-      return [*channels, **keyed_channels]
+      nil
     end
     
     def handler(method_name,
