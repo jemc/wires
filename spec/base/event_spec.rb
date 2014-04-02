@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Event do
+describe Wires::Event, iso:true do
   
   context "without arguments" do
     specify { expect(subject).to eq :*[] }
@@ -14,30 +14,88 @@ describe Wires::Event do
     subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
     specify { 
       expect(subject).to eq :*[1, 2, 3, a:4, b:5, &:proc] }
+    its(:type)        { should == :* }
+    its(:args)        { should == [1, 2, 3] }
+    its(:kwargs)      { should == {a:4, b:5} }
+    its(:codeblock)   { should == :proc.to_proc }
+    its(:a)           { should == 4 }
+    its(:b)           { should == 5 }
+    its([:type])      { should == nil }
+    its([:args])      { should == nil }
+    its([:kwargs])    { should == nil }
+    its([:codeblock]) { should == nil }
   end
   
   context "with :type keyword argument" do
     subject { Wires::Event.new    1, 2, 3, a:4, b:5, type: :test, &:proc }
     specify { 
       expect(subject).to eq :test[1, 2, 3, a:4, b:5, &:proc] }
+    its(:type)        { should == :test }
+    its(:args)        { should == [1, 2, 3] }
+    its(:kwargs)      { should == {a:4, b:5} }
+    its(:codeblock)   { should == :proc.to_proc }
+    its(:a)           { should == 4 }
+    its(:b)           { should == 5 }
+    its([:type])      { should == nil }
+    its([:args])      { should == nil }
+    its([:kwargs])    { should == nil }
+    its([:codeblock]) { should == nil }
+    its([:a])         { should == 4 }
+    its([:b])         { should == 5 }
   end
     
   context "with :args keyword argument" do
-    subject { Wires::Event.new 1,2,3, args:[5,6,7] }
+    subject { Wires::Event.new 1, 2, 3, args:[5, 6, 7], a:4, b:5, &:proc }
     specify { 
-      expect(subject).to eq :*[1,2,3, args:[5,6,7]] }
+      expect(subject).to eq :*[1, 2, 3, args:[5, 6, 7], a:4, b:5, &:proc] }
+    its(:type)        { should == :* }
+    its(:args)        { should == [1, 2, 3] }
+    its(:kwargs)      { should == {args:[5, 6, 7], a:4, b:5} }
+    its(:codeblock)   { should == :proc.to_proc }
+    its(:a)           { should == 4 }
+    its(:b)           { should == 5 }
+    its([:type])      { should == nil }
+    its([:args])      { should == [5, 6, 7] }
+    its([:kwargs])    { should == nil }
+    its([:codeblock]) { should == nil }
+    its([:a])         { should == 4 }
+    its([:b])         { should == 5 }
   end
     
   context "with :kwargs keyword argument" do
-    subject { Wires::Event.new a:1,b:2, kwargs:{a:4,b:5} }
+    subject { Wires::Event.new 1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &:proc }
     specify { 
-      expect(subject).to eq :*[a:1,b:2, kwargs:{a:4,b:5}] }
+      expect(subject).to eq :*[1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &:proc] }
+    its(:type)        { should == :* }
+    its(:args)        { should == [1, 2, 3] }
+    its(:kwargs)      { should == {kwargs:{a:8, b:9}, a:4, b:5} }
+    its(:codeblock)   { should == :proc.to_proc }
+    its(:a)           { should == 4 }
+    its(:b)           { should == 5 }
+    its([:type])      { should == nil }
+    its([:args])      { should == nil }
+    its([:kwargs])    { should == {a:8, b:9} }
+    its([:codeblock]) { should == nil }
+    its([:a])         { should == 4 }
+    its([:b])         { should == 5 }
   end
   
   context "with :codeblock keyword argument" do
-    subject { Wires::Event.new codeblock: :anything, &:proc }
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, codeblock: :foo, &:proc }
     specify { 
-      expect(subject).to eq :*[codeblock: :anything, &:proc] }
+      expect(subject).to eq :*[1, 2, 3, a:4, b:5, codeblock: :foo, &:proc] }
+    its(:type)        { should == :* }
+    its(:args)        { should == [1, 2, 3] }
+    its(:kwargs)      { should == {a:4, b:5, codeblock: :foo} }
+    its(:codeblock)   { should == :proc.to_proc }
+    its(:a)           { should == 4 }
+    its(:b)           { should == 5 }
+    its([:type])      { should == nil }
+    its([:args])      { should == nil }
+    its([:kwargs])    { should == nil }
+    its([:codeblock]) { should == :foo }
+    its([:a])         { should == 4 }
+    its([:b])         { should == 5 }
   end
   
   describe "#to_wires_event" do
