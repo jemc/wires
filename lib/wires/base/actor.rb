@@ -18,17 +18,19 @@ module Wires.current_network::Namespace
       unreg = Proc.new { |c| Channel[c].unregister &@_wires_actor_listen_proc }
       reg = Proc.new { |c| Channel[c].register :*, &@_wires_actor_listen_proc }
       
-      @_wires_actor_channels       ||= []
-      @_wires_actor_keyed_channels ||= {}
+      @_wires_actor_keyed_channels ||= {nil=>[]}
       
-      @_wires_actor_channels.each              &unreg
-      @_wires_actor_keyed_channels.values.each &unreg
+      old_channels       = @_wires_actor_keyed_channels.delete nil
+      old_keyed_channels = @_wires_actor_keyed_channels
       
-      @_wires_actor_channels       = channels
-      @_wires_actor_keyed_channels = keyed_channels
+      old_channels.each              &unreg
+      old_keyed_channels.values.each &unreg
       
-      @_wires_actor_channels.each              &reg
-      @_wires_actor_keyed_channels.values.each &reg
+      channels.each              &reg
+      keyed_channels.values.each &reg
+      
+      @_wires_actor_keyed_channels      = keyed_channels.dup
+      @_wires_actor_keyed_channels[nil] = channels
       
       nil
     end
@@ -41,8 +43,10 @@ module Wires.current_network::Namespace
         @_wires_actor_channel.register event_type, weak:true do |e|
           orig_channel = e.kwargs.delete :_wires_actor_original_channel
           
-          if (channel.nil? && @_wires_actor_channels.include?(orig_channel)) \
-          || (@_wires_actor_keyed_channels[channel] == orig_channel)
+          channel_list = @_wires_actor_keyed_channels[channel]
+          channel_list = [channel_list] unless channel_list.is_a? Array
+          
+          if channel_list.include? orig_channel
             if expand_args
               send method_name, *e.args, **e.kwargs, &e.codeblock
             else
