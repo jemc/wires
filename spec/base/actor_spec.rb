@@ -121,13 +121,13 @@ describe Wires::Actor, iso:true do
       end
     end
     
-    describe "with :channel specified" do
+    describe "with :channel_code specified" do
       let(:klass_def) { proc {
         def type_a(*args) end
         def type_b(*args) end
         def type_c(*args) end
-        handler :type_a, :channel=>:alpha
-        handler :type_b, :channel=>:beta
+        handler :type_a, :channel_code=>:alpha
+        handler :type_b, :channel_code=>:beta
         handler :type_c
       } }
       

@@ -18,10 +18,10 @@ module Wires.current_network::Namespace
       unreg = Proc.new { |c| Channel[c].unregister &@_wires_actor_listen_proc }
       reg = Proc.new { |c| Channel[c].register :*, &@_wires_actor_listen_proc }
       
-      @_wires_actor_keyed_channels ||= {nil=>[]}
+      @_wires_actor_coded_channels ||= {nil=>[]}
       
-      old_channels       = @_wires_actor_keyed_channels.delete nil
-      old_keyed_channels = @_wires_actor_keyed_channels
+      old_channels       = @_wires_actor_coded_channels.delete nil
+      old_keyed_channels = @_wires_actor_coded_channels
       
       old_channels.each              &unreg
       old_keyed_channels.values.each &unreg
@@ -29,21 +29,21 @@ module Wires.current_network::Namespace
       channels.each              &reg
       keyed_channels.values.each &reg
       
-      @_wires_actor_keyed_channels      = keyed_channels.dup
-      @_wires_actor_keyed_channels[nil] = channels
+      @_wires_actor_coded_channels      = keyed_channels.dup
+      @_wires_actor_coded_channels[nil] = channels
       
       nil
     end
     
     def handler(method_name,
-                event_type:  method_name,
-                expand_args: true,
-                channel:     nil )
+                event_type:   method_name,
+                expand_args:  true,
+                channel_code: nil )
       @_wires_actor_handler_procs << (
         @_wires_actor_channel.register event_type, weak:true do |e|
           orig_channel = e.kwargs.delete :_wires_actor_original_channel
           
-          channel_list = @_wires_actor_keyed_channels[channel]
+          channel_list = @_wires_actor_coded_channels[channel_code]
           channel_list = [channel_list] unless channel_list.is_a? Array
           
           if channel_list.include? orig_channel
