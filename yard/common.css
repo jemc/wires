@@ -136,12 +136,12 @@ tt,
   font-family: Monaco,Consolas,Courier,monospace;
 }
 
-.source_code {
+.source_code, pre.code.ruby {
   border: 1px dashed #65804A;
   background-color: #020305;
 }
 
-pre.code { /* punctuation */
+pre.code, code { /* punctuation */
   color: #901025;
 }
 pre.code .symbol {
