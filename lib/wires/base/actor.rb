@@ -33,7 +33,7 @@ module Wires.current_network::Namespace
   #        fire :invalid[id], @outstream
   #      end
   #    end
-  #    handler :request, :channel_code=>:in
+  #    handler :request, :channel=>:in
   #    
   #    private
   #    
@@ -55,7 +55,7 @@ module Wires.current_network::Namespace
   #    def track_pending(id)
   #      @pending_ids << id
   #    end
-  #    handler :track_pending, :event_type=>:pending, :channel_code=>:out
+  #    handler :track_pending, :event=>:pending, :channel=>:out
   #  end
   #
   module Actor
@@ -74,7 +74,7 @@ module Wires.current_network::Namespace
     #
     # @param channels [Array] The untagged channels to listen_on.
     #   An event fired on any one of these channels will be routed to any
-    #   {#handler} that did not specify a :channel_code when {#handler} was
+    #   {#handler} that did not specify a :channel when {#handler} was
     #   invoked.  Each object in the array is treated as the {Channel#name},
     #   unless it is itself a {Channel} object.
     #
@@ -82,7 +82,7 @@ module Wires.current_network::Namespace
     #   with each key symbol as the channel code, and each value treated as
     #   the {Channel#name} (or {Channel} object).
     #   An event fired on the given channel will be routed to any
-    #   {#handler} that specified the same :channel_code when {#handler} was
+    #   {#handler} that specified the same :channel when {#handler} was
     #   invoked.
     #
     # @TODO handle Channel objects instead of names 
@@ -121,17 +121,17 @@ module Wires.current_network::Namespace
     #
     # @param method_name [Symbol] The name of the instance method to mark
     #   as an event handler.
-    # @param event_type [Symbol] The type of events to listen for.
-    # @param channel_code [Symbol] The channel code corresponding to one of
+    # @param event [Symbol] The type of events to listen for.
+    # @param channel [Symbol] The channel code corresponding to one of
     #   the keywords to be used in a call to {#listen_on}. This channel code
     #   is used rather than a literal {Channel#name} because the name may or
     #   may not be known at the time of {#handler} call; the code will be
     #   resolved to an actual {Channel#name} at time of event reception
-    #   based on the last call to {#listen_on}. If no channel_code is 
+    #   based on the last call to {#listen_on}. If no channel is 
     #   specified, the handler will listen for the event on the untagged
     #   channels specified in {#listen_on}.
     #
-    # @param expand_args [Boolean] Specify the form of the arguments to be
+    # @param expand [Boolean] Specify the form of the arguments to be
     #   passed to the method when called. This argument is +true+ by default,
     #   indicating the default behavior of passing the arguments used in
     #   {Event} creation.  If +false+ is specified, the method will receive
@@ -140,18 +140,18 @@ module Wires.current_network::Namespace
     #   the {Event} object and the {Channel#name} that it was fired on.
     #
     def handler(method_name,
-                event_type:   method_name,
-                channel_code: nil,
-                expand_args:  true)
+                event:   method_name,
+                channel: nil,
+                expand:  true)
       @_wires_actor_handler_procs << (
-        @_wires_actor_channel.register event_type, weak:true do |e|
+        @_wires_actor_channel.register event, weak:true do |e|
           orig_channel = e.kwargs.delete :_wires_actor_original_channel
           
-          channel_list = @_wires_actor_coded_channels[channel_code]
+          channel_list = @_wires_actor_coded_channels[channel]
           channel_list = [channel_list] unless channel_list.is_a? Array
           
           if channel_list.include? orig_channel
-            if expand_args
+            if expand
               send method_name, *e.args, **e.kwargs, &e.codeblock
             else
               send method_name, e, orig_channel

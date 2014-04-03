@@ -5,7 +5,7 @@ require 'wires/base/actor'
 require 'spec_helper'
 
 
-describe Wires::Actor, iso:true do
+describe Wires::Actor do
   let(:klass_def) { proc{} }
   let(:klass) {
     kls = Class.new
@@ -83,7 +83,7 @@ describe Wires::Actor, iso:true do
       let(:klass_def) { proc {
         def foo(*args) end
         def type_b(*args) end
-        handler :foo, :event_type=>:type_a
+        handler :foo, :event=>:type_a
         handler :type_b
       } }
       
@@ -100,11 +100,11 @@ describe Wires::Actor, iso:true do
       end
     end
     
-    describe "with :expand_args=>false" do
+    describe "with :expand=>false" do
       let(:klass_def) { proc {
         def type_a(*args) end
         def type_b(*args) end
-        handler :type_a, :expand_args=>false
+        handler :type_a, :expand=>false
         handler :type_b
       } }
       
@@ -121,13 +121,13 @@ describe Wires::Actor, iso:true do
       end
     end
     
-    describe "with :channel_code specified" do
+    describe "with :channel specified" do
       let(:klass_def) { proc {
         def type_a(*args) end
         def type_b(*args) end
         def type_c(*args) end
-        handler :type_a, :channel_code=>:alpha
-        handler :type_b, :channel_code=>:beta
+        handler :type_a, :channel=>:alpha
+        handler :type_b, :channel=>:beta
         handler :type_c
       } }
       
