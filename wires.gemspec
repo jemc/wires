@@ -1,13 +1,11 @@
 
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.5.8' # Remove deprecations before 0.6.0!
-  s.date          = '2014-02-05'
+  s.version       = '0.6.0'
+  s.date          = '2014-04-02'
   s.summary       = "wires"
   s.description   = "A lightweight, extensible asynchronous"\
-                    " event routing framework in Ruby."\
-                    " Patch your objects together with wires."\
-                    " Inspired by the python 'circuits' framework."
+                    " event routing framework in Ruby."
   s.authors       = ["Joe McIlvain"]
   s.email         = 'joe.eli.mac@gmail.com'
   
