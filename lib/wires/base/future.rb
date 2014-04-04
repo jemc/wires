@@ -10,11 +10,39 @@ module Wires.current_network::Namespace
         unless block
       
       @codeblock = block
+      @state     = :initial
+      @result    = nil
+      @statelock = Mutex.new
+      @cond      = ConditionVariable.new
+    end
+    
+    def start *args, &block
+      Thread.new { execute *args, &block }
     end
     
     def execute *args, &block
-      @codeblock.call *args, &block
+      @statelock.synchronize do
+        return @result if @state == :complete
+        @state = :running
+        
+        @codeblock.call(*args, &block).tap do |result|
+          @result = result
+          @state  = :complete
+          @cond.broadcast
+        end
+      end
     end
+    
+    def join
+      @statelock.synchronize do
+        @cond.wait @statelock unless complete?
+        @result
+      end
+    end
+    alias result join
+    
+    def running?;  @state == :running;  end;  alias executing? running?
+    def complete?; @state == :complete; end;  alias ready? complete?
     
   end
   
