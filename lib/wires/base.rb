@@ -48,6 +48,7 @@ loader.call 'base/util/hooks'
 loader.call 'base/util/router_table'
 
 loader.call 'base/event'
+loader.call 'base/future'
 loader.call 'base/launcher'
 loader.call 'base/router'
 loader.call 'base/channel'
