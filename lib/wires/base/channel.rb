@@ -263,6 +263,10 @@ module Wires.current_network::Namespace
         end
       end
       
+      procs.map! do |pr|
+        Future.new &pr
+      end
+      
       # Fire to selected targets
       threads = procs.uniq.map do |pr|
         Launcher.spawn \
