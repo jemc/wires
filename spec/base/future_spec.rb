@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Future do
+describe Wires::Future, iso:true do
   
   subject { Wires::Future.new &codeblock }
   
@@ -152,6 +152,23 @@ describe Wires::Future do
     dupe.codeblock.should eq subject.codeblock
     dupe.running?.should_not be
     dupe.complete?.should_not be
+  end
+  
+  it "will raise an exception out through result or join" do
+    ary = []
+    subject = Wires::Future.new { ary += caller; sleep 0.1; raise "whoops" }
+    thr = subject.start
+    
+    check_backtrace = Proc.new do |e|
+      ary.each { |line| e.backtrace.should include line }
+    end
+    
+    expect { subject.result }.to raise_error "whoops", &check_backtrace
+    expect { subject.result }.to raise_error "whoops", &check_backtrace
+    expect { subject.join   }.to raise_error "whoops", &check_backtrace
+    expect { subject.join   }.to raise_error "whoops", &check_backtrace
+    
+    thr.join # No exception raised here
   end
   
 end

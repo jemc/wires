@@ -42,14 +42,22 @@ module Wires.current_network::Namespace
       @cond      = ConditionVariable.new
     end
     
-    # Run {#execute} in a new +Thread+.
+    # Run {#execute} in a new +Thread+. If {#execute} raises an +Exception+,
+    # it will be rescued at the top level of the +Thread+, but will be raised
+    # when {#result} is called.
     #
     # @param args The arguments to pass to {#codeblock} in {#execute}.
     # @param block The block argument to pass to {#codeblock} in {#execute}.
     # @return [Thread] The spawned +Thread+.
     #
     def start *args, &block
-      Thread.new { execute *args, &block }
+      Thread.new do
+        begin
+          execute *args, &block
+        rescue Exception
+          # Exceptions get raised through when #result is called.
+        end
+      end
     end
     
     # Run the {#codeblock} passed to {#initialize} with the given arguments.
@@ -60,15 +68,23 @@ module Wires.current_network::Namespace
     # @param args The arguments to pass to {#codeblock}.
     # @param block The block argument to pass to {#codeblock}.
     # @return The return value of the call to {#codeblock}.
+    # @raise The exception raised by the call to {#codeblock}, if any.
     #
     def execute *args, &block
       @statelock.synchronize do
         return @result if @state == :complete
         @state = :running
         
-        @codeblock.call(*args, &block).tap do |result|
-          @result = result
-          @state  = :complete
+        begin
+          @codeblock.call(*args, &block).tap do |result|
+            @result = result
+            @state  = :complete
+          end
+        rescue Exception => exception
+          @result = exception
+          @state  = :exception
+          raise exception
+        ensure
           @cond.broadcast
         end
       end
@@ -81,11 +97,12 @@ module Wires.current_network::Namespace
     # {#result} will block until the {#codeblock} has been run.
     #
     # @return The return value of the call to {#codeblock}.
+    # @raise The exception raised by the call to {#codeblock}, if any.
     #
     def result
       @statelock.synchronize do
         @cond.wait @statelock unless complete?
-        @result
+        @state==:exception ? raise(@result) : @result
       end
     end
     alias join result
@@ -97,7 +114,7 @@ module Wires.current_network::Namespace
     
     # @return [Boolean]
     #   +true+ if {#codeblock} has already executed, else +false+.
-    def complete?; @state == :complete; end
+    def complete?; @state == :complete || @state == :exception; end
     alias ready? complete?
     
     # Duplicate the Future, without copying its {#running?}/{#complete?} state.
