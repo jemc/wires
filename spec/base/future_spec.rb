@@ -4,7 +4,7 @@ require 'wires'
 require 'spec_helper'
 
 
-describe Wires::Future, iso:true do
+describe Wires::Future do
   
   subject { Wires::Future.new &codeblock }
   

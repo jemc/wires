@@ -18,7 +18,6 @@ module Wires.current_network::Namespace
       
       # Moved to a dedicated method for subclass' sake
       def class_init
-        # @queue = Queue.new
         @max_children   = nil
         @children       = Array.new
         @children .extend MonitorMixin
@@ -45,10 +44,10 @@ module Wires.current_network::Namespace
       nil end
       
       def reset_neglect_procs
-        @on_neglect = Proc.new do |args|
+        @on_neglect = Proc.new do |*args|
           $stderr.puts "#{self} neglected to spawn task: #{args.inspect}"
         end
-        @on_neglect_done = Proc.new do |args|
+        @on_neglect_done = Proc.new do |*args|
           $stderr.puts "#{self} finally spawned neglected task: #{args.inspect}"
         end
       nil end
@@ -64,25 +63,27 @@ module Wires.current_network::Namespace
       end
       
       # Spawn a task - user code should never call this directly
-      def spawn(*args) # :args: event, chan, proc, blocking, parallel, fire_bt
+      def spawn(*args) # :args: event, chan, future, blocking, parallel, fire_bt
         
-        event, chan, proc, blocking, parallel, fire_bt = *args
+        event, chan, future, blocking, parallel, fire_bt = *args
         *proc_args = event, chan
         *exc_args  = event, chan, fire_bt
         
-        # If not parallel, run the proc in this thread
+        # If not parallel, run the future in this thread
         if !parallel
           begin
-            proc.call(*proc_args)
+            future.call(*proc_args)
           rescue Exception => exc
             unhandled_exception(exc, *exc_args)
           end
           
-          return nil
+          return future
         end
         
-        return neglect(*args) \
-          if @hold_lock.instance_variable_get(:@mon_mutex).locked?
+        if @hold_lock.instance_variable_get(:@mon_mutex).locked?
+          neglect(*args)
+          return future
+        end
         
         # If not parallel, clear old threads and spawn a new thread
         Thread.exclusive do
@@ -93,7 +94,7 @@ module Wires.current_network::Namespace
             # Start the new child thread; follow with chain of neglected tasks
             @children << Thread.new do
               begin
-                proc.call(*proc_args)
+                future.call(*proc_args)
               rescue Exception => exc
                 unhandled_exception(exc, *exc_args)
               ensure
@@ -103,9 +104,12 @@ module Wires.current_network::Namespace
             end
             
           # Capture ThreadError from either OS or user-set limitation
-          rescue ThreadError; return neglect(*args) end
+          rescue ThreadError
+            neglect(*args)
+            return future
+          end
           
-          return @children.last
+          return future
         end
         
       end
@@ -142,13 +146,13 @@ module Wires.current_network::Namespace
           @on_neglect.call(*args)
           @neglected << args
         end
-      false end
+      nil end
       
       # Run a chain of @neglected tasks in place until no more are waiting
       def spawn_neglected_task_chain
         args = @neglected.synchronize do
           return nil if @neglected.empty?
-          ((@neglected.shift)[0...-1]<<true) # Call with blocking
+          @neglected.shift.tap { |a| a[3] = true } # Call with blocking
         end
         spawn(*args)
         @on_neglect_done.call(*args)
@@ -160,7 +164,7 @@ module Wires.current_network::Namespace
         until (cease||=false)
           args = @neglected.synchronize do
             break if (cease = @neglected.empty?)
-            ((@neglected.shift)[0...-1]<<false) # Call without blocking
+            @neglected.shift.tap { |a| a[3] = false } # Call without blocking
           end
           break if cease
           spawn(*args)

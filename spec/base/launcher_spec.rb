@@ -31,21 +31,22 @@ describe Wires::Launcher do
     it "allows the user to set an arbitrary maximum number of children"\
        " and temporarily neglects to spawn all further threads" do
       done_flag = false
-      spargs = make_spargs Proc.new { sleep 0.02 until done_flag }
+      future = Wires::Future.new { sleep 0.02 until done_flag }
+      spargs = make_spargs future
       
       subject.max_children = 3
       expect(subject.max_children).to eq 3
       subject.max_children.times do
-        expect(subject.spawn(*spargs)).to be_instance_of Thread
+        expect(subject.spawn(*spargs)).to eq future
       end
       expect(subject.count_neglected).to eq 0
-      expect(subject.spawn(*spargs)).to eq false
+      expect(subject.spawn(*spargs)).to eq future
       expect(subject.count_neglected).to eq 1
-      expect(subject.spawn(*spargs)).to eq false
+      expect(subject.spawn(*spargs)).to eq future
       expect(subject.count_neglected).to eq 2
       subject.clear_neglected
       expect(subject.count_neglected).to eq 0
-      expect(subject.spawn(*spargs)).to eq false
+      expect(subject.spawn(*spargs)).to eq future
       expect(subject.count_neglected).to eq 1
       
       done_flag = true
@@ -58,11 +59,12 @@ describe Wires::Launcher do
     it "temporarily neglects procs that raise a ThreadError on creation;"\
        " that is, when there are too many threads for the OS to handle" do
       done_flag = false
-      spargs = make_spargs Proc.new { sleep 0.02 until done_flag }
+      future = Wires::Future.new { sleep 0.02 until done_flag }
+      spargs = make_spargs future
       count = 0
-      while subject.spawn(*spargs)
+      while subject.count_neglected == 0
         count += 1
-        expect(subject.count_neglected).to eq 0
+        subject.spawn(*spargs)
       end
       
       expect(subject.count_neglected).to eq 1
@@ -78,13 +80,15 @@ describe Wires::Launcher do
     it "temporarily neglects procs that try to spawn as threads"\
        " during Wires::Launcher.hold, but allows procs to spawn in place" do
       var = 'before'
-      spargs  = make_spargs Proc.new { var = 'after' }
-      spargs2 = make_spargs Proc.new { var = 'after' }, blocking:true
+      future  = Wires::Future.new { var = 'after' }
+      future2 = Wires::Future.new { var = 'after' }
+      spargs  = make_spargs future
+      spargs2 = make_spargs future2, blocking:true
       expect(subject.count_neglected).to eq 0
       
       subject.hold do
         expect(subject.count_neglected).to eq 0
-        expect(subject.spawn(*spargs)).to eq false
+        expect(subject.spawn(*spargs)).to eq future
         expect(subject.count_neglected).to eq 1
         sleep 0.1
         expect(var).to eq 'before'
@@ -97,7 +101,8 @@ describe Wires::Launcher do
       var = 'before'
       subject.hold do
         expect(subject.count_neglected).to eq 0
-        expect(subject.spawn(*spargs2)).to_not eq false
+        expect(subject.spawn(*spargs2)).to eq future2
+        expect(subject.count_neglected).to eq 0
         sleep 0.1
         expect(var).to eq 'after'
       end
@@ -107,10 +112,11 @@ describe Wires::Launcher do
     
     it "logs neglects to $stderr by default," \
        "but allows you to specify a different action if desired" do
-      spargs = make_spargs Proc.new { nil }
+      future = Wires::Future.new { nil }
+      spargs = make_spargs future
       
       subject.hold do
-        expect(subject.spawn(*spargs)).to eq false
+        expect(subject.spawn(*spargs)).to eq future
         expect($stderr.size).to be > 0
         $stderr = StringIO.new
         expect($stderr.size).to be == 0
@@ -133,7 +139,7 @@ describe Wires::Launcher do
       end
       
       subject.hold do
-        expect(subject.spawn(*spargs)).to eq false
+        expect(subject.spawn(*spargs)).to eq future
         expect($stderr.size).to be == 0
         expect(something_happened).to eq true
         expect(count).to be > 0

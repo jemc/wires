@@ -32,6 +32,7 @@ module Wires.current_network::Namespace
         end
       end
     end
+    alias call execute
     
     def join
       @statelock.synchronize do
