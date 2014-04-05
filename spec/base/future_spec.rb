@@ -142,4 +142,16 @@ describe Wires::Future do
     subject.complete?.should be
   end
   
+  it "can be duplicated without duplicating running/completion state" do
+    subject.execute
+    subject.running?.should_not be
+    subject.complete?.should be
+    
+    dupe = subject.dup
+    
+    dupe.codeblock.should eq subject.codeblock
+    dupe.running?.should_not be
+    dupe.complete?.should_not be
+  end
+  
 end

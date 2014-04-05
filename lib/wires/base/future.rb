@@ -100,6 +100,17 @@ module Wires.current_network::Namespace
     def complete?; @state == :complete; end
     alias ready? complete?
     
+    # Duplicate the Future, without copying its {#running?}/{#complete?} state.
+    # This is the preferred way to "reuse" a {Future}, because each {Future}
+    # is guaranteed to run at most one time.  It is the same as creating a
+    # new {Future} with the same {#codeblock} object passed to {#initialize}.
+    #
+    # @return [Future] A new {Future} with the same {#codeblock}.
+    #
+    def dup
+      self.class.new &@codeblock
+    end
+    
   end
   
 end
