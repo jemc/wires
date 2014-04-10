@@ -56,27 +56,6 @@ describe Wires::Launcher do
     end
     
     
-    it "temporarily neglects procs that raise a ThreadError on creation;"\
-       " that is, when there are too many threads for the OS to handle" do
-      done_flag = false
-      future = Wires::Future.new { sleep 0.02 until done_flag }
-      spargs = make_spargs future
-      count = 0
-      while subject.count_neglected == 0
-        count += 1
-        subject.spawn(*spargs)
-      end
-      
-      expect(subject.count_neglected).to eq 1
-      subject.spawn(*spargs)
-      expect(subject.count_neglected).to eq 2
-      
-      done_flag = true
-      subject.join_children
-      expect(subject.count_neglected).to eq 0
-    end
-    
-    
     it "temporarily neglects procs that try to spawn as threads"\
        " during Wires::Launcher.hold, but allows procs to spawn in place" do
       var = 'before'
