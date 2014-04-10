@@ -9,7 +9,7 @@ module Wires.current_network::Namespace
       def weak?; @weak end
       
       def initialize(obj)
-        raise ValueError "#{self.class} referent cannot be nil" if obj.nil?
+        raise ArgumentError, "#{self.class} referent cannot be nil" if obj.nil?
         
         # Make initial weak reference (if possible)
         begin
