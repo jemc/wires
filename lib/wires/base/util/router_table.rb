@@ -64,7 +64,9 @@ module Wires.current_network::Namespace
     
     def []=(key, value)
       begin; ObjectSpace.define_finalizer key, @finalizer
-      rescue RuntimeError => e; end
+      rescue RuntimeError => e
+        raise unless e.message =~ /can't modify frozen/
+      end
       
       @lock.synchronize do
         id    = key.object_id
