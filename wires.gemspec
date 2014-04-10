@@ -1,7 +1,7 @@
 
 Gem::Specification.new do |s|
   s.name          = 'wires'
-  s.version       = '0.6.0'
+  s.version       = '0.6.1'
   s.date          = '2014-04-02'
   s.summary       = "wires"
   s.description   = "A lightweight, extensible asynchronous"\
