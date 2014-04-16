@@ -11,35 +11,36 @@ describe Wires::Convenience do
   let(:channel_name) { 'test' }
   let(:channel) { Wires::Channel[channel_name] }
   let(:a_proc) { Proc.new { nil } }
+  let(:kw) { {foo:'bar'} }
   
   describe "#on" do
     it "forwards to Channel[self].register by default" do
-      expect(Wires::Channel[subject]).to receive(:register).with(event, &a_proc)
-      subject.on(event, &a_proc)
+      expect(Wires::Channel[subject]).to receive(:register).with(event, **kw, &a_proc)
+      subject.on(event, **kw, &a_proc)
     end
     
     it "forwards to the Channel when given the channel object" do
-      expect(channel).to receive(:register).with(event, &a_proc)
-      subject.on(event, channel, &a_proc)
+      expect(channel).to receive(:register).with(event, **kw, &a_proc)
+      subject.on(event, channel, **kw, &a_proc)
     end
     
     it "forwards to the Channel when given the channel name" do
-      expect(channel).to receive(:register).with(event, &a_proc)
-      subject.on(event, channel_name, &a_proc)
+      expect(channel).to receive(:register).with(event, **kw, &a_proc)
+      subject.on(event, channel_name, **kw, &a_proc)
     end
     
     it "forwards to multiple Channels when given a channel object array" do
-      expect(Wires::Channel['1']).to receive(:register).with(event, &a_proc)
-      expect(Wires::Channel['2']).to receive(:register).with(event, &a_proc)
-      expect(Wires::Channel['3']).to receive(:register).with(event, &a_proc)
-      subject.on(event, ['1','2','3'].map{|s| Wires::Channel[s]}, &a_proc)
+      expect(Wires::Channel['1']).to receive(:register).with(event, **kw, &a_proc)
+      expect(Wires::Channel['2']).to receive(:register).with(event, **kw, &a_proc)
+      expect(Wires::Channel['3']).to receive(:register).with(event, **kw, &a_proc)
+      subject.on(event, ['1','2','3'].map{|s| Wires::Channel[s]}, **kw, &a_proc)
     end
     
     it "forwards to multiple Channels when given a channel name array" do
-      expect(Wires::Channel['1']).to receive(:register).with(event, &a_proc)
-      expect(Wires::Channel['2']).to receive(:register).with(event, &a_proc)
-      expect(Wires::Channel['3']).to receive(:register).with(event, &a_proc)
-      subject.on(event, ['1','2','3'], &a_proc)
+      expect(Wires::Channel['1']).to receive(:register).with(event, **kw, &a_proc)
+      expect(Wires::Channel['2']).to receive(:register).with(event, **kw, &a_proc)
+      expect(Wires::Channel['3']).to receive(:register).with(event, **kw, &a_proc)
+      subject.on(event, ['1','2','3'], **kw, &a_proc)
     end
   end
   

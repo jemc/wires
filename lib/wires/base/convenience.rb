@@ -3,12 +3,12 @@ module Wires.current_network::Namespace
 
   module Convenience
     
-    def on(events, channels=self, &codeblock)
+    def on(events, channels=self, **kwargs, &codeblock)
       channels = [channels] unless channels.is_a? Array
       channels.each do |channel|
         channel=Channel.new(channel) unless channel.is_a? Channel
         
-        channel.register(*events, &codeblock)
+        channel.register(*events, **kwargs, &codeblock)
       end
       codeblock
     end
