@@ -1,6 +1,6 @@
+^\.git
 \.gem$
 ^Gemfile\.lock$
-\.sublime-project$
-\.sublime-workspace$
+\.sublime-(project|workspace)$
 ^doc/
 ^.yardoc/
