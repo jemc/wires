@@ -14,4 +14,4 @@ end
 task :g  => :install
 task :gp => :release
 
-task :default => :test
+task :default => :doc
