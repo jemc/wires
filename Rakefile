@@ -1,14 +1,16 @@
 
 require "bundler/gem_tasks"
 require 'rspec/core/rake_task'
+require 'yard'
 
 # RSpec tests
 RSpec::Core::RakeTask.new :test
 
-# Yard Documentation
-task :doc do 
-  code = "./yard/corrections.rb"
-  exec "yardoc -e '#{code}'; cp ./yard/common.css ./doc/css/"
+# YARD Documentation
+YARD::Rake::YardocTask.new :doc do |c|
+  c.after = Proc.new do
+    system "cp ./yard/common.css ./doc/css/" # Change stylesheet
+  end
 end
 
 task :g  => :install
