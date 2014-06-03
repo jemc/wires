@@ -39,7 +39,7 @@ describe Wires::Router do
     it "asserts that Regexp channels are not firable" do
       channels.each do |channel|
         if channel.name.is_a? Regexp
-          expect(channel.not_firable).to be_true
+          expect(channel.not_firable).to be
           expect(channel.not_firable).to include TypeError
         else
           expect(channel.not_firable).to_not be

@@ -12,23 +12,23 @@ end
 
 
 shared_examples "an exhausted item" do
-  its(:active?)   { should be_false }
-  its(:ready?)    { should be_false }
+  its(:active?)   { should eq false }
+  its(:ready?)    { should eq false }
   its(:count)     { should eq 0     }
   
   it "refuses to be conditionally fired" do
-    expect(subject.fire_if_ready).to be_false
+    expect(subject.fire_if_ready).to eq nil
     
-    expect(subject.active?)  .to be_false
-    expect(subject.ready?)   .to be_false
+    expect(subject.active?)  .to eq false
+    expect(subject.ready?)   .to eq false
     expect(subject.count)    .to eq 0
   end
   
   it "can still be unconditionally fired" do
-    expect(subject.fire).to be_true
+    expect(subject.fire).to eq true
     
-    expect(subject.active?)  .to be_false
-    expect(subject.ready?)   .to be_false
+    expect(subject.active?)  .to eq false
+    expect(subject.ready?)   .to eq false
     expect(subject.count)    .to eq 0
   end
 end
@@ -38,20 +38,20 @@ shared_examples "a disabled item with count" do |the_count|
   if !the_count or the_count<=0 
     it_behaves_like "an exhausted item"
   else
-    its(:active?)   { should be_false }
-    its(:ready?)    { should be_false }
+    its(:active?)   { should eq false }
+    its(:ready?)    { should eq false }
     its(:count)     { should eq the_count }
     
     it "refuses to be conditionally fired" do
-      expect(subject.fire_if_ready).to be_false
+      expect(subject.fire_if_ready).to eq nil
       
-      expect(subject.active?)  .to be_false
-      expect(subject.ready?)   .to be_false
+      expect(subject.active?)  .to eq false
+      expect(subject.ready?)   .to eq false
       expect(subject.count)    .to eq the_count
     end
     
     context "when unconditionally fired" do
-      before { expect(subject.fire).to be_true }
+      before { expect(subject.fire).to eq true }
       it_behaves_like "a disabled item with count", the_count-1
     end
   end
@@ -69,17 +69,17 @@ shared_examples "a ready item with count" do |the_count|
   if !the_count or the_count<=0 
     it_behaves_like "an exhausted item"
   else
-    its(:active?)   { should be_true }
-    its(:ready?)    { should be_true }
+    its(:active?)   { should eq true }
+    its(:ready?)    { should eq true }
     its(:count)     { should eq the_count }
     
     context "when conditionally fired" do
-      before { expect(subject.fire_if_ready).to be_true }
+      before { expect(subject.fire_if_ready).to eq true }
       it_behaves_like "an item of unknown readiness with count", the_count-1
     end
     
     context "when unconditionally fired" do
-      before { expect(subject.fire).to be_true }
+      before { expect(subject.fire).to eq true }
       it_behaves_like "an item of unknown readiness with count", the_count-1
     end
   end
@@ -90,20 +90,20 @@ shared_examples "an unready item with count" do |the_count|
   if !the_count or the_count<=0 
     it_behaves_like "an exhausted item"
   else
-    its(:active?)   { should be_true }
-    its(:ready?)    { should be_false }
+    its(:active?)   { should eq true }
+    its(:ready?)    { should eq false }
     its(:count)     { should eq the_count }
     
     it "refuses to be conditionally fired" do
-      expect(subject.fire_if_ready).to be_false
+      expect(subject.fire_if_ready).to eq nil
       
-      expect(subject.active?)  .to be_true
-      expect(subject.ready?)   .to be_false
+      expect(subject.active?)  .to eq true
+      expect(subject.ready?)   .to eq false
       expect(subject.count)    .to eq the_count
     end
     
     context "when unconditionally fired" do
-      before { expect(subject.fire).to be_true }
+      before { expect(subject.fire).to eq true }
       it_behaves_like "an unready item with count", the_count-1
     end
     
