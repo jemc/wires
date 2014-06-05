@@ -25,8 +25,9 @@ end
   ::Numeric.class_eval <<-CODE
     def #{k.last}(time = ::Time.now, &block)
       if block
-        Wires::Channel[block.object_id].register :time_scheduler_anon, &block
-        self.#{k.last}(time).fire(:time_scheduler_anon, block.object_id)
+        event = Wires::Event.new block: block, type: :time_scheduler_anon
+        Wires::Channel[Wires::TimeScheduler].register event, &block
+        self.#{k.last}(time).fire(event, Wires::TimeScheduler)
       end
       time #{v} self
     end
