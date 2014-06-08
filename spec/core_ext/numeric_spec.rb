@@ -1,7 +1,15 @@
 
-# Duration objects help with syntax sugar and can fire anonymous event blocks
-describe "wires/core_ext/Numeric" do
+require 'wires'
+
+require 'spec_helper'
+
+
+describe Wires::CoreExt::Numeric do
   after { Wires::Launcher.join_children; Wires::TimeScheduler.clear }
+  
+  it "is included in ::Numeric" do
+    ::Numeric.should < Wires::CoreExt::Numeric
+  end
   
   it "can convert between basic measures of time" do
     {
