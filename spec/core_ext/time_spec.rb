@@ -1,7 +1,16 @@
 
-describe "wires/core_ext/Time" do
+require 'wires'
+
+require 'spec_helper'
+
+
+describe Wires::CoreExt::Time do
   after { Wires::Launcher.join_children; Wires::TimeScheduler.clear }
   let(:chan) { Object.new.tap{|x| x.extend Wires::Convenience} }
+  
+  it "is included in ::Time" do
+    ::Time.should < Wires::CoreExt::Time
+  end
   
   it "can now fire events at a specific time" do
     var = 'before'
