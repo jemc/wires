@@ -1,6 +1,4 @@
 
-require 'wires'
-
 require 'spec_helper'
 
 

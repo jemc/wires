@@ -1,7 +1,4 @@
 
-require 'wires'
-require 'wires/base/actor'
-
 require 'spec_helper'
 
 

@@ -1,8 +1,5 @@
 
-require 'wires'
-
 require 'spec_helper'
-require 'timecop'
 
 
 shared_context "after sufficient time has passed", 
