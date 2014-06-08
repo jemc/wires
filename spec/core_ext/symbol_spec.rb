@@ -1,5 +1,10 @@
 
-describe "wires/core_ext/Symbol" do
+require 'wires'
+
+require 'spec_helper'
+
+
+describe Wires::CoreExt::Symbol do
   
   describe "#[]" do
     describe "without arguments" do
