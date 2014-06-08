@@ -40,6 +40,6 @@ module Wires.current_network::Namespace
     end
   end
   
-  class ::Numeric; include CoreExt::Numeric  end
+  ::Numeric.prepend CoreExt::Numeric
   
 end

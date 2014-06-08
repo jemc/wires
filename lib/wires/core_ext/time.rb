@@ -12,6 +12,6 @@ module Wires.current_network::Namespace
     end
   end
   
-  class ::Time; include CoreExt::Time  end
+  ::Time.prepend CoreExt::Time
   
 end

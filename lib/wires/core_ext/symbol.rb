@@ -15,6 +15,6 @@ module Wires.current_network::Namespace
     end
   end
   
-  class ::Symbol; include CoreExt::Symbol  end
+  ::Symbol.prepend CoreExt::Symbol
   
 end
