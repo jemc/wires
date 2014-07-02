@@ -99,7 +99,7 @@ module Wires.current_network::Namespace
     # @param name [#hash] a hashable object of any type, unique to this channel
     #
     def initialize(name)
-      @name = RouterTable::Reference.new name
+      @name = Util::RouterTable::Reference.new name
       @handlers = []
     end
     

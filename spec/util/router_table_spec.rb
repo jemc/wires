@@ -2,10 +2,10 @@
 require 'spec_helper'
 
 
-describe Wires::RouterTable do
+describe Wires::Util::RouterTable do
   
-  describe Wires::RouterTable::Reference do
-    subject { Wires::RouterTable::Reference.new(obj) }
+  describe Wires::Util::RouterTable::Reference do
+    subject { Wires::Util::RouterTable::Reference.new(obj) }
     
     after do # Check that weak? matches actual weakness
       expect(subject.ref).to be_a \
@@ -40,7 +40,7 @@ describe Wires::RouterTable do
   end
   
   
-  describe Wires::RouterTable do
+  describe Wires::Util::RouterTable do
     
     after do # Check consistency of tables
       GC.start
@@ -100,8 +100,8 @@ describe Wires::RouterTable do
       
       kref = subject.instance_variable_get(:@keys).values.last
       vref = subject.instance_variable_get(:@values).values.last
-      expect(kref).to be_a Wires::RouterTable::Reference
-      expect(vref).to be_a Wires::RouterTable::Reference
+      expect(kref).to be_a Wires::Util::RouterTable::Reference
+      expect(vref).to be_a Wires::Util::RouterTable::Reference
       expect(kref).to receive :make_weak
       expect(vref).to receive :make_weak
       
@@ -113,8 +113,8 @@ describe Wires::RouterTable do
       
       kref = subject.instance_variable_get(:@keys).values.last
       vref = subject.instance_variable_get(:@values).values.last
-      expect(kref).to be_a Wires::RouterTable::Reference
-      expect(vref).to be_a Wires::RouterTable::Reference
+      expect(kref).to be_a Wires::Util::RouterTable::Reference
+      expect(vref).to be_a Wires::Util::RouterTable::Reference
       expect(kref).to receive :make_strong
       expect(vref).to receive :make_strong
       

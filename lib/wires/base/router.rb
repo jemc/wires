@@ -7,7 +7,7 @@ module Wires.current_network::Namespace
     class Category
       def initialize(name)
         @name = name
-        @table = RouterTable.new
+        @table = Util::RouterTable.new
         @exclusive = true
         @qualifiers = []
         @executions = []
