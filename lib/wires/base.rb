@@ -47,6 +47,7 @@ end
 loader.call 'base/util/hooks'
 loader.call 'base/util/router_table'
 loader.call 'base/util/thread_pool'
+loader.call 'base/util/thread_pool/task'
 
 loader.call 'base/event'
 loader.call 'base/future'
