@@ -5,11 +5,9 @@
 module Wires.current_network::Namespace
   module Util
     
-    # A pool is a container of a limited amount of threads to which you can add
-    # tasks to run.
-    #
-    # This is usually more performant and less memory intensive than creating a
-    # new thread for every task.
+    # A pool is a container of a limited amount of threads to which you
+    # can add tasks to run.  This is usually more performant and less
+    # memory-intensive than creating a new thread for every task.
     class ThreadPool
       attr_reader :min, :max, :spawned, :waiting
       
@@ -18,9 +16,9 @@ module Wires.current_network::Namespace
       # The pool will start with the minimum amount of threads created and will
       # spawn new threads until the max is reached in case of need.
       #
-      # A default block can be passed, which will be used to {#process} the passed
-      # data.
-      def initialize (min, max = nil, &block)
+      # A default block can be passed, which will be used to {#process} the
+      # passed data.
+      def initialize min, max = nil, &block
         @min   = min
         @max   = max || min
         @block = block
@@ -42,11 +40,11 @@ module Wires.current_network::Namespace
         @auto_trim     = false
         @idle_trim     = nil
         
-        @mutex.synchronize {
-          min.times {
+        @mutex.synchronize do
+          min.times do
             spawn_thread
-          }
-        }
+          end
+        end
       end
       
       # Check if the pool has been shut down.
@@ -57,8 +55,8 @@ module Wires.current_network::Namespace
         @auto_trim
       end
       
-      # Enable auto trimming, unneeded threads will be deleted until the minimum
-      # is reached.
+      # Enable auto trimming, unneeded threads will be deleted until the
+      # minimum is reached.
       def auto_trim!
         @auto_trim = true
       end
@@ -73,19 +71,20 @@ module Wires.current_network::Namespace
         !@idle_trim.nil?
       end
       
-      # Enable idle trimming. Unneeded threads will be deleted after the given number of seconds of inactivity.
-      # The minimum number of threads is respeced.
-      def idle_trim!(timeout)
+      # Enable idle trimming.
+      # Unneeded threads will be deleted after the given number of seconds
+      # of inactivity.  The minimum number of threads is respected.
+      def idle_trim! timeout
         @idle_trim = timeout
       end
       
-      # Turn of idle trimming.
+      # Disable idle trimming.
       def no_idle_trim!
         @idle_trim = nil
       end
       
       # Resize the pool with the passed arguments.
-      def resize (min, max = nil)
+      def resize min, max = nil
         @min = min
         @max = max || min
         
@@ -94,22 +93,20 @@ module Wires.current_network::Namespace
       
       # Get the amount of tasks that still have to be run.
       def backlog
-        @mutex.synchronize {
-          @todo.length
-        }
+        @mutex.synchronize { @todo.length }
       end
       
-      # Are all tasks consumed ?
+      # Return true if all tasks have been consumed
       def done?
         @todo.empty? and @waiting == @spawned
       end
       
-      # Wait until all tasks are consumed. The caller will be blocked until then.
+      # Block until all tasks are consumed.
       def wait_done
-        @done_mutex.synchronize {
+        @done_mutex.synchronize do
           return if done?
           @done.wait @done_mutex
-        }
+        end
       end
       
       # Check if there are idle workers.
@@ -117,13 +114,13 @@ module Wires.current_network::Namespace
         @todo.length < @waiting
       end
       
-      # Process Block when there is a idle worker if not block its returns
-      def idle (*args, &block)
+      # Block until there is an idle worker, then run the given block in it.
+      def idle *args, &block
         while !idle?
-          @done_mutex.synchronize {
+          @done_mutex.synchronize do
             break if idle?
             @done.wait @done_mutex
-          }
+          end
         end
         
         unless block
@@ -131,7 +128,6 @@ module Wires.current_network::Namespace
         end
         
         process *args, &block
-        
       end
       
       # Add a task to the pool which will execute the block with the given
@@ -139,14 +135,14 @@ module Wires.current_network::Namespace
       #
       # If no block is passed the default block will be used if present, an
       # ArgumentError will be raised otherwise.
-      def process (*args, &block)
+      def process *args, &block
         unless block || @block
           raise ArgumentError, 'you must pass a block'
         end
         
         task = Task.new(self, *args, &(block || @block))
         
-        @mutex.synchronize {
+        @mutex.synchronize do
           raise 'unable to add work while shutting down' if shutdown?
           
           @todo << task
@@ -156,22 +152,23 @@ module Wires.current_network::Namespace
           end
           
           @cond.signal
-        }
+        end
         
         task
       end
       
       alias << process
       
-      # Trim the unused threads, if forced threads will be trimmed even if there
-      # are tasks waiting.
-      def trim (force = false)
-        @mutex.synchronize {
+      # Trim the unused threads.
+      # @param force [Boolean] If true, threads will be trimmed even if there
+      #   are tasks waiting.
+      def trim force = false
+        @mutex.synchronize do
           if (force || @waiting > 0) && @spawned - @trim_requests > @min
             @trim_requests += 1
             @cond.signal
           end
-        }
+        end
         
         self
       end
@@ -183,10 +180,10 @@ module Wires.current_network::Namespace
       
       # Shut down the pool instantly without finishing to execute tasks.
       def shutdown!
-        @mutex.synchronize {
+        @mutex.synchronize do
           @shutdown = :now
           @cond.broadcast
-        }
+        end
         
         wake_up_timeout
         
@@ -195,10 +192,10 @@ module Wires.current_network::Namespace
       
       # Shut down the pool, it will block until all tasks have finished running.
       def shutdown
-        @mutex.synchronize {
+        @mutex.synchronize do
           @shutdown = :nicely
           @cond.broadcast
-        }
+        end
         
         join
         
@@ -225,7 +222,7 @@ module Wires.current_network::Namespace
       end
       
       # Define a timeout for a task.
-      def timeout_for (task, timeout)
+      def timeout_for task, timeout
         unless @timeout
           spawn_timeout_thread
         end
@@ -238,7 +235,7 @@ module Wires.current_network::Namespace
       end
       
       # Shutdown the pool after a given amount of time.
-      def shutdown_after (timeout)
+      def shutdown_after timeout
         Thread.new {
           sleep timeout
           
@@ -258,9 +255,9 @@ module Wires.current_network::Namespace
       def spawn_thread
         @spawned += 1
         
-        thread = Thread.new {
+        thread = Thread.new do
           loop do
-            task = @mutex.synchronize {
+            task = @mutex.synchronize do
               if @todo.empty?
                 while @todo.empty?
                   if @trim_requests > 0
@@ -290,7 +287,7 @@ module Wires.current_network::Namespace
               end
               
               @todo.shift
-            } or break
+            end or break
             
             task.execute(thread)
             
@@ -299,11 +296,11 @@ module Wires.current_network::Namespace
             trim if auto_trim? && @spawned > @min
           end
           
-          @mutex.synchronize {
+          @mutex.synchronize do
             @spawned -= 1
             @workers.delete thread
-          }
-        }
+          end
+        end
         
         @workers << thread
         
@@ -312,14 +309,14 @@ module Wires.current_network::Namespace
       
       def spawn_timeout_thread
         @pipes   = IO.pipe
-        @timeout = Thread.new {
+        @timeout = Thread.new do
           loop do
             now     = Time.now
-            timeout = @timeouts.map {|task, time|
+            timeout = @timeouts.map do |task, time|
               next unless task.started_at
               
               now - task.started_at + task.timeout
-            }.compact.min unless @timeouts.empty?
+            end.compact.min unless @timeouts.empty?
             
             readable, = IO.select([@pipes.first], nil, nil, timeout)
             
@@ -330,25 +327,23 @@ module Wires.current_network::Namespace
             end
             
             now = Time.now
-            @timeouts.each {|task, time|
+            @timeouts.each do |task, time|
               next if !task.started_at || task.terminated? || task.finished?
               
               if now > task.started_at + task.timeout
                 task.timeout!
               end
-            }
+            end
             
             @timeouts.reject! { |task, _| task.terminated? || task.finished? }
             
             break if @shutdown == :now
           end
-        }
+        end
       end
       
       def report_done
-        @done_mutex.synchronize {
-          @done.broadcast if done? or idle?
-        }
+        @done_mutex.synchronize { @done.broadcast if done? or idle? }
       end
     end
     
