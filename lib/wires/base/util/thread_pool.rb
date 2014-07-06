@@ -50,45 +50,20 @@ module Wires.current_network::Namespace
       # Check if the pool has been shut down.
       def shutdown?; !!@shutdown; end
       
-      # Check if auto trimming is enabled.
-      def auto_trim?
-        @auto_trim
-      end
+      # If true, unneeded threads will be deleted until the minimum is reached.
+      attr_accessor :auto_trim
       
-      # Enable auto trimming, unneeded threads will be deleted until the
-      # minimum is reached.
-      def auto_trim!
-        @auto_trim = true
-      end
-      
-      # Disable auto trimming.
-      def no_auto_trim!
-        @auto_trim = false
-      end
-      
-      # Check if idle trimming is enabled.
-      def idle_trim?
-        !@idle_trim.nil?
-      end
-      
-      # Enable idle trimming.
-      # Unneeded threads will be deleted after the given number of seconds
-      # of inactivity.  The minimum number of threads is respected.
-      def idle_trim! timeout
-        @idle_trim = timeout
-      end
-      
-      # Disable idle trimming.
-      def no_idle_trim!
-        @idle_trim = nil
-      end
+      # The number of seconds of inactivity before unneeded threads will be
+      # trimmed, respecting the minimum number of threads.  If nil is given,
+      # trimming of idle threads will be disabled.
+      attr_accessor :idle_trim
       
       # Resize the pool with the passed arguments.
       def resize min, max = nil
         @min = min
         @max = max || min
         
-        trim!
+        trim force:true
       end
       
       # Get the amount of tasks that still have to be run.
@@ -96,13 +71,13 @@ module Wires.current_network::Namespace
         @mutex.synchronize { @todo.length }
       end
       
-      # Return true if all tasks have been consumed
+      # Return true if all tasks have been consumed.
       def done?
         @todo.empty? and @waiting == @spawned
       end
       
       # Block until all tasks are consumed.
-      def wait_done
+      def wait_until_done
         @done_mutex.synchronize do
           return if done?
           @done.wait @done_mutex
@@ -162,7 +137,7 @@ module Wires.current_network::Namespace
       # Trim the unused threads.
       # @param force [Boolean] If true, threads will be trimmed even if there
       #   are tasks waiting.
-      def trim force = false
+      def trim force: false
         @mutex.synchronize do
           if (force || @waiting > 0) && @spawned - @trim_requests > @min
             @trim_requests += 1
@@ -171,11 +146,6 @@ module Wires.current_network::Namespace
         end
         
         self
-      end
-      
-      # Force #{trim}.
-      def trim!
-        trim true
       end
       
       # Shut down the pool instantly without finishing to execute tasks.
@@ -245,7 +215,9 @@ module Wires.current_network::Namespace
         self
       end
       
+      
       private
+      
       def wake_up_timeout
         if defined? @pipes
           @pipes.last.write_nonblock 'x' rescue nil
@@ -293,7 +265,7 @@ module Wires.current_network::Namespace
             
             break if @shutdown == :now
             
-            trim if auto_trim? && @spawned > @min
+            trim if @auto_trim && @spawned > @min
           end
           
           @mutex.synchronize do

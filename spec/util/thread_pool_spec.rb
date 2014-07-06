@@ -27,7 +27,7 @@ describe Wires::Util::ThreadPool, iso:true do
     
     Thread.list.count.should eq original_count + max_threads
     release = true
-    subject.wait_done
+    subject.wait_until_done
   end
   
 end
