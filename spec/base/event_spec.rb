@@ -4,18 +4,20 @@ require 'spec_helper'
 
 describe Wires::Event do
   
+  let(:block) { Proc.new { } }
+  
   context "without arguments" do
     specify { expect(subject).to eq :*[] }
   end
   
   context "with arguments" do
-    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &block }
     specify { 
-      expect(subject).to eq :*[1, 2, 3, a:4, b:5, &:proc] }
+      expect(subject).to eq :*[1, 2, 3, a:4, b:5, &block] }
     its(:type)        { should == :* }
     its(:args)        { should == [1, 2, 3] }
     its(:kwargs)      { should == {a:4, b:5} }
-    its(:codeblock)   { should == :proc.to_proc }
+    its(:codeblock)   { should == block }
     its(:a)           { should == 4 }
     its(:b)           { should == 5 }
     its([:type])      { should == nil }
@@ -25,13 +27,13 @@ describe Wires::Event do
   end
   
   context "with :type keyword argument" do
-    subject { Wires::Event.new    1, 2, 3, a:4, b:5, type: :test, &:proc }
+    subject { Wires::Event.new    1, 2, 3, a:4, b:5, type: :test, &block }
     specify { 
-      expect(subject).to eq :test[1, 2, 3, a:4, b:5, &:proc] }
+      expect(subject).to eq :test[1, 2, 3, a:4, b:5, &block] }
     its(:type)        { should == :test }
     its(:args)        { should == [1, 2, 3] }
     its(:kwargs)      { should == {a:4, b:5} }
-    its(:codeblock)   { should == :proc.to_proc }
+    its(:codeblock)   { should == block }
     its(:a)           { should == 4 }
     its(:b)           { should == 5 }
     its([:type])      { should == nil }
@@ -43,13 +45,13 @@ describe Wires::Event do
   end
     
   context "with :args keyword argument" do
-    subject { Wires::Event.new 1, 2, 3, args:[5, 6, 7], a:4, b:5, &:proc }
+    subject { Wires::Event.new 1, 2, 3, args:[5, 6, 7], a:4, b:5, &block }
     specify { 
-      expect(subject).to eq :*[1, 2, 3, args:[5, 6, 7], a:4, b:5, &:proc] }
+      expect(subject).to eq :*[1, 2, 3, args:[5, 6, 7], a:4, b:5, &block] }
     its(:type)        { should == :* }
     its(:args)        { should == [1, 2, 3] }
     its(:kwargs)      { should == {args:[5, 6, 7], a:4, b:5} }
-    its(:codeblock)   { should == :proc.to_proc }
+    its(:codeblock)   { should == block }
     its(:a)           { should == 4 }
     its(:b)           { should == 5 }
     its([:type])      { should == nil }
@@ -61,13 +63,13 @@ describe Wires::Event do
   end
     
   context "with :kwargs keyword argument" do
-    subject { Wires::Event.new 1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &:proc }
+    subject { Wires::Event.new 1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &block }
     specify { 
-      expect(subject).to eq :*[1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &:proc] }
+      expect(subject).to eq :*[1, 2, 3, kwargs:{a:8, b:9}, a:4, b:5, &block] }
     its(:type)        { should == :* }
     its(:args)        { should == [1, 2, 3] }
     its(:kwargs)      { should == {kwargs:{a:8, b:9}, a:4, b:5} }
-    its(:codeblock)   { should == :proc.to_proc }
+    its(:codeblock)   { should == block }
     its(:a)           { should == 4 }
     its(:b)           { should == 5 }
     its([:type])      { should == nil }
@@ -79,13 +81,13 @@ describe Wires::Event do
   end
   
   context "with :codeblock keyword argument" do
-    subject { Wires::Event.new 1, 2, 3, a:4, b:5, codeblock: :foo, &:proc }
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, codeblock: :foo, &block }
     specify { 
-      expect(subject).to eq :*[1, 2, 3, a:4, b:5, codeblock: :foo, &:proc] }
+      expect(subject).to eq :*[1, 2, 3, a:4, b:5, codeblock: :foo, &block] }
     its(:type)        { should == :* }
     its(:args)        { should == [1, 2, 3] }
     its(:kwargs)      { should == {a:4, b:5, codeblock: :foo} }
-    its(:codeblock)   { should == :proc.to_proc }
+    its(:codeblock)   { should == block }
     its(:a)           { should == 4 }
     its(:b)           { should == 5 }
     its([:type])      { should == nil }
@@ -97,7 +99,7 @@ describe Wires::Event do
   end
   
   describe "#to_wires_event" do
-    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &:proc }
+    subject { Wires::Event.new 1, 2, 3, a:4, b:5, &block }
     its(:to_wires_event) { should equal subject }
   end
   
@@ -106,32 +108,32 @@ describe Wires::Event do
               Wires::Event.new }
     specify { :test[]                              .should_not equal \
               :test[] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not equal \
-              :test[1, 2, 3, a:4, b:5, &:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &block]     .should_not equal \
+              :test[1, 2, 3, a:4, b:5, &block] }
     specify { Wires::Event.new                     .should == \
               Wires::Event.new }
     specify { :test[]                              .should == \
               :test[] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should == \
-              :test[1, 2, 3, a:4, b:5, &:proc] }
+    specify { :test[1, 2, 3, a:4, b:5, &block]     .should == \
+              :test[1, 2, 3, a:4, b:5, &block] }
     specify { :test[1, 2, 3]                       .should == \
               :test[1, 2, 3] }
     specify { :test[a:4, b:5]                      .should == \
               :test[a:4, b:5] }
-    specify { :test[&:proc]                        .should == \
-              :test[&:proc] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
-              :other[1, 2, 3, a:4, b:5, &:proc] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
-              :test[4, 5, 6, a:4, b:5, &:proc] }
-    specify { :test[1, 2, 3, a:4, b:5, &:proc]     .should_not == \
-              :test[1, 2, 3, a:4, &:proc] }
+    specify { :test[&block]                        .should == \
+              :test[&block] }
+    specify { :test[1, 2, 3, a:4, b:5, &block]     .should_not == \
+              :other[1, 2, 3, a:4, b:5, &block] }
+    specify { :test[1, 2, 3, a:4, b:5, &block]     .should_not == \
+              :test[4, 5, 6, a:4, b:5, &block] }
+    specify { :test[1, 2, 3, a:4, b:5, &block]     .should_not == \
+              :test[1, 2, 3, a:4, &block] }
     specify { :test[1, 2, 3, a:4, b:5, &Proc.new{}].should_not == \
               :test[1, 2, 3, a:4, b:5, &Proc.new{}] }
   end
   
   describe "#dup" do
-    let(:event) { :test[1, 2, 3, a:4, b:5, &:proc] }
+    let(:event) { :test[1, 2, 3, a:4, b:5, &block] }
     
     specify { event.dup.should            ==    event }
     specify { event.dup.should_not        equal event }

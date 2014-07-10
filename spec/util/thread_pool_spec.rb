@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 
-describe Wires::Util::ThreadPool, iso:true do
+describe Wires::Util::ThreadPool do
   
   subject { Wires::Util::ThreadPool.new min_threads, max_threads }
   let(:min_threads) { 3 }
