@@ -3,18 +3,22 @@ module FireTestHelper
   # Convenience method to test concurrency properties of a firing block
   def fire_test on_method, blocking:false, parallel:!blocking
     count = 0
+    count_mutex = Mutex.new
     running_count = 0
+    running_count_mutex = Mutex.new
     10.times do
       on_method.call :event, subject do
         if parallel
           expect(count).to eq 0
           sleep 0.1
         else
-          expect(count).to eq running_count
-          running_count += 1
+          running_count_mutex.synchronize {
+            expect(count).to eq running_count
+            running_count += 1
+          }
           sleep 0.01
         end
-        count += 1
+        count_mutex.synchronize { count += 1 }
       end
     end
     
@@ -22,9 +26,8 @@ module FireTestHelper
     
     if not blocking
       expect(count).to eq 0
-      sleep 0.15
     end
-    expect(count).to eq 10
+    Timeout.timeout(5) { Thread.pass until count == 10 }
   end
 end
 

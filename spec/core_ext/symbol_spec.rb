@@ -4,6 +4,8 @@ require 'spec_helper'
 
 describe Wires::CoreExt::Symbol do
   
+  let(:block) { Proc.new { } }
+  
   describe "#[]" do
     describe "without arguments" do
       subject { :some_event[] }
@@ -21,14 +23,14 @@ describe Wires::CoreExt::Symbol do
     end
     
     context "with arguments" do
-      subject { :some_event[1, 2, 3, a:4, b:5, &:proc] }
+      subject { :some_event[1, 2, 3, a:4, b:5, &block] }
       
       its(:class)     { should eq Wires::Event }
       its(:type)      { should eq :some_event  }
       
       its(:args)      { should eq [1, 2, 3] }
       its(:kwargs)    { should eq a:4, b:5  }
-      its(:codeblock) { should eq :proc.to_proc }
+      its(:codeblock) { should eq block }
       
       its([:args])      { should_not be }
       its([:kwargs])    { should_not be }
@@ -42,14 +44,14 @@ describe Wires::CoreExt::Symbol do
     end
     
     context "with :type keyword argument" do
-      subject { :some_event[1, 2, 3, a:4, b:5, type: :test, &:proc] }
+      subject { :some_event[1, 2, 3, a:4, b:5, type: :test, &block] }
       
       its(:class)     { should eq Wires::Event }
       its(:type)      { should eq :some_event  }
       
       its(:args)      { should eq [1, 2, 3] }
       its(:kwargs)    { should eq a:4, b:5  }
-      its(:codeblock) { should eq :proc.to_proc }
+      its(:codeblock) { should eq block }
       
       its([:args])      { should_not be }
       its([:kwargs])    { should_not be }
@@ -83,12 +85,12 @@ describe Wires::CoreExt::Symbol do
     end
     
     context "with :codeblock keyword argument" do
-      subject { :some_event[codeblock: :anything, &:proc] }
+      subject { :some_event[codeblock: :anything, &block] }
       
       its(:class)     { should eq Wires::Event }
       its(:type)      { should eq :some_event  }
       
-      its(:codeblock)   { should eq :proc.to_proc }
+      its(:codeblock)   { should eq block }
       its([:codeblock]) { should eq :anything }
     end
   end

@@ -23,7 +23,7 @@ describe Wires::Util::ThreadPool do
     release = false
     original_count = Thread.list.count
     
-    (max_threads+3).times { subject.process { sleep 0 until release } }
+    (max_threads+3).times { subject.process { Thread.pass until release } }
     
     Thread.list.count.should eq original_count + max_threads
     release = true

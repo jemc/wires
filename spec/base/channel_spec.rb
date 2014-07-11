@@ -11,6 +11,7 @@ describe Wires::Channel do
   let(:event) { Wires::Event.new }
   let(:event2) { :other_event[] }
   let(:a_proc)  { Proc.new { nil } }
+  let(:b_proc)  { Proc.new { nil } }
   let(:names) {['channel',   'Channel',  'CHANNEL',
                 :channel,    :Channel,   :CHANNEL,
                 /channel/,   /Channel/,  /CHANNEL/,
@@ -89,7 +90,7 @@ describe Wires::Channel do
        " if not all handlers have been unregistered" do
       expect { loop_gc_with_timeout { |chan|
         chan.register event, &a_proc
-        chan.register event, &Proc.new{}
+        chan.register event, &b_proc
         a_proc.unregister
       }}.to raise_error Timeout::Error
     end

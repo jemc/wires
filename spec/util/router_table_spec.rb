@@ -36,7 +36,7 @@ describe Wires::Util::RouterTable do
       its(:weak?) { subject.make_strong; should_not be }
       its(:weak?) { subject.make_strong; 
                     subject.make_weak;   should_not be }
-    end
+    end unless defined? Rubinius # Rubinius allows WeakRefs of frozen objects
   end
   
   
