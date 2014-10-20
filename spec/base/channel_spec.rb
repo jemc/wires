@@ -11,7 +11,7 @@ describe Wires::Channel do
   let(:event) { Wires::Event.new }
   let(:event2) { :other_event[] }
   let(:a_proc)  { Proc.new { nil } }
-  let(:b_proc)  { Proc.new { nil } }
+  let(:b_proc)  { Proc.new { true } }
   let(:names) {['channel',   'Channel',  'CHANNEL',
                 :channel,    :Channel,   :CHANNEL,
                 /channel/,   /Channel/,  /CHANNEL/,
