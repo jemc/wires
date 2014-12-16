@@ -5,18 +5,18 @@ module Wires.current_network::Namespace
   #
   # Because event handlers created with {Channel#register} or {Convenience#on}
   # are global and permanent (until unregistered), other {Wires} patterns
-  # are more conducive to global or singleton structures, but an {Actor}
+  # are more conducive to global or singleton structures, but an {OldActor}
   # can easily be more transient and dynamic.
   #
-  # An {Actor} marks one or more of its methods as event handlers with
+  # An {OldActor} marks one or more of its methods as event handlers with
   # {ClassMethods#handler} or {#handler}, and indicates the channels to 
   # listen on with {#listen_on}. Events fired on those channels will generate
   # invocations of the corresponding marked event handler methods.
   #
-  # A basic {Actor} might look something like this:
+  # A basic {OldActor} might look something like this:
   #
   #  class Node
-  #    include Wires::Actor
+  #    include Wires::OldActor
   #    
   #    def initialize(instream, outstream)
   #      @instream  = instream
@@ -58,7 +58,7 @@ module Wires.current_network::Namespace
   #    handler :track_pending, :event=>:pending, :channel=>:out
   #  end
   #
-  module Actor
+  module OldActor
     include Wires::Convenience
     
     # When included into a class, extend {ClassMethods} in.
@@ -67,7 +67,7 @@ module Wires.current_network::Namespace
       obj.extend ClassMethods
     end
     
-    # Define the list of channels that the Actor's handlers listen on.
+    # Define the list of channels that the OldActor's handlers listen on.
     # Each subsequent call to {#listen_on} will overwrite the last call,
     # so the entire list of tagged and untagged channels should be specified
     # all in one invocation.
@@ -163,16 +163,16 @@ module Wires.current_network::Namespace
       nil
     end
     
-    # A collection of methods to aid in class definitions that include {Actor}.
-    # This module gets extended into the class object by {Actor.included}.
+    # A collection of methods to aid in class definitions that include {OldActor}.
+    # This module gets extended into the class object by {OldActor.included}.
     #
     module ClassMethods
       
       # This method is used in class definitions to mark a method as an event
-      # handler. This creates a delayed call to {Actor#handler} upon instance
+      # handler. This creates a delayed call to {OldActor#handler} upon instance
       # object creation inside {#new}.
       #
-      # Refer to the argument specification in {Actor#handler}, because
+      # Refer to the argument specification in {OldActor#handler}, because
       # arguments are passed on verbatim.
       #
       def handler(*args)

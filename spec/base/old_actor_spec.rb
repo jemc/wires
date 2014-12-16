@@ -2,11 +2,11 @@
 require 'spec_helper'
 
 
-describe Wires::Actor do
+describe Wires::OldActor do
   let(:klass_def) { proc{} }
   let(:klass) {
     kls = Class.new
-    kls.include Wires::Actor
+    kls.include Wires::OldActor
     kls.class_eval &klass_def
     kls
   }
@@ -45,7 +45,7 @@ describe Wires::Actor do
       handler :type_b
     } }
     
-    it { should be_a Wires::Actor }
+    it { should be_a Wires::OldActor }
     
     it "forwards incoming events to method calls" do
       subject.listen_on 'channel'
